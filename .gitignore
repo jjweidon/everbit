@@ -1,0 +1,86 @@
+# 공통
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# 서버 (Spring Boot)
+server/HELP.md
+server/target/
+server/.gradle/
+server/build/
+server/out/
+server/bin/
+server/.settings/
+server/.classpath
+server/.factorypath
+server/.project
+server/.springBeans
+server/.sts4-cache
+server/*.log
+server/logs/
+server/.apt_generated
+server/nbproject/private/
+server/nbbuild/
+server/dist/
+server/nbdist/
+server/.nb-gradle/
+server/**/application.yaml
+
+# 예외 처리 (서버)
+!server/gradle/wrapper/gradle-wrapper.jar
+!server/**/src/main/**/build/
+!server/**/src/test/**/build/
+!server/**/src/main/**/bin/
+!server/**/src/test/**/bin/
+!server/**/src/main/**/out/
+!server/**/src/test/**/out/
+
+# 클라이언트 (Next.js)
+client/node_modules/
+client/.next/
+client/out/
+client/build/
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+
+# 알고리즘 (Python)
+algorithm/__pycache__/
+algorithm/*.py[cod]
+algorithm/*$py.class
+algorithm/.env
+algorithm/.venv/
+algorithm/venv/
+algorithm/ENV/
+algorithm/env/
+algorithm/.pytest_cache/
+algorithm/htmlcov/
+algorithm/.coverage
+algorithm/coverage/
+algorithm/*.egg-info/
+algorithm/dist/
+algorithm/build/
+
+# 데이터 파일
+data/
+*.csv
+*.xlsx
+*.db
+
+# 로그 파일
+logs/
+*.log 
