@@ -19,32 +19,6 @@
 - 포트폴리오 및 리스크 관리
 - 트레이딩 성과 대시보드 제공
 
-## 개발 환경 설정
-
-### 요구 사항
-
-- JDK 17 이상
-- Python 3.10 이상
-- Node.js 18 이상
-- Docker
-
-### 설치 및 실행
-
-```bash
-# 백엔드 실행
-cd server
-./gradlew bootRun
-
-# 알고리즘 모듈 설정
-cd algorithm
-pip install -r requirements.txt
-
-# 프론트엔드 실행
-cd client
-npm install
-npm run dev
-```
-
 ## 기술 스택
 
 - **백엔드**: Spring Boot 3.x, WebFlux, Kafka, PostgreSQL, TimescaleDB, Redis
