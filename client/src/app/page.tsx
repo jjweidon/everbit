@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, Button, Container, Flex, Heading, Text } from '@chakra-ui/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,17 +17,17 @@ export default function Home() {
         >
           <Box maxW={{ base: '100%', md: '50%' }}>
             <Heading as="h1" size="2xl" mb={4}>
-              에버비트: 비트코인 자동 트레이딩 시스템
+              everbit
             </Heading>
             <Text fontSize="xl" mb={6} color="gray.600">
               Upbit API를 기반으로 퀀트 전략을 활용하여 최적의 매매 타이밍을 자동으로 판단하고 실행하는 서비스입니다.
             </Text>
             <Flex gap={4}>
-              <Button colorScheme="blue" size="lg">
-                <Link href="/dashboard">대시보드 바로가기</Link>
+              <Button as={Link} href="/dashboard" colorScheme="blue" size="lg">
+                대시보드 바로가기
               </Button>
-              <Button colorScheme="gray" size="lg" variant="outline">
-                <Link href="/docs">시작하기</Link>
+              <Button as={Link} href="/docs" colorScheme="gray" size="lg" variant="outline">
+                시작하기
               </Button>
             </Flex>
           </Box>
@@ -35,14 +37,9 @@ export default function Home() {
             height={{ base: '300px', md: '400px' }}
             borderRadius="xl"
             overflow="hidden"
+            bg="gray.100"
           >
-            <Image
-              src="/images/bitcoin-trading.jpg"
-              alt="비트코인 트레이딩"
-              fill
-              style={{ objectFit: 'cover' }}
-              priority
-            />
+            {/* 이미지 파일이 비어 있으므로 임시로 배경색만 설정 */}
           </Box>
         </Flex>
 
