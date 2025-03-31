@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, Container, Heading, Text, List, ListItem, ListIcon } from '@chakra-ui/react';
 import { MdCheckCircle } from 'react-icons/md';
 

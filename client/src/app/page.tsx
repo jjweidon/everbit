@@ -23,12 +23,16 @@ export default function Home() {
               Upbit API를 기반으로 퀀트 전략을 활용하여 최적의 매매 타이밍을 자동으로 판단하고 실행하는 서비스입니다.
             </Text>
             <Flex gap={4}>
-              <Button as={Link} href="/dashboard" colorScheme="blue" size="lg">
-                대시보드 바로가기
-              </Button>
-              <Button as={Link} href="/docs" colorScheme="gray" size="lg" variant="outline">
-                시작하기
-              </Button>
+              <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
+                <Button colorScheme="blue" size="lg">
+                  대시보드 바로가기
+                </Button>
+              </Link>
+              <Link href="/docs" passHref style={{ textDecoration: 'none' }}>
+                <Button colorScheme="gray" size="lg" variant="outline">
+                  시작하기
+                </Button>
+              </Link>
             </Flex>
           </Box>
           <Box

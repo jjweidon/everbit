@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, Container, Heading, Text } from '@chakra-ui/react';
 
 export default function Dashboard() {
