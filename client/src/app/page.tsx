@@ -7,10 +7,10 @@ import { keyframes } from '@emotion/react';
 
 const rotateAnimation = keyframes`
   from {
-    transform: rotateX(0deg);
+    transform: rotateY(0deg);
   }
   to {
-    transform: rotateX(180deg);
+    transform: rotateY(90deg);
   }
 `;
 
@@ -51,7 +51,7 @@ export default function Home() {
             height={{ base: '300px', md: '400px' }}
             borderRadius="xl"
             overflow="hidden"
-            bg="gray.100"
+            bg="none"
             sx={{
               transformStyle: 'preserve-3d',
               animation: `${rotateAnimation} 2s ease-in-out infinite alternate`,
@@ -60,7 +60,13 @@ export default function Home() {
               },
             }}
           >
-            {/* 이미지 파일이 비어 있으므로 임시로 배경색만 설정 */}
+            <Image
+              src="/images/logo-image.png"
+              alt="everbit 로고"
+              fill
+              style={{ objectFit: 'contain' }}
+              priority
+            />
           </Box>
         </Flex>
 

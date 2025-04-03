@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'everbit - 비트코인 자동 트레이딩 시스템',
   description: 'Upbit API 기반 비트코인 자동 트레이딩 시스템',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
