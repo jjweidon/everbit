@@ -74,6 +74,7 @@ algorithm/coverage/
 algorithm/*.egg-info/
 algorithm/dist/
 algorithm/build/
+.venv/
 
 # 데이터 파일
 data/

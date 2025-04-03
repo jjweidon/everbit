@@ -6,12 +6,19 @@
 """
 
 import logging
+import os
+import sys
 from typing import Dict, Optional
 
 import pandas as pd
 import talib as ta
 
-from src.strategies.base_strategy import BaseStrategy
+# 모듈 경로 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+sys.path.insert(0, os.path.dirname(src_dir))
+
+from strategies.base_strategy import BaseStrategy
 
 logger = logging.getLogger(__name__)
 

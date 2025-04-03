@@ -6,12 +6,19 @@
 """
 
 import logging
+import os
+import sys
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
 import pandas as pd
 
-from src.data.upbit_api import UpbitAPI
+# 모듈 경로 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+sys.path.insert(0, os.path.dirname(src_dir))
+
+from data.upbit_api import UpbitAPI
 
 logger = logging.getLogger(__name__)
 

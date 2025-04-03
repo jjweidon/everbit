@@ -3,6 +3,16 @@
 import { Box, Button, Container, Flex, Heading, Text } from '@chakra-ui/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { keyframes } from '@emotion/react';
+
+const rotateAnimation = keyframes`
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(180deg);
+  }
+`;
 
 export default function Home() {
   return (
@@ -42,6 +52,13 @@ export default function Home() {
             borderRadius="xl"
             overflow="hidden"
             bg="gray.100"
+            sx={{
+              transformStyle: 'preserve-3d',
+              animation: `${rotateAnimation} 2s ease-in-out infinite alternate`,
+              '&:hover': {
+                animation: `${rotateAnimation} 1s ease-in-out infinite alternate`,
+              },
+            }}
           >
             {/* 이미지 파일이 비어 있으므로 임시로 배경색만 설정 */}
           </Box>

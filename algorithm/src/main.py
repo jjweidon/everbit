@@ -12,7 +12,14 @@ import sys
 import time
 from pathlib import Path
 
-import dotenv
+from dotenv import load_dotenv
+
+# 현재 스크립트 디렉토리를 파이썬 모듈 검색 경로에 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
+# PyJWT 관련 테스트 코드 제거
 
 # 로거 설정
 logging.basicConfig(
@@ -23,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # .env 파일 로드
-dotenv.load_dotenv()
+load_dotenv()
 
 
 def parse_args():
@@ -34,8 +41,8 @@ def parse_args():
     parser.add_argument(
         "--strategy",
         type=str,
-        default="ma_crossover",
-        help="사용할 트레이딩 전략 (ma_crossover, rsi, macd, bollinger)",
+        default="bollinger_rsi",
+        help="사용할 트레이딩 전략 (ma_crossover, bollinger_rsi)",
     )
     parser.add_argument("--backtest", action="store_true", help="백테스팅 모드 활성화")
     parser.add_argument(
@@ -54,7 +61,7 @@ def run_backtest(args):
     """
     백테스팅 실행
     """
-    from src.backtest.runner import BacktestRunner
+    from backtest.runner import BacktestRunner
 
     logger.info(f"백테스팅 시작: 전략 '{args.strategy}', 기간 {args.start} ~ {args.end}")
     runner = BacktestRunner(
@@ -74,8 +81,8 @@ def run_trading_bot(args):
     """
     실시간 트레이딩 봇 실행
     """
-    from src.strategies.factory import create_strategy
-    from src.data.upbit_api import UpbitAPI
+    from strategies.factory import create_strategy
+    from data.upbit_api import UpbitAPI
 
     logger.info(f"트레이딩 봇 시작: 전략 '{args.strategy}', 심볼 {args.symbol}")
 

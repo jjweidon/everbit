@@ -2,20 +2,30 @@
 # -*- coding: utf-8 -*-
 
 """
-트레이딩 전략 팩토리 모듈
+전략 팩토리 모듈
 """
 
 import logging
-from typing import Dict, Optional
+import os
+import sys
+from typing import Dict, Optional, Type, Union
 
-from src.data.upbit_api import UpbitAPI
-from src.strategies.base_strategy import BaseStrategy
-from src.strategies.ma_crossover import MACrossoverStrategy
+# 모듈 경로 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+sys.path.insert(0, os.path.dirname(src_dir))
+
+from data.upbit_api import UpbitAPI
+from strategies.base_strategy import BaseStrategy
+from strategies.bollinger_rsi import BollingerRSIStrategy
+from strategies.ma_crossover import MACrossoverStrategy
 
 logger = logging.getLogger(__name__)
 
+# 사용 가능한 전략 클래스 맵
 STRATEGIES = {
     "ma_crossover": MACrossoverStrategy,
+    "bollinger_rsi": BollingerRSIStrategy,
 }
 
 
@@ -32,7 +42,7 @@ def create_strategy(
     Parameters
     ----------
     strategy_name : str
-        전략 이름 (ma_crossover, rsi, macd, bollinger)
+        전략 이름 (ma_crossover, bollinger_rsi)
     api : UpbitAPI
         Upbit API 인스턴스
     symbol : str

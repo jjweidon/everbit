@@ -6,7 +6,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Everbit - 비트코인 자동 트레이딩 시스템',
+  title: 'everbit - 비트코인 자동 트레이딩 시스템',
   description: 'Upbit API 기반 비트코인 자동 트레이딩 시스템',
 };
 
