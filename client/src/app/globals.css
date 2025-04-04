@@ -3,16 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 245, 245, 245;
+  --foreground-rgb: 25, 25, 25;
+  --background-start-rgb: 255, 250, 240;
   --background-end-rgb: 255, 255, 255;
+  --gold-light: #FFF9E5;
+  --gold-medium: #FFC107;
+  --gold-dark: #DAA520;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-start-rgb: 40, 30, 10;
+    --background-end-rgb: 20, 20, 20;
   }
 }
 
@@ -24,4 +27,11 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}
+
+/* 금색 강조 효과 (Tailwind를 통해 사용할 수 없는 특수 효과만 CSS로 정의) */
+.gold-gradient-text {
+  background: linear-gradient(to right, var(--gold-dark), var(--gold-medium));
+  -webkit-background-clip: text;
+  color: transparent;
 } 
