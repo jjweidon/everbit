@@ -1,10 +1,10 @@
 package com.everbit.everbit.entity;
 
-import com.everbit.everbit.entity.enums.TransactionType;
 import com.everbit.everbit.entity.enums.TransactionStatus;
+import com.everbit.everbit.entity.enums.TransactionType;
+import de.huxhorn.sulky.ulid.ULID;
 import jakarta.persistence.*;
 import lombok.*;
-import de.huxhorn.sulky.ulid.ULID;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,8 +21,8 @@ public class Transaction extends BaseTime {
     private final String id = new ULID().nextULID();
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "member_id")
+    private Member member;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "upbit_account_id")

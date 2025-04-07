@@ -1,154 +1,138 @@
 package com.everbit.everbit.client;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.config.UpbitConfig;
-import com.everbit.everbit.dto.upbit.CandleDto;
-import com.everbit.everbit.dto.upbit.TickerDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
  * Upbit API 클라이언트
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class UpbitClient {
 
-    private final WebClient webClient;
     private final UpbitConfig upbitConfig;
-    private final ObjectMapper objectMapper;
+
+    /**
+     * URL 빌드
+     */
+    private URI buildUrl(String path) {
+        String baseUrl = upbitConfig.getBaseUrl();
+        return URI.create(baseUrl + path);
+    }
+
+    /**
+     * 계좌 정보 조회
+     */
+    public String getAccounts() {
+        try {
+            URI uri = buildUrl("/v1/accounts");
+            URL url = uri.toURL();
+            String token = createAuthHeaders("");
+
+            log.info("Request URL: {}", url);
+            log.info("Request Headers: Bearer {}", token);
+
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+
+            log.info("Starting Upbit API request");
+            
+            int responseCode = conn.getResponseCode();
+            log.info("Response Code: {}", responseCode);
+
+            BufferedReader in;
+            if (responseCode >= 200 && responseCode < 300) {
+                in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            String responseBody = response.toString();
+            if (responseCode >= 400) {
+                log.error("Failed to get accounts: {}", responseBody);
+                throw new RuntimeException("Failed to get accounts: " + responseBody);
+            }
+
+            return responseBody;
+        } catch (IOException e) {
+            log.error("Failed to get accounts", e);
+            throw new RuntimeException("Failed to get accounts", e);
+        }
+    }
 
     /**
      * 인증 헤더 생성
      */
-    private Map<String, String> createAuthHeaders(String queryString) {
-        String accessKey = upbitConfig.getAccessKey();
-        String secretKey = upbitConfig.getSecretKey();
-        String authenticationToken = UUID.randomUUID().toString();
-
-        Map<String, String> params = new HashMap<>();
-        params.put("access_key", accessKey);
-        params.put("nonce", authenticationToken);
-
-        if (queryString != null && !queryString.isEmpty()) {
-            try {
-                String queryHash = makeQueryHash(queryString);
-                params.put("query_hash", queryHash);
-                params.put("query_hash_alg", "SHA512");
-            } catch (Exception e) {
-                log.error("Failed to create query hash", e);
-            }
-        }
-
-        String jwtToken = createJwtToken(params, secretKey);
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + jwtToken);
-        return headers;
-    }
-
-    /**
-     * JWT 토큰 생성
-     */
-    private String createJwtToken(Map<String, String> params, String secretKey) {
+    private String createAuthHeaders(String queryString) {
         try {
-            String jsonParams = objectMapper.writeValueAsString(params);
-            
-            Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            mac.init(secretKeySpec);
-            
-            byte[] hash = mac.doFinal(jsonParams.getBytes(StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
-        } catch (JsonProcessingException | NoSuchAlgorithmException | InvalidKeyException e) {
-            log.error("Failed to create JWT token", e);
-            return "";
+            String accessKey = upbitConfig.getAccessKey();
+            String secretKey = upbitConfig.getSecretKey();
+            String nonce = UUID.randomUUID().toString();
+
+            log.info("Access Key: {}", accessKey);
+            log.info("Nonce: {}", nonce);
+
+            Algorithm algorithm = Algorithm.HMAC256(secretKey);
+            String jwtToken;
+
+            if (queryString != null && !queryString.isEmpty()) {
+                String queryHash = makeQueryHash(queryString);
+                jwtToken = JWT.create()
+                        .withClaim("access_key", accessKey)
+                        .withClaim("nonce", nonce)
+                        .withClaim("query_hash", queryHash)
+                        .withClaim("query_hash_alg", "SHA512")
+                        .sign(algorithm);
+            } else {
+                jwtToken = JWT.create()
+                        .withClaim("access_key", accessKey)
+                        .withClaim("nonce", nonce)
+                        .sign(algorithm);
+            }
+
+            log.info("Generated JWT Token: {}", jwtToken);
+            return jwtToken;
+        } catch (Exception e) {
+            log.error("Failed to create auth headers", e);
+            throw new RuntimeException("Failed to create auth headers", e);
         }
     }
 
     /**
      * 쿼리 해시 생성
      */
-    private String makeQueryHash(String queryString) throws NoSuchAlgorithmException {
-        java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-512");
-        md.update(queryString.getBytes(StandardCharsets.UTF_8));
-        
-        StringBuilder sb = new StringBuilder();
-        for (byte b : md.digest()) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 시세 정보 조회
-     */
-    public Flux<TickerDto> getTicker(List<String> markets) {
-        String marketParam = String.join(",", markets);
-        String url = UriComponentsBuilder.fromHttpUrl(upbitConfig.getBaseUrl() + "/v1/ticker")
-                .queryParam("markets", marketParam)
-                .toUriString();
-
-        Map<String, String> headers = createAuthHeaders("");
-        
-        return webClient.get()
-                .uri(url)
-                .headers(httpHeaders -> headers.forEach(httpHeaders::add))
-                .retrieve()
-                .bodyToFlux(TickerDto.class)
-                .doOnError(e -> log.error("Failed to get ticker: {}", e.getMessage()));
-    }
-
-    /**
-     * 분 캔들 조회
-     */
-    public Flux<CandleDto> getMinuteCandles(String market, String unit, Integer count) {
-        String url = UriComponentsBuilder.fromHttpUrl(upbitConfig.getBaseUrl() + "/v1/candles/minutes/" + unit)
-                .queryParam("market", market)
-                .queryParam("count", count)
-                .toUriString();
-
-        Map<String, String> headers = createAuthHeaders("");
-        
-        return webClient.get()
-                .uri(url)
-                .headers(httpHeaders -> headers.forEach(httpHeaders::add))
-                .retrieve()
-                .bodyToFlux(CandleDto.class)
-                .doOnError(e -> log.error("Failed to get minute candles: {}", e.getMessage()));
-    }
-
-    /**
-     * 일 캔들 조회
-     */
-    public Flux<CandleDto> getDayCandles(String market, Integer count) {
-        String url = UriComponentsBuilder.fromHttpUrl(upbitConfig.getBaseUrl() + "/v1/candles/days")
-                .queryParam("market", market)
-                .queryParam("count", count)
-                .toUriString();
-
-        Map<String, String> headers = createAuthHeaders("");
-        
-        return webClient.get()
-                .uri(url)
-                .headers(httpHeaders -> headers.forEach(httpHeaders::add))
-                .retrieve()
-                .bodyToFlux(CandleDto.class)
-                .doOnError(e -> log.error("Failed to get day candles: {}", e.getMessage()));
+    private String makeQueryHash(String queryString) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        md.update(queryString.getBytes("utf8"));
+        return String.format("%0128x", new BigInteger(1, md.digest()));
     }
 } 

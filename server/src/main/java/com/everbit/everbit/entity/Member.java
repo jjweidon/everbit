@@ -10,9 +10,9 @@ import de.huxhorn.sulky.ulid.ULID;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseTime {
+public class Member extends BaseTime {
     @Id
-    @Column(name = "user_id")
+    @Column(name = "member_id")
     @Builder.Default
     private final String id = new ULID().nextULID();
 

@@ -27,8 +27,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        // 서버 API를 통해 업비트 자산 정보 가져오기
-        const response = await axios.get('/api/accounts');
+        // 스프링 백엔드 서버의 API 엔드포인트 호출
+        const response = await axios.get('http://localhost:8080/api/upbit/accounts');
         const assets = response.data;
         setAssets(assets);
         

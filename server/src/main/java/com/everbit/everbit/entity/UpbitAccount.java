@@ -19,8 +19,8 @@ public class UpbitAccount extends BaseTime {
     private final String id = new ULID().nextULID();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Column(nullable = false)
     private String accountName;
