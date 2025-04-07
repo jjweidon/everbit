@@ -3,59 +3,55 @@
 import { Box, Container, Heading, Text, Flex, Stat, StatLabel, StatNumber, StatHelpText, Grid, GridItem, Button } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-interface Asset {
-  currency: string;
-  balance: string;
-  locked: string;
-  avg_buy_price: string;
-  avg_buy_price_modified: boolean;
-  unit_currency: string;
-}
+import { UpbitAccount, AccountSummary } from '@/types/upbit';
+import { upbitApi } from '@/api/upbit';
 
 export default function Dashboard() {
   const skyGradient = 'linear-gradient(to right, #38A4CA, #49C3EC, #B0E7F7)';
   const goldGradient = 'linear-gradient(to right, #DAA520, #FFC107, #FFD700)';
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalBalance, setTotalBalance] = useState('0');
-  const [tradeCount, setTradeCount] = useState(0);
-  const [profitRate, setProfitRate] = useState('0');
 
   useEffect(() => {
-    const fetchAssets = async () => {
+    const fetchAccounts = async () => {
       try {
-        // 스프링 백엔드 서버의 API 엔드포인트 호출
-        const response = await axios.get('http://localhost:8080/api/upbit/accounts');
-        const assets = response.data;
-        setAssets(assets);
+        const accounts = await upbitApi.getAccounts();
         
-        // 총 자산 계산 (KRW + 코인 환산 금액)
-        let total = 0;
-        assets.forEach((asset: Asset) => {
-          if (asset.currency === 'KRW') {
-            total += parseFloat(asset.balance);
-          } else {
-            const price = parseFloat(asset.avg_buy_price) * parseFloat(asset.balance);
-            total += price;
+        // 계좌 요약 정보 계산
+        const summary: AccountSummary = {
+          totalBalance: 0,
+          totalProfit: 0,
+          profitRate: 0,
+          accounts: accounts
+        };
+
+        // KRW 기준 총 자산 계산
+        summary.totalBalance = accounts.reduce((total, account) => {
+          const balance = parseFloat(account.balance) + parseFloat(account.locked);
+          if (account.currency === 'KRW') {
+            return total + balance;
           }
-        });
-        
-        setTotalBalance(total.toLocaleString());
-        setTradeCount(27); // 임시 데이터
-        setProfitRate('8.2'); // 임시 데이터
-        setLoading(false);
+          // 코인의 경우 평균 매수가로 계산
+          const avgPrice = parseFloat(account.avg_buy_price);
+          return total + (balance * avgPrice);
+        }, 0);
+
+        setAccountSummary(summary);
       } catch (err) {
-        console.error('자산 정보 가져오기 실패:', err);
-        setError('자산 정보를 가져오지 못했습니다. 나중에 다시 시도해주세요.');
+        setError('계좌 정보를 불러오는데 실패했습니다.');
+        console.error('Failed to fetch accounts:', err);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchAssets();
+    fetchAccounts();
   }, []);
+
+  if (loading) return <div className="p-4">로딩 중...</div>;
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (!accountSummary) return <div className="p-4">데이터가 없습니다.</div>;
 
   return (
     <Container maxW="container.xl" py={10}>
@@ -73,17 +69,7 @@ export default function Dashboard() {
           <Box p={6} bg="white" borderRadius="lg" boxShadow="md" borderTop="4px solid" borderColor="skyblue.500">
             <Stat>
               <StatLabel color="gray.600">현재 잔고</StatLabel>
-              <StatNumber color="skyblue.600" fontSize="2xl">{loading ? '로딩 중...' : `₩ ${totalBalance}`}</StatNumber>
-              <StatHelpText color="green.500">+12.5%</StatHelpText>
-            </Stat>
-          </Box>
-        </GridItem>
-        <GridItem>
-          <Box p={6} bg="white" borderRadius="lg" boxShadow="md" borderTop="4px solid" borderColor="skyblue.500">
-            <Stat>
-              <StatLabel color="gray.600">거래 횟수</StatLabel>
-              <StatNumber color="skyblue.600" fontSize="2xl">{loading ? '로딩 중...' : `${tradeCount}회`}</StatNumber>
-              <StatHelpText>최근 30일</StatHelpText>
+              <StatNumber color="skyblue.600" fontSize="2xl">{accountSummary.totalBalance.toLocaleString()} KRW</StatNumber>
             </Stat>
           </Box>
         </GridItem>
@@ -91,8 +77,7 @@ export default function Dashboard() {
           <Box p={6} bg="white" borderRadius="lg" boxShadow="md" borderTop="4px solid" borderColor="gold.500">
             <Stat>
               <StatLabel color="gray.600">수익률</StatLabel>
-              <StatNumber color="gold.600" fontSize="2xl">{loading ? '로딩 중...' : `${profitRate}%`}</StatNumber>
-              <StatHelpText>연 환산</StatHelpText>
+              <StatNumber color="gold.600" fontSize="2xl">{accountSummary.profitRate}%</StatNumber>
             </Stat>
           </Box>
         </GridItem>
@@ -102,35 +87,49 @@ export default function Dashboard() {
         <GridItem colSpan={{ base: 1, md: 2 }}>
           <Box p={8} bg="white" borderRadius="lg" boxShadow="md" borderLeft="4px solid" borderColor="skyblue.500" height="100%">
             <Heading as="h3" size="md" mb={4} color="skyblue.700">트레이딩 현황</Heading>
-            {loading ? (
-              <Text>로딩 중...</Text>
-            ) : error ? (
-              <Text color="red.500">{error}</Text>
-            ) : (
-              <Box maxH="400px" overflowY="auto">
-                <Text mb={4}>보유 자산 목록</Text>
-                {assets.map((asset, index) => (
-                  <Box 
-                    key={index} 
-                    p={3} 
-                    mb={2} 
-                    bg={asset.currency === 'KRW' ? 'gray.50' : 'skyblue.50'} 
-                    borderRadius="md"
-                  >
-                    <Flex justifyContent="space-between">
-                      <Text fontWeight="bold">{asset.currency}</Text>
-                      <Text>{parseFloat(asset.balance).toLocaleString()} {asset.currency}</Text>
-                    </Flex>
-                    {asset.currency !== 'KRW' && (
-                      <Flex justifyContent="space-between" mt={1}>
-                        <Text fontSize="sm">평균 매수가</Text>
-                        <Text fontSize="sm">{parseFloat(asset.avg_buy_price).toLocaleString()} KRW</Text>
-                      </Flex>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            )}
+            <Text mb={4}>보유 자산 목록</Text>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">화폐</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">보유수량</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">주문중</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">매수평균가</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">평가금액</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {accountSummary.accounts.map((account) => {
+                    const balance = parseFloat(account.balance);
+                    const locked = parseFloat(account.locked);
+                    const avgPrice = parseFloat(account.avg_buy_price);
+                    const totalValue = (balance + locked) * (account.currency === 'KRW' ? 1 : avgPrice);
+
+                    return (
+                      <tr key={account.currency}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{account.currency}</div>
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {parseFloat(account.balance).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {parseFloat(account.locked).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {account.currency === 'KRW' ? '-' : 
+                            parseFloat(account.avg_buy_price).toLocaleString() + ' ' + account.unit_currency}
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {totalValue.toLocaleString()} {account.unit_currency}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </Box>
         </GridItem>
         <GridItem>
