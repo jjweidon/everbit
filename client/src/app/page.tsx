@@ -89,10 +89,7 @@ export default function Home() {
               bg="none"
               sx={{
                 transformStyle: 'preserve-3d',
-                animation: `${rotateAnimation} 2s ease-in-out infinite alternate`,
-                '&:hover': {
-                  animation: `${rotateAnimation} 1s ease-in-out infinite alternate`,
-                },
+                animation: `${rotateAnimation} 2s ease-in-out infinite alternate`
               }}
             >
               <Image
