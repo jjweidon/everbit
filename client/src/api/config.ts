@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'localhost';
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT || '8080';
 
 export const apiClient = axios.create({
-    baseURL: `https://${API_HOST}:${API_PORT}/api`,
+    baseURL: `https://${API_HOST}/api`,
     headers: {
         'Content-Type': 'application/json',
     },
