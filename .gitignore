@@ -54,6 +54,7 @@ client/node_modules/
 client/.next/
 client/out/
 client/build/
+client/dist/
 client/npm-debug.log*
 client/yarn-debug.log*
 client/yarn-error.log*
