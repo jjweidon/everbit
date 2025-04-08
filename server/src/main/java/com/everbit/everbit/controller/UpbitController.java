@@ -1,6 +1,6 @@
 package com.everbit.everbit.controller;
 
-import com.everbit.everbit.client.UpbitClient;
+import com.everbit.everbit.service.UpbitClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.everbit.everbit.client;
+package com.everbit.everbit.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
