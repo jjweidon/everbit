@@ -50,9 +50,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsFilter(){
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
-            "http://127.0.0.1:3000",
-            "http://localhost:3000",
-            "https://everbit.kr"
+                "http://127.0.0.1:3000",
+                "http://localhost:3000",
+                "https://everbit.kr",
+                "https://www.everbit.kr"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
