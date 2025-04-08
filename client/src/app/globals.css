@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 25, 25, 25;
-  --background-start-rgb: 255, 250, 240;
+  --foreground-rgb: 41, 62, 125;
+  --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 255, 255, 255;
-  --gold-light: #FFF9E5;
-  --gold-medium: #FFC107;
-  --gold-dark: #DAA520;
+  --navy-light: #E6E8F0;
+  --navy-medium: #293E7D;
+  --navy-dark: #19254B;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 40, 30, 10;
-    --background-end-rgb: 20, 20, 20;
+    --background-start-rgb: 25, 25, 25;
+    --background-end-rgb: 25, 25, 25;
   }
 }
 
@@ -29,9 +29,9 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-/* 금색 강조 효과 (Tailwind를 통해 사용할 수 없는 특수 효과만 CSS로 정의) */
-.gold-gradient-text {
-  background: linear-gradient(to right, var(--gold-dark), var(--gold-medium));
+/* 네이비 강조 효과 */
+.navy-gradient-text {
+  background: linear-gradient(to right, var(--navy-dark), var(--navy-medium));
   -webkit-background-clip: text;
   color: transparent;
 } 

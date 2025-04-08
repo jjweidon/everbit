@@ -58,6 +58,7 @@ client/dist/
 client/npm-debug.log*
 client/yarn-debug.log*
 client/yarn-error.log*
+client/next-env.d.ts
 
 # 알고리즘 (Python)
 algorithm/__pycache__/

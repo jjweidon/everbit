@@ -1,32 +1,14 @@
 'use client';
 
-import { Box, Button, Container, Flex, Heading, Text, useColorModeValue, Grid, GridItem, Icon, Badge } from '@chakra-ui/react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { keyframes } from '@emotion/react';
+import { Box, Container, Heading, Text, Flex, Button, Badge, Grid, GridItem, Icon } from '@chakra-ui/react';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
-
-const rotateAnimation = keyframes`
-  from {
-    transform: rotateY(0deg);
-  }
-  to {
-    transform: rotateY(90deg);
-  }
-`;
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
-  // 하늘색 그라데이션 배경
-  const skyGradient = 'linear-gradient(to right, #38A4CA, #49C3EC, #B0E7F7)';
-  // 금색 그라데이션 배경 (포인트용)
-  const goldGradient = 'linear-gradient(to right, #DAA520, #FFC107, #FFD700)';
-  
   return (
     <main>
-      <Box 
-        bgGradient="linear-gradient(to bottom, rgba(229,247,253,0.8), rgba(255,255,255,1))" 
-        minH="100vh"
-      >
+      <Box bg="white" minH="100vh">
         <Container maxW="container.xl" py={10}>
           <Flex
             direction={{ base: 'column', md: 'row' }}
@@ -36,21 +18,21 @@ export default function Home() {
             mb={16}
           >
             <Box maxW={{ base: '100%', md: '50%' }}>
-              <Heading as="h1" size="2xl" mb={4} bgGradient={skyGradient} bgClip="text">
+              <Heading as="h1" size="2xl" mb={4} color="navy.700">
                 everbit
               </Heading>
-              <Text fontSize="xl" mb={6} color="gray.700">
+              <Text fontSize="xl" mb={6} color="navy.600">
                 Upbit API를 기반으로 퀀트 전략을 활용하여 최적의 매매 타이밍을 자동으로 판단하고 실행하는 서비스입니다.
               </Text>
               <Flex gap={4} wrap="wrap">
                 <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
                   <Button 
-                    colorScheme="skyblue" 
+                    colorScheme="navy" 
                     size="lg" 
-                    boxShadow="0 4px 8px rgba(73,195,236,0.3)"
+                    boxShadow="0 4px 8px rgba(41,62,125,0.3)"
                     _hover={{
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(73,195,236,0.4)'
+                      boxShadow: '0 6px 12px rgba(41,62,125,0.4)'
                     }}
                   >
                     대시보드 바로가기
@@ -60,10 +42,10 @@ export default function Home() {
                   <Button 
                     variant="accent"
                     size="lg" 
-                    boxShadow="0 4px 8px rgba(255,193,7,0.3)"
+                    boxShadow="0 4px 8px rgba(41,62,125,0.3)"
                     _hover={{
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(255,193,7,0.4)'
+                      boxShadow: '0 6px 12px rgba(41,62,125,0.4)'
                     }}
                   >
                     시작하기
@@ -72,10 +54,10 @@ export default function Home() {
               </Flex>
               
               <Box mt={8} display="flex" gap={2}>
-                <Badge bg="skyblue.200" px={3} py={1} borderRadius="full" fontSize="sm">
+                <Badge bg="navy.100" color="navy.700" px={3} py={1} borderRadius="full" fontSize="sm">
                   실시간 분석
                 </Badge>
-                <Badge colorScheme="yellow" px={3} py={1} borderRadius="full" fontSize="sm">
+                <Badge bg="navy.100" color="navy.700" px={3} py={1} borderRadius="full" fontSize="sm">
                   안전한 자동 트레이딩
                 </Badge>
               </Box>
@@ -87,10 +69,6 @@ export default function Home() {
               borderRadius="xl"
               overflow="hidden"
               bg="none"
-              sx={{
-                transformStyle: 'preserve-3d',
-                animation: `${rotateAnimation} 2s ease-in-out infinite alternate`
-              }}
             >
               <Image
                 src="/images/logo-image.png"
@@ -107,8 +85,7 @@ export default function Home() {
             size="xl" 
             mb={10} 
             textAlign="center" 
-            bgGradient={skyGradient} 
-            bgClip="text"
+            color="navy.700"
             position="relative"
             _before={{
               content: '""',
@@ -118,7 +95,7 @@ export default function Home() {
               transform: 'translateX(-50%)',
               width: '100px',
               height: '3px',
-              background: skyGradient
+              background: 'navy.500'
             }}
           >
             주요 기능
@@ -153,37 +130,24 @@ export default function Home() {
                 icon: FaBriefcase,
                 accent: false
               },
-            ].map((feature, index) => (
+            ].map((item, index) => (
               <GridItem key={index}>
-                <Box
-                  bg="white"
-                  p={8}
-                  borderRadius="lg"
+                <Box 
+                  p={8} 
+                  bg="white" 
+                  borderRadius="lg" 
                   boxShadow="md"
-                  borderTop="4px solid"
-                  borderColor={feature.accent ? "gold.500" : "skyblue.500"}
+                  borderLeft="4px solid"
+                  borderColor={item.accent ? "navy.500" : "navy.400"}
                   height="100%"
-                  transition="all 0.3s"
-                  _hover={{
-                    transform: 'translateY(-4px)',
-                    boxShadow: 'lg',
-                    borderColor: feature.accent ? "gold.600" : "skyblue.600",
-                  }}
                 >
-                  <Flex mb={4} align="center">
-                    <Box 
-                      bg={feature.accent ? "gold.50" : "skyblue.50"} 
-                      p={3} 
-                      borderRadius="full"
-                      mr={4}
-                    >
-                      <Icon as={feature.icon} color={feature.accent ? "gold.500" : "skyblue.500"} boxSize={6} />
-                    </Box>
-                    <Heading as="h3" size="md" color={feature.accent ? "gold.600" : "skyblue.700"}>
-                      {feature.title}
+                  <Flex align="center" mb={4}>
+                    <Icon as={item.icon} color="navy.500" boxSize={6} mr={3} />
+                    <Heading as="h3" size="md" color="navy.700">
+                      {item.title}
                     </Heading>
                   </Flex>
-                  <Text color="gray.600">{feature.description}</Text>
+                  <Text color="navy.600">{item.description}</Text>
                 </Box>
               </GridItem>
             ))}
@@ -195,20 +159,20 @@ export default function Home() {
             bg="white" 
             borderRadius="lg" 
             boxShadow="md"
-            bgGradient="linear-gradient(to right, rgba(176,231,247,0.4), white, rgba(176,231,247,0.2))"
+            bgGradient="linear-gradient(to right, rgba(230,232,240,0.4), white, rgba(230,232,240,0.2))"
             border="1px solid"
-            borderColor="skyblue.200"
+            borderColor="navy.200"
           >
             <Flex direction="column" align="center" textAlign="center">
-              <Heading size="lg" mb={4} color="skyblue.700">
+              <Heading size="lg" mb={4} color="navy.700">
                 비트코인 자동 트레이딩의 미래
               </Heading>
-              <Text fontSize="lg" maxW="container.md" mb={6}>
+              <Text fontSize="lg" maxW="container.md" mb={6} color="navy.600">
                 에버비트와 함께 효율적이고 안전한 암호화폐 트레이딩을 경험해보세요.
               </Text>
               <Flex gap={4}>
                 <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
-                  <Button colorScheme="skyblue" size="lg">
+                  <Button colorScheme="navy" size="lg">
                     시작하기
                   </Button>
                 </Link>

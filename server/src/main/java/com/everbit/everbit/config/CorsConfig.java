@@ -14,7 +14,7 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
+        config.setAllowedOrigins(List.of(
                 "http://127.0.0.1:3000",
                 "http://localhost:3000",
                 "https://everbit.kr",
@@ -22,7 +22,11 @@ public class CorsConfig {
         ));
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
-        config.addExposedHeader("Authorization");
+        config.setExposedHeaders(List.of(
+            "Authorization",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
+        ));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
