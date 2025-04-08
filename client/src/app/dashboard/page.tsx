@@ -1,15 +1,26 @@
 'use client';
 
-import { Box, Container, Heading, Text, Flex, Stat, StatLabel, StatNumber, StatHelpText, Grid, GridItem, Button } from '@chakra-ui/react';
+import { Box, Container, Heading, Text, Flex, Stat, StatLabel, StatNumber, StatHelpText, Grid, GridItem, Button, Badge, Icon } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
 import { upbitApi } from '@/api/upbit';
+import { useRouter } from 'next/navigation';
+import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function Dashboard() {
   const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('upbit_access_token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     let mounted = true;

@@ -4,12 +4,28 @@ import { Box, Container, Heading, Text, Flex, Button, Badge, Grid, GridItem, Ico
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
+
   return (
     <main>
       <Box bg="white" minH="100vh">
         <Container maxW="container.xl" py={10}>
+          <Flex justify="flex-end" mb={8}>
+            <Button
+              onClick={() => router.push('/login')}
+              colorScheme="navy"
+              size="md"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(41,62,125,0.2)'
+              }}
+            >
+              로그인
+            </Button>
+          </Flex>
           <Flex
             direction={{ base: 'column', md: 'row' }}
             align="center"
