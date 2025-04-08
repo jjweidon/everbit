@@ -14,10 +14,14 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchAccounts = async () => {
       try {
         const accounts = await upbitApi.getAccounts();
         
+        if (!mounted) return;
+
         // 계좌 요약 정보 계산
         const summary: AccountSummary = {
           totalBalance: 0,
@@ -39,19 +43,55 @@ export default function Dashboard() {
 
         setAccountSummary(summary);
       } catch (err) {
+        if (!mounted) return;
         setError('계좌 정보를 불러오는데 실패했습니다.');
         console.error('Failed to fetch accounts:', err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchAccounts();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  if (loading) return <div className="p-4">로딩 중...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!accountSummary) return <div className="p-4">데이터가 없습니다.</div>;
+  if (loading) {
+    return (
+      <Container maxW="container.xl" py={10}>
+        <Box textAlign="center" py={20}>
+          <Text fontSize="xl" color="gray.600">로딩 중...</Text>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxW="container.xl" py={10}>
+        <Box textAlign="center" py={20}>
+          <Text fontSize="xl" color="red.500">{error}</Text>
+          <Button mt={4} colorScheme="skyblue" onClick={() => window.location.reload()}>
+            다시 시도
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (!accountSummary) {
+    return (
+      <Container maxW="container.xl" py={10}>
+        <Box textAlign="center" py={20}>
+          <Text fontSize="xl" color="gray.600">데이터가 없습니다.</Text>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxW="container.xl" py={10}>

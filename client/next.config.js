@@ -6,6 +6,23 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'export',
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: '/:path*',
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/dashboard',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
