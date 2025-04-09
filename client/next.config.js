@@ -10,6 +10,14 @@ const nextConfig = {
   trailingSlash: true,
   assetPrefix: '/',
   basePath: '',
+  
+  // 폰트 최적화 설정
+  optimizeFonts: true,
+  
+  // 실험적 기능 활성화
+  experimental: {
+    optimizeFonts: true,
+  },
 };
 
 module.exports = nextConfig;

@@ -27,6 +27,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  font-family: var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 /* 네이비 강조 효과 */

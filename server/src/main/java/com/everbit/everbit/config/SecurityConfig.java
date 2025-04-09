@@ -7,6 +7,7 @@ import com.everbit.everbit.oauth2.CustomSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -47,7 +48,7 @@ public class SecurityConfig {
                 .oauth2Login((oauth2) -> oauth2
                         .failureUrl("/login?error=true")
                         .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/api/login/oauth2/code/kakao"))
+                                endpoint.baseUri("/api/login/oauth2/code"))
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)
@@ -56,6 +57,7 @@ public class SecurityConfig {
         //경로별 인가 작업
         http
                 .authorizeHttpRequests((auth) -> auth
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.PUBLIC_URLS.toArray(new String[0])).permitAll()
                         .anyRequest().authenticated());
 
         return http.build();

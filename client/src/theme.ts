@@ -4,6 +4,10 @@ import { extendTheme } from '@chakra-ui/react';
 
 // 하늘색을 메인 테마로 설정
 const theme = extendTheme({
+  fonts: {
+    heading: 'var(--font-noto-sans-kr)',
+    body: 'var(--font-noto-sans-kr)',
+  },
   colors: {
     navy: {
       50: '#E6E8F0',
@@ -55,6 +59,7 @@ const theme = extendTheme({
       body: {
         bg: 'white',
         color: 'navy.800',
+        fontFamily: 'var(--font-noto-sans-kr)',
       },
     },
   },
