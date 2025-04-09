@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MainController {
 
-    @GetMapping("")
+    @GetMapping("/")
     public ResponseEntity<?> hello() {
         log.info("HELLO EVERBIT");
         try {

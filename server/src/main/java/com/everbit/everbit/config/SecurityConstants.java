@@ -1,12 +1,11 @@
 package com.everbit.everbit.config;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class SecurityConstants {
     // 인증이 필요 없는 URL 패턴
     public static final List<String> PUBLIC_URLS = List.of(
-            ""
+            "/"
     );
 
     // URL 패턴이 일치하는지 확인하는 메서드
