@@ -5,6 +5,20 @@ import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { keyframes } from '@emotion/react';
+
+// y축 회전 애니메이션 정의
+const rotateY = keyframes`
+  0% {
+    transform: perspective(1000px) rotateY(-40deg);
+  }
+  50% {
+    transform: perspective(1000px) rotateY(40deg);
+  }
+  100% {
+    transform: perspective(1000px) rotateY(-40deg);
+  }
+`;
 
 export default function Home() {
   const router = useRouter();
@@ -86,13 +100,25 @@ export default function Home() {
               overflow="hidden"
               bg="none"
             >
-              <Image
-                src="/images/logo-image.png"
-                alt="everbit 로고"
-                fill
-                style={{ objectFit: 'contain' }}
-                priority
-              />
+              <Box
+                position="relative"
+                width="100%"
+                height="100%"
+                sx={{
+                  animation: `${rotateY} 3s ease-in-out infinite`,
+                  '& img': {
+                    objectFit: 'contain',
+                    backfaceVisibility: 'hidden'
+                  }
+                }}
+              >
+                <Image
+                  src="/images/logo-image.png"
+                  alt="everbit 로고"
+                  fill
+                  priority
+                />
+              </Box>
             </Box>
           </Flex>
 
