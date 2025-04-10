@@ -46,7 +46,7 @@ public class SecurityConfig {
         //oauth2
         http
                 .oauth2Login((oauth2) -> oauth2
-                        .failureUrl("/login?error=true")
+//                        .failureUrl("/login?error=true")
                         .authorizationEndpoint(endpoint ->
                                 endpoint.baseUri("/api/login/oauth2/code"))
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
