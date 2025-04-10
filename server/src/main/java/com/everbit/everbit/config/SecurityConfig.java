@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .oauth2Login((oauth2) -> oauth2
 //                        .failureUrl("/login?error=true")
                         .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/api/login/oauth2/code"))
+                                endpoint.baseUri("/api/login/kakao"))
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)

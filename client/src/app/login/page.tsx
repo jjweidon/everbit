@@ -3,6 +3,7 @@
 import { Box, Container, Flex, Heading, Text, Image, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { loginApi } from '@/api/login';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,9 +16,12 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  const handleKakaoLogin = () => {
-    // 카카오 로그인 URL로 리다이렉트
-    window.location.href = 'https://www.everbit.kr/login/oauth2/code/kakao';
+  const handleKakaoLogin = async () => {
+    try {
+      await loginApi.kakaoLogin();
+    } catch (error) {
+      console.error('카카오 로그인 에러:', error);
+    }
   };
 
   return (
