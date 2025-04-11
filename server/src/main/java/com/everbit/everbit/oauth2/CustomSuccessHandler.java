@@ -73,7 +73,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             response.addCookie(authStatusCookie);
             
             // 클라이언트 리다이렉트
-            String redirectUrl = "https://www.everbit.kr/";
+            String redirectUrl = "https://www.everbit.kr/dashboard"; // 대시보드로 직접 리다이렉트
             log.info("인증 성공. 리다이렉트: {}", redirectUrl);
             response.sendRedirect(redirectUrl);
         } catch (Exception e) {

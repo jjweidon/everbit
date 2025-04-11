@@ -16,7 +16,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // 쿠키에서 인증 토큰 확인
+    // 쿠키에서 인증 상태 확인
     const getCookie = (name: string): string | undefined => {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -26,9 +26,9 @@ export default function Dashboard() {
       return undefined;
     };
     
-    const authToken = getCookie('Authorization');
-    if (!authToken) {
-      console.log('인증 토큰이 없습니다. 로그인 페이지로 이동합니다.');
+    const authStatus = getCookie('AuthStatus');
+    if (!authStatus) {
+      console.log('인증 상태가 없습니다. 로그인 페이지로 이동합니다.');
       router.push('/login');
     }
   }, [router]);
