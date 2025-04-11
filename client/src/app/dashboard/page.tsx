@@ -16,8 +16,19 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('upbit_access_token');
-    if (!token) {
+    // 쿠키에서 인증 토큰 확인
+    const getCookie = (name: string): string | undefined => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return parts.pop()?.split(';').shift();
+      }
+      return undefined;
+    };
+    
+    const authToken = getCookie('Authorization');
+    if (!authToken) {
+      console.log('인증 토큰이 없습니다. 로그인 페이지로 이동합니다.');
       router.push('/login');
     }
   }, [router]);

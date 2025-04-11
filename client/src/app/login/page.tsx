@@ -11,9 +11,19 @@ export default function LoginPage() {
   const borderColor = useColorModeValue('navy.100', 'navy.700');
 
   useEffect(() => {
-    // 토큰이 있는 경우 대시보드로 리다이렉트
-    const token = localStorage.getItem('upbit_access_token');
-    if (token) {
+    // 쿠키에서 인증 토큰 확인
+    const getCookie = (name: string): string | undefined => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return parts.pop()?.split(';').shift();
+      }
+      return undefined;
+    };
+    
+    const authToken = getCookie('Authorization');
+    if (authToken) {
+      console.log('인증 토큰이 발견되었습니다. 대시보드로 이동합니다.');
       router.push('/dashboard');
     }
   }, [router]);

@@ -61,10 +61,25 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             
             // 쿠키 생성 및 설정
             Cookie cookie = createCookie("Authorization", token);
-            response.addCookie(cookie);
+            
+            // 쿠키 구성 세부 설정 (SameSite 속성 추가)
+            String cookieHeader = cookie.getName() + "=" + cookie.getValue() + "; Max-Age=" + cookie.getMaxAge()
+                    + "; Path=" + cookie.getPath() + "; Domain=" + cookie.getDomain()
+                    + "; SameSite=Lax";
+            
+            if (cookie.getSecure()) {
+                cookieHeader += "; Secure";
+            }
+            if (cookie.isHttpOnly()) {
+                cookieHeader += "; HttpOnly";
+            }
+            
+            // 수정된 쿠키 헤더 추가
+            response.setHeader("Set-Cookie", cookieHeader);
             
             // 클라이언트 리다이렉트
             String redirectUrl = "https://www.everbit.kr/";
+            log.info("인증 성공. 리다이렉트: {}", redirectUrl);
             response.sendRedirect(redirectUrl);
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
