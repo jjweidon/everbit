@@ -35,11 +35,7 @@ public class CustomErrorController implements ErrorController {
     @RequestMapping("/error")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> handleError(HttpServletRequest request) {
-        WebRequest webRequest = new ServletWebRequest(request);
         Map<String, Object> errorInfo = new HashMap<>();
-        
-        // 요청 정보 로깅
-        log.error("오류 발생 - URL: {}, Method: {}", request.getRequestURL(), request.getMethod());
         
         // 오류 상태 코드 가져오기
         HttpStatus status = getStatus(request);
@@ -52,23 +48,6 @@ public class CustomErrorController implements ErrorController {
         // 오류 메시지 추가
         String message = getErrorMessage(request);
         errorInfo.put("message", message);
-        log.error("오류 메시지: {}", message);
-        
-        // 원래 요청 파라미터 추가
-        Map<String, String[]> params = request.getParameterMap();
-        if (!params.isEmpty()) {
-            Map<String, String> simplifiedParams = new HashMap<>();
-            params.forEach((key, values) -> {
-                if (values != null && values.length > 0) {
-                    simplifiedParams.put(key, values[0]);
-                }
-            });
-            errorInfo.put("parameters", simplifiedParams);
-            log.error("요청 파라미터: {}", simplifiedParams);
-        }
-        
-        // 오류 처리 안내 추가
-        errorInfo.put("suggestion", "카카오 로그인 시 발생한 오류입니다. 관리자에게 문의하세요.");
         
         return ResponseEntity.status(status).body(errorInfo);
     }
