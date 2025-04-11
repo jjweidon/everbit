@@ -5,6 +5,7 @@ import com.everbit.everbit.jwt.JwtUtil;
 import com.everbit.everbit.oauth2.CustomOAuth2UserService;
 import com.everbit.everbit.oauth2.CustomSuccessHandler;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -36,15 +38,22 @@ public class SecurityConfig {
         //oauth2
         http
                 .oauth2Login((oauth2) -> oauth2
-                        .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/api/login"))
+                        .authorizationEndpoint(endpoint -> {
+                            endpoint.baseUri("/api/login");
+                            log.info("OAuth2 인증 엔드포인트 설정: {}", endpoint);
+                        })
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)
                 );
         
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/login/**").permitAll()
+                        .requestMatchers("/", 
+                                         "/api/login/**", 
+                                         "/api/oauth2/**", 
+                                         "/api/login/oauth2/code/**",
+                                         "/favicon.ico",
+                                         "/error").permitAll()
                         .anyRequest().authenticated()
                 );
 

@@ -59,6 +59,71 @@ public class OAuthController {
     }
     
     /**
+     * 실제 OAuth2 콜백 엔드포인트 - Spring Security의 OAuth2 처리를 보완하는 역할
+     */
+    @GetMapping("/login/oauth2/code/kakao")
+    public ResponseEntity<?> kakaoCallback(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "error", required = false) String error,
+            HttpServletRequest request) {
+        
+        String clientIp = getClientIp(request);
+        log.info("카카오 OAuth2 콜백 처리 - 접속 IP: {}", clientIp);
+        log.info("카카오 인증 코드: {}", code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+        log.info("상태 토큰: {}", state);
+        
+        if (error != null) {
+            log.error("카카오 OAuth2 인증 오류: {}", error);
+            return ResponseEntity.badRequest().body(Map.of("error", error));
+        }
+        
+        // 이 시점에서는 Spring Security의 OAuth2 클라이언트가 자동으로 처리해야 함
+        // 만약 이 메서드가 호출된다면 Spring Security의 필터가 제대로 작동하지 않는 것임
+        log.warn("Spring Security OAuth2 필터가 처리하지 않은 OAuth2 콜백 요청을 수신했습니다.");
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "unhandled");
+        response.put("message", "OAuth2 콜백이 Spring Security에 의해 처리되지 않았습니다. 설정을 확인하세요.");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 오류 페이지 디버깅용 엔드포인트
+     */
+    @GetMapping("/error/debug")
+    public ResponseEntity<?> debugError(HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        log.info("에러 페이지 디버그 - 접속 IP: {}", clientIp);
+        
+        // 요청 정보 로깅
+        log.info("요청 URL: {}", request.getRequestURL());
+        log.info("요청 메서드: {}", request.getMethod());
+        
+        // 요청 헤더 로깅
+        log.debug("요청 헤더:");
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            log.debug("  - {}: {}", headerName, request.getHeader(headerName));
+        }
+        
+        // 요청 매개변수 로깅
+        log.debug("요청 파라미터:");
+        request.getParameterMap().forEach((key, values) -> {
+            log.debug("  - {}: {}", key, String.join(", ", values));
+        });
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "debug",
+            "message", "에러 페이지 디버그 정보",
+            "request_url", request.getRequestURL().toString(),
+            "client_ip", clientIp
+        ));
+    }
+    
+    /**
      * 클라이언트 IP 주소를 가져옵니다.
      */
     private String getClientIp(HttpServletRequest request) {

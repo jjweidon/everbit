@@ -27,7 +27,8 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
                 "https://everbit.kr",
-                "https://www.everbit.kr"
+                "https://www.everbit.kr",
+                "https://api.everbit.kr"
         ));
         
         // 허용할 HTTP 메서드 설정

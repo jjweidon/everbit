@@ -44,17 +44,34 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 요청 파라미터 로깅
         log.debug("요청 파라미터:");
         request.getParameterMap().forEach((key, values) -> {
-            log.debug("  - {}: {}", key, String.join(", ", values));
+            if ("code".equals(key)) {
+                String code = values[0];
+                log.debug("  - code: {}", code.substring(0, Math.min(10, code.length())) + "...");
+            } else {
+                log.debug("  - {}: {}", key, String.join(", ", values));
+            }
         });
         
         try {
             // OAuth2User 정보 추출
+            if (!(authentication.getPrincipal() instanceof CustomOAuth2User)) {
+                log.error("인증 객체가 CustomOAuth2User 타입이 아닙니다: {}", authentication.getPrincipal().getClass().getName());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다.");
+                return;
+            }
+            
             CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
             String username = customUserDetails.getName();
             log.info("인증된 사용자: {}", username);
             
             // 권한 정보 추출
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+            if (authorities.isEmpty()) {
+                log.warn("사용자 권한이 없습니다.");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
+                return;
+            }
+            
             Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
             GrantedAuthority auth = iterator.next();
             String role = auth.getAuthority();
@@ -76,7 +93,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             log.info("OAuth2 인증 성공 처리 완료");
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
-            throw e;
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다.");
         }
     }
 
