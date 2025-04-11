@@ -15,7 +15,6 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/oauth2")
 @RequiredArgsConstructor
 public class OAuthController {
 
@@ -23,7 +22,7 @@ public class OAuthController {
      * OAuth2 인증 코드 로깅을 위한 디버그용 엔드포인트
      * Spring Security의 OAuth2 클라이언트가 자동으로 처리하기 전에 코드 수신 여부를 확인합니다.
      */
-    @GetMapping("/debug/code/kakao")
+    @GetMapping("/api/oauth2/debug/code/kakao")
     public ResponseEntity<?> debugKakaoCallback(
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "state", required = false) String state,
@@ -61,7 +60,7 @@ public class OAuthController {
     /**
      * 실제 OAuth2 콜백 엔드포인트 - Spring Security의 OAuth2 처리를 보완하는 역할
      */
-    @GetMapping("/login/oauth2/code/kakao")
+    @GetMapping("/api/login/oauth2/code/kakao")
     public ResponseEntity<?> kakaoCallback(
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "state", required = false) String state,
@@ -69,7 +68,7 @@ public class OAuthController {
             HttpServletRequest request) {
         
         String clientIp = getClientIp(request);
-        log.info("카카오 OAuth2 콜백 처리 - 접속 IP: {}", clientIp);
+        log.info("카카오 OAuth2 콜백 처리 시작 - 접속 IP: {}", clientIp);
         log.info("카카오 인증 코드: {}", code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
         log.info("상태 토큰: {}", state);
         
@@ -92,7 +91,7 @@ public class OAuthController {
     /**
      * 오류 페이지 디버깅용 엔드포인트
      */
-    @GetMapping("/error/debug")
+    @GetMapping("/api/oauth2/error/debug")
     public ResponseEntity<?> debugError(HttpServletRequest request) {
         String clientIp = getClientIp(request);
         log.info("에러 페이지 디버그 - 접속 IP: {}", clientIp);
@@ -121,6 +120,45 @@ public class OAuthController {
             "request_url", request.getRequestURL().toString(),
             "client_ip", clientIp
         ));
+    }
+    
+    /**
+     * OAuth2 인증 성공 후 처리를 위한 컨트롤러
+     * 이 엔드포인트는 OAuth2 인증 성공 시 사용자 정보를 반환합니다.
+     */
+    @GetMapping("/api/auth/me")
+    public ResponseEntity<?> getAuthenticatedUser(HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        log.info("인증된 사용자 정보 요청 - 접속 IP: {}", clientIp);
+        
+        // 요청 정보 로깅
+        log.debug("요청 헤더:");
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            log.debug("  - {}: {}", headerName, request.getHeader(headerName));
+        }
+        
+        // 쿠키 정보 로깅
+        log.debug("쿠키 정보:");
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                log.debug("  - {}: {}", cookie.getName(), cookie.getName().equals("Authorization") ? 
+                            cookie.getValue().substring(0, Math.min(10, cookie.getValue().length())) + "..." : 
+                            cookie.getValue());
+            }
+        } else {
+            log.debug("  - 쿠키 없음");
+        }
+        
+        // 더미 응답 반환
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "인증된 사용자 정보 조회 성공");
+        response.put("authenticated", request.getUserPrincipal() != null);
+        response.put("principal", request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anonymous");
+        
+        return ResponseEntity.ok(response);
     }
     
     /**

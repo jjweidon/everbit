@@ -35,27 +35,39 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
-        //oauth2
+        // OAuth2 로그인 설정
         http
-                .oauth2Login((oauth2) -> oauth2
+                .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> {
                             endpoint.baseUri("/api/login");
-                            log.info("OAuth2 인증 엔드포인트 설정: {}", endpoint);
+                            log.info("OAuth2 인증 엔드포인트 설정: /api/login");
                         })
-                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService))
+                        .redirectionEndpoint(endpoint -> {
+                            endpoint.baseUri("/api/login/oauth2/code/*");
+                            log.info("OAuth2 리다이렉션 엔드포인트 설정: /api/login/oauth2/code/*");
+                        })
+                        .userInfoEndpoint(userInfo -> 
+                            userInfo.userService(customOAuth2UserService)
+                        )
                         .successHandler(customSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            log.error("OAuth2 인증 실패: {}", exception.getMessage());
+                            exception.printStackTrace();
+                            response.sendRedirect("/api/oauth2/error/debug?error=" + exception.getMessage());
+                        })
                 );
         
+        // 인증 없이 접근 가능한 경로 설정
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", 
-                                         "/api/login/**", 
-                                         "/api/oauth2/**", 
-                                         "/api/login/oauth2/code/**",
-                                         "/favicon.ico",
-                                         "/error").permitAll()
-                        .anyRequest().authenticated()
-                );
+                .requestMatchers("/", 
+                                "/api/login/**", 
+                                "/api/oauth2/**", 
+                                "/api/login/oauth2/code/**",
+                                "/api/auth/me",
+                                "/favicon.ico",
+                                "/error").permitAll()
+                .anyRequest().authenticated()
+        );
 
         return http.build();
     }
