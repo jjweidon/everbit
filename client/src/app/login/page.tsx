@@ -44,15 +44,6 @@ export default function LoginPage() {
             position="relative"
             overflow="hidden"
           >
-            <Box
-              position="absolute"
-              top="0"
-              left="0"
-              right="0"
-              bottom="0"
-              bg="url('/images/pattern.svg')"
-              opacity="0.1"
-            />
             <Flex
               position="absolute"
               top="0"
