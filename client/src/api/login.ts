@@ -5,9 +5,20 @@ export const loginApi = {
     kakaoLogin: async (): Promise<void> => {
         try {
             console.log('카카오 로그인 요청 시작');
+            const response = await apiClient.get('/login/kakao');
+            console.log('카카오 로그인 응답:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+                data: response.data
+            });
             
-            // 브라우저를 통해 직접 로그인 URL로 이동
-            window.location.href = 'https://api.everbit.kr/api/oauth2/authorization/kakao';
+            if (response.data.data) {
+                console.log('카카오 로그인 URL로 리다이렉트:', response.data.data);
+                window.location.href = response.data.data;
+            } else {
+                console.error('카카오 로그인 URL이 없습니다:', response.data);
+            }
         } catch (error) {
             const axiosError = error as AxiosError;
             console.error('카카오 로그인 에러 상세:', {
