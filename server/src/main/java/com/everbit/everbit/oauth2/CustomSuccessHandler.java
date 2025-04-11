@@ -61,21 +61,16 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             
             // 쿠키 생성 및 설정
             Cookie cookie = createCookie("Authorization", token);
+            response.addCookie(cookie);
             
-            // 쿠키 구성 세부 설정 (SameSite 속성 추가)
-            String cookieHeader = cookie.getName() + "=" + cookie.getValue() + "; Max-Age=" + cookie.getMaxAge()
-                    + "; Path=" + cookie.getPath() + "; Domain=" + cookie.getDomain()
-                    + "; SameSite=Lax";
-            
-            if (cookie.getSecure()) {
-                cookieHeader += "; Secure";
-            }
-            if (cookie.isHttpOnly()) {
-                cookieHeader += "; HttpOnly";
-            }
-            
-            // 수정된 쿠키 헤더 추가
-            response.setHeader("Set-Cookie", cookieHeader);
+            // JS 접근 가능한 추가 쿠키 설정 (인증 상태 확인용)
+            Cookie authStatusCookie = new Cookie("AuthStatus", "loggedIn");
+            authStatusCookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 60시간 (초 단위)
+            authStatusCookie.setSecure(true); // HTTPS에서만 전송
+            authStatusCookie.setPath("/");
+            authStatusCookie.setHttpOnly(false); // 자바스크립트에서 접근 가능하게 설정
+            authStatusCookie.setDomain(".everbit.kr"); // 모든 서브도메인에서 접근 가능하게 설정
+            response.addCookie(authStatusCookie);
             
             // 클라이언트 리다이렉트
             String redirectUrl = "https://www.everbit.kr/";
@@ -93,7 +88,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setSecure(true); // HTTPS에서만 전송
         cookie.setPath("/");
         cookie.setHttpOnly(true); // 자바스크립트에서 접근 불가
-        cookie.setDomain("everbit.kr"); // 도메인 설정
+        cookie.setDomain(".everbit.kr"); // 모든 서브도메인에서 접근 가능하게 설정
         
         return cookie;
     }
