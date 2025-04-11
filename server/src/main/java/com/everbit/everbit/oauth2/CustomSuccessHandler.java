@@ -69,7 +69,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             authStatusCookie.setSecure(true); // HTTPS에서만 전송
             authStatusCookie.setPath("/");
             authStatusCookie.setHttpOnly(false); // 자바스크립트에서 접근 가능하게 설정
-            authStatusCookie.setDomain(".everbit.kr"); // 모든 서브도메인에서 접근 가능하게 설정
+            authStatusCookie.setDomain("everbit.kr"); // 서브도메인 간 쿠키 공유를 위한 설정
             response.addCookie(authStatusCookie);
             
             // 클라이언트 리다이렉트
@@ -88,7 +88,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setSecure(true); // HTTPS에서만 전송
         cookie.setPath("/");
         cookie.setHttpOnly(true); // 자바스크립트에서 접근 불가
-        cookie.setDomain(".everbit.kr"); // 모든 서브도메인에서 접근 가능하게 설정
+        cookie.setDomain("everbit.kr"); // 서브도메인 간 쿠키 공유를 위한 설정
         
         return cookie;
     }
