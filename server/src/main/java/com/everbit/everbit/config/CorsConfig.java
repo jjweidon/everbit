@@ -8,15 +8,18 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 
+@Slf4j
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        log.info("CORS Configuration is being set up");
         CorsConfiguration config = new CorsConfiguration();
         
         // 허용할 출처 설정
@@ -58,11 +61,13 @@ public class CorsConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+        log.info("CORS Configuration has been set up with allowed origins: {}", config.getAllowedOrigins());
         return source;
     }
 
     @Bean
     public CorsFilter corsFilter() {
+        log.info("CORS Filter is being created");
         return new CorsFilter(corsConfigurationSource());
     }
 }
