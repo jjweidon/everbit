@@ -1,32 +1,20 @@
 import { apiClient } from './config';
 import { AxiosError } from 'axios';
 
+interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+}
+
 export const loginApi = {
     kakaoLogin: async (): Promise<void> => {
         try {
             console.log('카카오 로그인 요청 시작');
-            const response = await apiClient.get('/login/kakao');
-            console.log('카카오 로그인 응답:', {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers,
-                data: response.data
-            });
-            
-            if (response.data.data) {
-                console.log('카카오 로그인 URL로 리다이렉트:', response.data.data);
-                window.location.href = response.data.data;
-            } else {
-                console.error('카카오 로그인 URL이 없습니다:', response.data);
-            }
+            // OAuth2 클라이언트가 자동으로 생성한 URL로 직접 이동
+            window.location.href = 'https://api.everbit.kr/api/login/oauth2/authorization/kakao';
         } catch (error) {
-            const axiosError = error as AxiosError;
-            console.error('카카오 로그인 에러 상세:', {
-                message: axiosError.message,
-                response: axiosError.response?.data,
-                status: axiosError.response?.status,
-                headers: axiosError.response?.headers
-            });
+            console.error('카카오 로그인 에러:', error);
             throw error;
         }
     }

@@ -6,7 +6,8 @@ export const apiClient = axios.create({
     baseURL: `https://${API_HOST}/api`,
     headers: {
         'Content-Type': 'application/json',
-    }
+    },
+    withCredentials: true
 });
 
 // 응답 인터셉터 추가
