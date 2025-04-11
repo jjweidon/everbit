@@ -23,6 +23,10 @@ import java.util.Iterator;
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
+    
+    // 토큰 유효기간 설정 (60시간)
+    private static final long JWT_EXPIRATION_MS = 60 * 60 * 60 * 1000L; // 밀리초 단위
+    private static final int COOKIE_MAX_AGE_SECONDS = 60 * 60 * 60; // 초 단위
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -52,8 +56,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             GrantedAuthority auth = iterator.next();
             String role = auth.getAuthority();
             
-            // JWT 토큰 생성
-            String token = jwtUtil.createJwt(username, role, 60*60*60L);
+            // JWT 토큰 생성 (밀리초 단위로 유효기간 전달)
+            String token = jwtUtil.createJwt(username, role, JWT_EXPIRATION_MS);
             
             // 쿠키 생성 및 설정
             Cookie cookie = createCookie("Authorization", token);
@@ -70,7 +74,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60*60); // 60시간
+        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 60시간 (초 단위)
         cookie.setSecure(true); // HTTPS에서만 전송
         cookie.setPath("/");
         cookie.setHttpOnly(true); // 자바스크립트에서 접근 불가

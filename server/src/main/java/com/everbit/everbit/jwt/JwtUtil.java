@@ -1,7 +1,10 @@
 package com.everbit.everbit.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JwtUtil {
 
@@ -37,13 +41,21 @@ public class JwtUtil {
     }
 
     public Boolean isExpired(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration()
-                .before(new Date());
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            
+            return claims.getExpiration().before(new Date());
+        } catch (ExpiredJwtException e) {
+            log.debug("토큰이 만료되었습니다.");
+            return true;
+        } catch (Exception e) {
+            log.error("토큰 만료 확인 중 오류 발생: {}", e.getMessage());
+            return true;
+        }
     }
 
     public String createJwt(String username, String role, Long expiredMs) {
