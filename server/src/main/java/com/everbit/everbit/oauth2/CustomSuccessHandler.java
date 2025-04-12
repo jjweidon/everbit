@@ -26,7 +26,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     
     // 토큰 유효기간 설정 (60시간)
     private static final long JWT_EXPIRATION_MS = 60 * 60 * 60 * 1000L; // 밀리초 단위
-    private static final int COOKIE_MAX_AGE_SECONDS = 60 * 60 * 60; // 초 단위
+    private static final int COOKIE_MAX_AGE_SECONDS = 2 * 60 * 60; // 초 단위
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -65,7 +65,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             
             // JS 접근 가능한 추가 쿠키 설정 (인증 상태 확인용)
             Cookie authStatusCookie = new Cookie("AuthStatus", "loggedIn");
-            authStatusCookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 60시간 (초 단위)
+            authStatusCookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 7,200초 (2시간)
             authStatusCookie.setSecure(true); // HTTPS에서만 전송
             authStatusCookie.setPath("/");
             authStatusCookie.setHttpOnly(false); // 자바스크립트에서 접근 가능하게 설정
@@ -84,7 +84,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 60시간 (초 단위)
+        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 7,200초 (2시간)
         cookie.setSecure(true); // HTTPS에서만 전송
         cookie.setPath("/");
         cookie.setHttpOnly(true); // 자바스크립트에서 접근 불가
