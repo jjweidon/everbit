@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
-import { Providers } from '../providers';
 import './globals.css';
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  display: 'swap',
-  preload: true,
+  weight: ['100', '300', '400', '500', '700', '900'],
   variable: '--font-noto-sans-kr',
-  fallback: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif']
 });
 
 export const metadata: Metadata = {
@@ -26,15 +22,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable}`}>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className={notoSansKr.className}>
-        <Providers>{children}</Providers>
+    <html lang="ko">
+      <body className={`${notoSansKr.variable} font-sans bg-white text-navy-800`}>
+        {children}
       </body>
     </html>
   );

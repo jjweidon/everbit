@@ -1,233 +1,136 @@
 'use client';
 
-import { Box, Container, Heading, Text, Flex, Button, Badge, Grid, GridItem, Icon } from '@chakra-ui/react';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { keyframes } from '@emotion/react';
-
-// y축 회전 애니메이션 정의
-const rotateY = keyframes`
-  0% {
-    transform: perspective(1000px) rotateY(-40deg);
-  }
-  50% {
-    transform: perspective(1000px) rotateY(40deg);
-  }
-  100% {
-    transform: perspective(1000px) rotateY(-40deg);
-  }
-`;
 
 export default function Home() {
-  const router = useRouter();
-
   return (
-    <main>
-      <Box bg="white" minH="100vh">
-        <Container maxW="container.xl" py={10}>
-          <Flex justify="flex-end" mb={8}>
-            <Button
-              onClick={() => router.push('/login')}
-              colorScheme="navy"
-              size="md"
-              _hover={{
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 8px rgba(41,62,125,0.2)'
-              }}
-            >
-              로그인
-            </Button>
-          </Flex>
-          <Flex
-            direction={{ base: 'column', md: 'row' }}
-            align="center"
-            justify="space-between"
-            gap={8}
-            mb={16}
-          >
-            <Box maxW={{ base: '100%', md: '50%' }}>
-              <Heading as="h1" size="2xl" mb={4} color="navy.700">
-                everbit
-              </Heading>
-              <Text fontSize="xl" mb={6} color="navy.600">
-                Upbit API를 기반으로 퀀트 전략을 활용하여 최적의 매매 타이밍을 자동으로 판단하고 실행하는 서비스입니다.
-              </Text>
-              <Flex gap={4} wrap="wrap">
-                <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
-                  <Button 
-                    colorScheme="navy" 
-                    size="lg" 
-                    boxShadow="0 4px 8px rgba(41,62,125,0.3)"
-                    _hover={{
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(41,62,125,0.4)'
-                    }}
-                  >
-                    대시보드 바로가기
-                  </Button>
-                </Link>
-                <Link href="/docs" passHref style={{ textDecoration: 'none' }}>
-                  <Button 
-                    variant="accent"
-                    size="lg" 
-                    boxShadow="0 4px 8px rgba(41,62,125,0.3)"
-                    _hover={{
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(41,62,125,0.4)'
-                    }}
-                  >
-                    시작하기
-                  </Button>
-                </Link>
-              </Flex>
-              
-              <Box mt={8} display="flex" gap={2}>
-                <Badge bg="navy.100" color="navy.700" px={3} py={1} borderRadius="full" fontSize="sm">
-                  실시간 분석
-                </Badge>
-                <Badge bg="navy.100" color="navy.700" px={3} py={1} borderRadius="full" fontSize="sm">
-                  안전한 자동 트레이딩
-                </Badge>
-              </Box>
-            </Box>
-            <Box
-              position="relative"
-              width={{ base: '100%', md: '50%' }}
-              height={{ base: '300px', md: '400px' }}
-              borderRadius="xl"
-              overflow="hidden"
-              bg="none"
-            >
-              <Box
-                position="relative"
-                width="100%"
-                height="100%"
-                sx={{
-                  animation: `${rotateY} 3s ease-in-out infinite`,
-                  '& img': {
-                    objectFit: 'contain',
-                    backfaceVisibility: 'hidden'
-                  }
-                }}
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <div className="relative bg-navy-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+              everbit
+            </h1>
+            <p className="mt-6 text-xl text-navy-100 max-w-3xl mx-auto">
+              업비트 API를 활용한 안전하고 효율적인 비트코인 자동 트레이딩
+            </p>
+            <div className="mt-10">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-navy-700 bg-white hover:bg-navy-50"
               >
-                <Image
-                  src="/images/logo-image.png"
-                  alt="everbit 로고"
-                  fill
-                  priority
-                />
-              </Box>
-            </Box>
-          </Flex>
+                대시보드 시작하기
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <Heading 
-            as="h2" 
-            size="xl" 
-            mb={10} 
-            textAlign="center" 
-            color="navy.700"
-            position="relative"
-            _before={{
-              content: '""',
-              position: 'absolute',
-              bottom: '-10px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '100px',
-              height: '3px',
-              background: 'navy.500'
-            }}
-          >
-            주요 기능
-          </Heading>
+      {/* Features Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-navy-900 sm:text-4xl">
+              주요 기능
+            </h2>
+            <p className="mt-4 text-lg text-navy-600">
+              업비트 API를 활용한 다양한 트레이딩 기능
+            </p>
+          </div>
 
-          <Grid
-            templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
-            gap={8}
-          >
-            {[
-              {
-                title: '실시간 시세 분석',
-                description: '비트코인 실시간 시세를 수집하고 분석하여 트레이딩에 활용합니다.',
-                icon: FaChartLine,
-                accent: false
-              },
-              {
-                title: '퀀트 알고리즘',
-                description: '다양한 퀀트 전략을 기반으로 자동 매매를 실행합니다.',
-                icon: FaRobot,
-                accent: true
-              },
-              {
-                title: '백테스팅',
-                description: '과거 데이터를 활용하여 전략의 성능을 검증합니다.',
-                icon: FaHistory,
-                accent: true
-              },
-              {
-                title: '포트폴리오 관리',
-                description: '자산 배분 및 리스크 관리를 통해 안정적인 수익을 추구합니다.',
-                icon: FaBriefcase,
-                accent: false
-              },
-            ].map((item, index) => (
-              <GridItem key={index}>
-                <Box 
-                  p={8} 
-                  bg="white" 
-                  borderRadius="lg" 
-                  boxShadow="md"
-                  borderLeft="4px solid"
-                  borderColor={item.accent ? "navy.500" : "navy.400"}
-                  height="100%"
-                >
-                  <Flex align="center" mb={4}>
-                    <Icon as={item.icon} color="navy.500" boxSize={6} mr={3} />
-                    <Heading as="h3" size="md" color="navy.700">
-                      {item.title}
-                    </Heading>
-                  </Flex>
-                  <Text color="navy.600">{item.description}</Text>
-                </Box>
-              </GridItem>
-            ))}
-          </Grid>
-          
-          <Box 
-            mt={16} 
-            p={8} 
-            bg="white" 
-            borderRadius="lg" 
-            boxShadow="md"
-            bgGradient="linear-gradient(to right, rgba(230,232,240,0.4), white, rgba(230,232,240,0.2))"
-            border="1px solid"
-            borderColor="navy.200"
-          >
-            <Flex direction="column" align="center" textAlign="center">
-              <Heading size="lg" mb={4} color="navy.700">
-                비트코인 자동 트레이딩의 미래
-              </Heading>
-              <Text fontSize="lg" maxW="container.md" mb={6} color="navy.600">
-                에버비트와 함께 효율적이고 안전한 암호화폐 트레이딩을 경험해보세요.
-              </Text>
-              <Flex gap={4}>
-                <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
-                  <Button colorScheme="navy" size="lg">
-                    시작하기
-                  </Button>
-                </Link>
-                <Link href="/docs" passHref style={{ textDecoration: 'none' }}>
-                  <Button variant="accent" size="lg">
-                    자세히 알아보기
-                  </Button>
-                </Link>
-              </Flex>
-            </Flex>
-          </Box>
-        </Container>
-      </Box>
-    </main>
+          <div className="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Feature 1 */}
+            <div className="pt-6">
+              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
+                    <FaChartLine className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
+                    실시간 차트 분석
+                  </h3>
+                  <p className="mt-5 text-base text-navy-600">
+                    실시간으로 업비트 시장 데이터를 분석하여 최적의 매매 시점을 포착합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="pt-6">
+              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
+                    <FaRobot className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
+                    자동 매매 시스템
+                  </h3>
+                  <p className="mt-5 text-base text-navy-600">
+                    설정한 전략에 따라 자동으로 매매를 실행하여 수익을 극대화합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="pt-6">
+              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
+                    <FaHistory className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
+                    거래 내역 관리
+                  </h3>
+                  <p className="mt-5 text-base text-navy-600">
+                    모든 거래 내역을 자동으로 기록하고 분석하여 투자 성과를 추적합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="pt-6">
+              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
+                    <FaBriefcase className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
+                    포트폴리오 관리
+                  </h3>
+                  <p className="mt-5 text-base text-navy-600">
+                    보유 자산과 수익률을 실시간으로 모니터링하여 투자 전략을 최적화합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-navy-50">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+          <h2 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
+            <span className="block">지금 바로 시작하세요</span>
+            <span className="block text-navy-500">업비트 API 키만 있으면 됩니다.</span>
+          </h2>
+          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+            <div className="inline-flex rounded-md shadow">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-navy-500 hover:bg-navy-600"
+              >
+                시작하기
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 } 

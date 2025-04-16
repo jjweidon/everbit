@@ -1,32 +1,12 @@
 'use client';
 
-import { Box, Container, Flex, Heading, Text, Image, VStack, Divider, useColorModeValue } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import Image from 'next/image';
 import { loginApi } from '@/api/login';
+import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('navy.100', 'navy.700');
-
-  useEffect(() => {
-    // 쿠키에서 인증 토큰 확인
-    const getCookie = (name: string): string | undefined => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) {
-        return parts.pop()?.split(';').shift();
-      }
-      return undefined;
-    };
-    
-    const authToken = getCookie('Authorization');
-    if (authToken) {
-      console.log('인증 토큰이 발견되었습니다. 대시보드로 이동합니다.');
-      router.push('/dashboard');
-    }
-  }, [router]);
 
   const handleKakaoLogin = async () => {
     try {
@@ -37,87 +17,82 @@ export default function LoginPage() {
   };
 
   return (
-    <Box bg="gray.100" minH="100vh" position="fixed" top={0} left={0} right={0} bottom={0}>
-      <Container maxW="container.sm" h="100vh" display="flex" alignItems="center">
-        <Box
-          w="100%"
-          bg={cardBg}
-          borderRadius="2xl"
-          boxShadow="0 8px 32px rgba(0, 0, 0, 0.1)"
-          overflow="hidden"
-          position="relative"
-        >
-          {/* 상단 그라데이션 배너 */}
-          <Box
-            h="120px"
-            bgGradient="linear(to-r, navy.600, navy.800)"
-            position="relative"
-            overflow="hidden"
-          >
-            <Flex
-              position="absolute"
-              top="0"
-              left="0"
-              right="0"
-              bottom="0"
-              align="center"
-              justify="center"
-            >
-              <Heading
-                as="h1"
-                size="2xl"
-                color="white"
-                textShadow="0 2px 4px rgba(0,0,0,0.1)"
+    <div className="min-h-screen bg-navy-500 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
+        <div className="flex justify-center mb-8">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center">
+            <FaChartLine className="h-12 w-12 text-navy-500" />
+          </div>
+        </div>
+        <h2 className="mt-6 text-center text-5xl font-extrabold text-white">
+          everbit
+        </h2>
+        <p className="mt-4 text-center text-xl text-navy-100">
+          업비트 API를 활용한 안전하고 효율적인 비트코인 자동 트레이딩
+        </p>
+      </div>
+
+      <div className="mt-12 sm:mx-auto sm:w-full sm:max-w-2xl">
+        <div className="bg-white py-12 px-8 shadow-xl sm:rounded-lg">
+          <div className="space-y-8">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-navy-900 mb-2">시작하기</h3>
+              <p className="text-navy-600">카카오 계정으로 간편하게 로그인하세요</p>
+            </div>
+            
+            <div className="flex justify-center">
+              <button
+                onClick={handleKakaoLogin}
+                className="w-full max-w-md flex justify-center items-center"
               >
-                everbit
-              </Heading>
-            </Flex>
-          </Box>
+                <Image
+                  src="/images/kakao_login_button.png"
+                  alt="카카오 로그인"
+                  width={300}
+                  height={45}
+                  className="cursor-pointer"
+                />
+              </button>
+            </div>
 
-          {/* 로그인 폼 영역 */}
-          <VStack spacing={8} p={8} align="stretch">
-            <VStack spacing={4} align="center">
-              <Heading size="lg" color="navy.700">
-                환영합니다
-              </Heading>
-              <Text color="navy.600" textAlign="center">
-                비트코인 자동 트레이딩 시스템에 오신 것을 환영합니다.
-                <br />
-                로그인하여 서비스를 이용해보세요.
-              </Text>
-            </VStack>
-
-            <Divider />
-
-            <Box
-              as="button"
-              onClick={handleKakaoLogin}
-              cursor="pointer"
-              _hover={{ transform: 'translateY(-2px)', transition: 'transform 0.2s' }}
-              _active={{ transform: 'translateY(0)' }}
-              w="100%"
-              h="56px"
-            >
-              <Image
-                src="/images/kakao_login_button.png"
-                alt="카카오 로그인"
-                w="100%"
-                h="100%"
-                objectFit="contain"
-              />
-            </Box>
-
-            <Text
-              fontSize="sm"
-              color="navy.500"
-              textAlign="center"
-              mt={4}
-            >
-              로그인 시 everbit의 이용약관과 개인정보 처리방침에 동의하게 됩니다.
-            </Text>
-          </VStack>
-        </Box>
-      </Container>
-    </Box>
+            <div className="mt-8 grid grid-cols-3 gap-4">
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <FaRobot className="h-6 w-6 text-navy-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-navy-900">자동 매매</p>
+                    <p className="text-xs text-navy-600">24시간 자동 트레이딩</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <FaHistory className="h-6 w-6 text-navy-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-navy-900">실시간 분석</p>
+                    <p className="text-xs text-navy-600">최적의 매매 시점 포착</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <FaChartLine className="h-6 w-6 text-navy-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-navy-900">차트 분석</p>
+                    <p className="text-xs text-navy-600">다양한 기술적 지표</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 } 

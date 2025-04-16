@@ -1,216 +1,175 @@
 'use client';
 
-import { Box, Container, Heading, Text, Flex, Stat, StatLabel, StatNumber, StatHelpText, Grid, GridItem, Button, Badge, Icon } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
-import { upbitApi } from '@/api/upbit';
-import { useRouter } from 'next/navigation';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
-import Image from 'next/image';
-import { useAsyncEffect } from '@/hooks/useAsyncEffect';
 
 export default function Dashboard() {
-  const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    // 쿠키에서 인증 상태 확인
-    const isAuthenticated = document.cookie.includes('AuthStatus=');
-    if (!isAuthenticated) {
-      console.log('인증 상태가 없습니다. 로그인 페이지로 이동합니다.');
-      router.push('/login');
-    }
-  }, [router]);
-
-  useAsyncEffect(async () => {
-    try {
-      const accounts = await upbitApi.getAccounts();
-      
-      const summary: AccountSummary = {
-        totalBalance: 0,
-        totalProfit: 0,
-        profitRate: 0,
-        accounts: accounts
-      };
-
-      summary.totalBalance = accounts.reduce((total, account) => {
-        const balance = parseFloat(account.balance) + parseFloat(account.locked);
-        if (account.currency === 'KRW') {
-          return total + balance;
-        }
-        const avgPrice = parseFloat(account.avg_buy_price);
-        return total + (balance * avgPrice);
-      }, 0);
-
-      setAccountSummary(summary);
-    } catch (err) {
-      setError('계좌 정보를 불러오는데 실패했습니다.');
-      console.error('Failed to fetch accounts:', err);
-      // 에러 발생 시 라우팅
-      router.replace('/upbit-api-key');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
-  if (loading) {
-    return (
-      <Container maxW="container.xl" py={10}>
-        <Box textAlign="center" py={20}>
-          <Text fontSize="xl" color="navy.600">로딩 중...</Text>
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxW="container.xl" py={10}>
-        <Box textAlign="center" py={20}>
-          <Text fontSize="xl" color="red.500">{error}</Text>
-          <Button mt={4} colorScheme="navy" onClick={() => window.location.reload()}>
-            다시 시도
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  if (!accountSummary) {
-    return (
-      <Container maxW="container.xl" py={10}>
-        <Box textAlign="center" py={20}>
-          <Text fontSize="xl" color="navy.600">데이터가 없습니다.</Text>
-        </Box>
-      </Container>
-    );
-  }
+  const [account, setAccount] = useState<UpbitAccount | null>(null);
+  const [summary, setSummary] = useState<AccountSummary | null>(null);
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <Box mb={8}>
-        <Heading as="h1" size="2xl" mb={4} color="navy.700">
-          대시보드
-        </Heading>
-        <Text fontSize="lg" color="navy.600">
-          비트코인 자동 트레이딩 현황을 한눈에 확인하세요.
-        </Text>
-      </Box>
-      
-      <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' }} gap={6} mb={8}>
-        <GridItem>
-          <Box p={6} bg="white" borderRadius="lg" boxShadow="md" borderTop="4px solid" borderColor="navy.500">
-            <Stat>
-              <StatLabel color="navy.600">현재 잔고</StatLabel>
-              <StatNumber color="navy.700" fontSize="2xl">{accountSummary.totalBalance.toLocaleString()} KRW</StatNumber>
-            </Stat>
-          </Box>
-        </GridItem>
-        <GridItem>
-          <Box p={6} bg="white" borderRadius="lg" boxShadow="md" borderTop="4px solid" borderColor="navy.400">
-            <Stat>
-              <StatLabel color="navy.600">수익률</StatLabel>
-              <StatNumber color="navy.700" fontSize="2xl">{accountSummary.profitRate}%</StatNumber>
-            </Stat>
-          </Box>
-        </GridItem>
-      </Grid>
-      
-      <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' }} gap={6} mb={8}>
-        <GridItem colSpan={{ base: 1, md: 2 }}>
-          <Box p={8} bg="white" borderRadius="lg" boxShadow="md" borderLeft="4px solid" borderColor="navy.500" height="100%">
-            <Heading as="h3" size="md" mb={4} color="navy.700">트레이딩 현황</Heading>
-            <Text mb={4} color="navy.600">보유 자산 목록</Text>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-navy-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">화폐</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-navy-600 uppercase tracking-wider">보유수량</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-navy-600 uppercase tracking-wider">주문중</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-navy-600 uppercase tracking-wider">매수평균가</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-navy-600 uppercase tracking-wider">평가금액</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-navy-100">
-                  {accountSummary.accounts.map((account) => {
-                    const balance = parseFloat(account.balance);
-                    const locked = parseFloat(account.locked);
-                    const avgPrice = parseFloat(account.avg_buy_price);
-                    const totalValue = (balance + locked) * (account.currency === 'KRW' ? 1 : avgPrice);
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-navy-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">대시보드</h1>
+            <Link
+              href="/upbit-api-key"
+              className="px-4 py-2 bg-white text-navy-700 rounded-md hover:bg-navy-50"
+            >
+              API 키 설정
+            </Link>
+          </div>
+        </div>
+      </div>
 
-                    return (
-                      <tr key={account.currency}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-navy-900">{account.currency}</div>
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {parseFloat(account.balance).toLocaleString(undefined, { maximumFractionDigits: 8 })}
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {parseFloat(account.locked).toLocaleString(undefined, { maximumFractionDigits: 8 })}
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {account.currency === 'KRW' ? '-' : 
-                            parseFloat(account.avg_buy_price).toLocaleString() + ' ' + account.unit_currency}
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {totalValue.toLocaleString()} {account.unit_currency}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Total Balance */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <FaBriefcase className="h-6 w-6 text-navy-500" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      총 자산
+                    </dt>
+                    <dd className="flex items-baseline">
+                      <div className="text-2xl font-semibold text-gray-900">
+                        {summary?.totalBalance.toLocaleString()} KRW
+                      </div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
             </div>
-          </Box>
-        </GridItem>
-        <GridItem>
-          <Box p={8} bg="white" borderRadius="lg" boxShadow="md" borderLeft="4px solid" borderColor="navy.400" height="100%">
-            <Heading as="h3" size="md" mb={4} color="navy.700">시장 정보</Heading>
-            <Text mb={4} color="navy.600">최신 시장 동향과 정보를 확인하세요.</Text>
-            <Box bg="navy.50" p={4} borderRadius="md">
-              <Text fontWeight="bold" color="navy.700">비트코인 가격:</Text>
-              <Text fontSize="xl" color="navy.800">₩ 86,420,000</Text>
-            </Box>
-          </Box>
-        </GridItem>
-      </Grid>
-      
-      <Box borderRadius="lg" overflow="hidden" mb={8}>
-        <Flex>
-          <Box
-            bg="navy.500"
-            p={4}
-            width="50%"
-            textAlign="center"
-            fontWeight="bold"
-            color="white"
-          >
-            자동 매매
-          </Box>
-          <Box
-            bg="navy.400"
-            p={4}
-            width="50%"
-            textAlign="center"
-            fontWeight="bold"
-            color="white"
-          >
-            수동 매매
-          </Box>
-        </Flex>
-        <Box p={8} bg="white" borderRadius="0 0 lg lg" boxShadow="md" border="1px solid" borderColor="navy.200" borderTop="none">
-          <Text fontSize="lg" mb={4} color="navy.700">트레이딩 설정을 구성하세요.</Text>
-          <Flex gap={4}>
-            <Button colorScheme="navy">설정 저장</Button>
-            <Button variant="accent" onClick={() => window.location.reload()}>새로고침</Button>
-          </Flex>
-        </Box>
-      </Box>
-    </Container>
+          </div>
+
+          {/* Available Balance */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <FaChartLine className="h-6 w-6 text-navy-500" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      사용 가능 금액
+                    </dt>
+                    <dd className="flex items-baseline">
+                      <div className="text-2xl font-semibold text-gray-900">
+                        {summary?.availableBalance.toLocaleString()} KRW
+                      </div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Total Profit */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <FaRobot className="h-6 w-6 text-navy-500" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      총 수익
+                    </dt>
+                    <dd className="flex items-baseline">
+                      <div className="text-2xl font-semibold text-gray-900">
+                        {summary?.totalProfit.toLocaleString()} KRW
+                      </div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Profit Rate */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <FaHistory className="h-6 w-6 text-navy-500" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      수익률
+                    </dt>
+                    <dd className="flex items-baseline">
+                      <div className="text-2xl font-semibold text-gray-900">
+                        {summary?.profitRate.toFixed(2)}%
+                      </div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trading Section */}
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+          {/* Trading Status */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              트레이딩 상태
+            </h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">현재 상태</span>
+                <span className="px-2 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                  활성화
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">마지막 거래</span>
+                <span className="text-sm text-gray-900">2024-04-16 15:30:45</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">다음 거래 예정</span>
+                <span className="text-sm text-gray-900">2024-04-16 16:00:00</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trading Settings */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              트레이딩 설정
+            </h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">거래 전략</span>
+                <span className="text-sm text-gray-900">RSI + MACD</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">거래 간격</span>
+                <span className="text-sm text-gray-900">30분</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">최대 거래 금액</span>
+                <span className="text-sm text-gray-900">100,000 KRW</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 } 
