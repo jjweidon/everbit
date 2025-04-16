@@ -2,27 +2,34 @@
 
 import Link from 'next/link';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center bg-gradient-to-b from-navy-500 to-navy-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
-            <div className="space-y-4">
+            <div className={`space-y-4 ${isVisible ? 'animate-fade-in-down' : 'opacity-0'}`}>
               <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-navy-100 tracking-wide">
                 비트코인 자동 트레이딩 시스템
               </h3>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight font-logo">
                 everbit
               </h1>
               <div className="w-24 h-1 bg-navy-300 mx-auto"></div>
             </div>
-            <p className="text-xl sm:text-2xl text-navy-100 max-w-2xl mx-auto leading-relaxed">
+            <p className={`text-xl sm:text-2xl text-navy-100 max-w-2xl mx-auto leading-relaxed ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
               Upbit API 기반의 안전하고 효율적인 자동 트레이딩
             </p>
-            <div className="pt-4">
+            <div className={`pt-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <Link
                 href="/dashboard"
                 className="inline-block px-10 py-4 bg-white text-navy-700 rounded-lg text-lg font-medium hover:bg-navy-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"

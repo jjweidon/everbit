@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
 const notoSansKr = Noto_Sans_KR({
@@ -8,6 +9,12 @@ const notoSansKr = Noto_Sans_KR({
   display: 'swap',
   variable: '--font-noto-sans-kr',
   preload: true,
+});
+
+const logoFont = localFont({
+  src: '../../public/fonts/logo_font.ttf',
+  variable: '--font-logo',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -24,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" className={notoSansKr.variable}>
+    <html lang="ko" className={`${notoSansKr.variable} ${logoFont.variable}`}>
       <body className="font-sans bg-white text-navy-800">
         {children}
       </body>

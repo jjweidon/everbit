@@ -24,7 +24,7 @@ export default function Login() {
             <FaChartLine className="h-12 w-12 text-navy-500" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-5xl font-extrabold text-white">
+        <h2 className="mt-6 text-center text-5xl font-extrabold text-white font-logo">
           everbit
         </h2>
         <p className="mt-4 text-center text-xl text-navy-100">
