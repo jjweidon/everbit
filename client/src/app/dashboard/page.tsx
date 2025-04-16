@@ -8,6 +8,7 @@ import { upbitApi } from '@/api/upbit';
 import { useRouter } from 'next/navigation';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import Image from 'next/image';
+import { useAsyncEffect } from '@/hooks/useAsyncEffect';
 
 export default function Dashboard() {
   const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
@@ -17,65 +18,43 @@ export default function Dashboard() {
 
   useEffect(() => {
     // 쿠키에서 인증 상태 확인
-    const getCookie = (name: string): string | undefined => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) {
-        return parts.pop()?.split(';').shift();
-      }
-      return undefined;
-    };
-    
-    const authStatus = getCookie('AuthStatus');
-    if (!authStatus) {
+    const isAuthenticated = document.cookie.includes('AuthStatus=');
+    if (!isAuthenticated) {
       console.log('인증 상태가 없습니다. 로그인 페이지로 이동합니다.');
       router.push('/login');
     }
   }, [router]);
 
-  useEffect(() => {
-    let mounted = true;
+  useAsyncEffect(async () => {
+    try {
+      const accounts = await upbitApi.getAccounts();
+      
+      const summary: AccountSummary = {
+        totalBalance: 0,
+        totalProfit: 0,
+        profitRate: 0,
+        accounts: accounts
+      };
 
-    const fetchAccounts = async () => {
-      try {
-        const accounts = await upbitApi.getAccounts();
-        
-        if (!mounted) return;
-
-        const summary: AccountSummary = {
-          totalBalance: 0,
-          totalProfit: 0,
-          profitRate: 0,
-          accounts: accounts
-        };
-
-        summary.totalBalance = accounts.reduce((total, account) => {
-          const balance = parseFloat(account.balance) + parseFloat(account.locked);
-          if (account.currency === 'KRW') {
-            return total + balance;
-          }
-          const avgPrice = parseFloat(account.avg_buy_price);
-          return total + (balance * avgPrice);
-        }, 0);
-
-        setAccountSummary(summary);
-      } catch (err) {
-        if (!mounted) return;
-        setError('계좌 정보를 불러오는데 실패했습니다.');
-        console.error('Failed to fetch accounts:', err);
-      } finally {
-        if (mounted) {
-          setLoading(false);
+      summary.totalBalance = accounts.reduce((total, account) => {
+        const balance = parseFloat(account.balance) + parseFloat(account.locked);
+        if (account.currency === 'KRW') {
+          return total + balance;
         }
-      }
-    };
+        const avgPrice = parseFloat(account.avg_buy_price);
+        return total + (balance * avgPrice);
+      }, 0);
 
-    fetchAccounts();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+      setAccountSummary(summary);
+    } catch (err) {
+      setError('계좌 정보를 불러오는데 실패했습니다.');
+      console.error('Failed to fetch accounts:', err);
+      // 에러 발생 시 라우팅
+      router.replace('/upbit-api-key');
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   if (loading) {
     return (
