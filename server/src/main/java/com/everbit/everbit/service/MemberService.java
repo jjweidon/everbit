@@ -8,6 +8,8 @@ import com.everbit.everbit.oauth2.OAuth2Response;
 import com.everbit.everbit.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.encrypt.Encryptors;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final String encryptionPassword = "your-secure-password"; // 실제 운영에서는 환경변수로 관리
+    private final String encryptionSalt = "your-salt"; // 실제 운영에서는 환경변수로 관리
 
     public Member createMember(OAuth2User oAuth2Member) {
         OAuth2Response oAuth2Response = new KakaoResponse(oAuth2Member.getAttributes());
@@ -29,7 +33,7 @@ public class MemberService {
             log.info("기존 사용자 로그인: {}", username);
             return existingMember.get();
         }
-        
+
         // 새로운 사용자 생성
         log.info("새로운 사용자 등록: {}", username);
         Member member = Member.builder()
@@ -38,6 +42,19 @@ public class MemberService {
                 .role(Role.ROLE_USER)
                 .build();
         return memberRepository.save(member);
+    }
+
+    public void saveUpbitApiKeys(String memberId, String accessKey, String secretKey) {
+        Member member = getMemberByMemberId(memberId);
+        
+        TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
+        String encryptedAccessKey = encryptor.encrypt(accessKey);
+        String encryptedSecretKey = encryptor.encrypt(secretKey);
+        
+        member.setUpbitAccessKey(encryptedAccessKey);
+        member.setUpbitSecretKey(encryptedSecretKey);
+        
+        memberRepository.save(member);
     }
 
     public Member getMemberByMemberId(String memberId) {

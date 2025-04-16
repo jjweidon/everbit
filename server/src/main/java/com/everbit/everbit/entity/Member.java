@@ -16,13 +16,20 @@ public class Member extends BaseTime {
     @Builder.Default
     private final String id = new ULID().nextULID();
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String username;
+
+    private String image;
+
+    @Setter
+    private String upbitAccessKey;
+
+    @Setter
+    private String upbitSecretKey;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
     private String nickname;
 
-    private String image;
 }

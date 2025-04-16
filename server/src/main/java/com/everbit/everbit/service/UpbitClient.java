@@ -3,6 +3,9 @@ package com.everbit.everbit.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.config.UpbitConfig;
+import com.everbit.everbit.entity.Member;
+import com.everbit.everbit.exception.MemberException;
+import com.everbit.everbit.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,7 @@ import java.util.UUID;
 public class UpbitClient {
 
     private final UpbitConfig upbitConfig;
+    private final MemberRepository memberRepository;
 
     /**
      * URL 빌드
@@ -40,11 +44,13 @@ public class UpbitClient {
     /**
      * 계좌 정보 조회
      */
-    public String getAccounts() {
+    public String getAccounts(String username) {
         try {
             URI uri = buildUrl("/v1/accounts");
             URL url = uri.toURL();
-            String token = createAuthHeaders("");
+            Member member = memberRepository.findByUsername(username)
+                    .orElseThrow(() -> MemberException.notFound(username));
+            String token = createAuthHeaders("", member);
 
             log.info("Request URL: {}", url);
             log.info("Request Headers: Bearer {}", token);
@@ -89,10 +95,10 @@ public class UpbitClient {
     /**
      * 인증 헤더 생성
      */
-    private String createAuthHeaders(String queryString) {
+    private String createAuthHeaders(String queryString, Member member) {
         try {
-            String accessKey = upbitConfig.getAccessKey();
-            String secretKey = upbitConfig.getSecretKey();
+            String accessKey = member.getUpbitAccessKey();
+            String secretKey = member.getUpbitSecretKey();
             String nonce = UUID.randomUUID().toString();
 
             log.info("Access Key: {}", accessKey);

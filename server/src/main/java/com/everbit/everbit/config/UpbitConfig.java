@@ -18,18 +18,18 @@ public class UpbitConfig {
     /**
      * Upbit API 기본 URL
      */
-    @Value("${upbit.api.base-url}")
-    private String baseUrl;
+//    @Value("${upbit.api.base-url}")
+    private final String baseUrl = "https://api.upbit.com";
     
     /**
      * Upbit API 액세스 키
      */
-    @Value("${upbit.api.access-key}")
+//    @Value("${upbit.api.access-key}")
     private String accessKey;
     
     /**
      * Upbit API 시크릿 키
      */
-    @Value("${upbit.api.secret-key}")
+//    @Value("${upbit.api.secret-key}")
     private String secretKey;
 } 
