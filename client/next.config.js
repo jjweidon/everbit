@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  trailingSlash: true,
   output: 'standalone',
-  assetPrefix: '/',
-  basePath: '',
+  trailingSlash: true,
+  distDir: '.next',
+  generateBuildId: async () => {
+    return 'build-' + Date.now();
+  }
 };
 
 module.exports = nextConfig;
