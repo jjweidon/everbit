@@ -2,18 +2,22 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { updateUpbitApiKey } from '@/services/upbit';
 
 interface UpbitApiKeyFormProps {
-    onSubmit: (accessKey: string, secretKey: string) => void;
+    onSubmit?: (accessKey: string, secretKey: string) => void;
 }
 
 export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
+    const router = useRouter();
     const [accessKey, setAccessKey] = useState('');
     const [secretKey, setSecretKey] = useState('');
     const [errors, setErrors] = useState({
         accessKey: '',
         secretKey: ''
     });
+    const [isLoading, setIsLoading] = useState(false);
 
     const validateForm = () => {
         const newErrors = {
@@ -24,10 +28,33 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
         return !Object.values(newErrors).some(error => error);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateForm()) {
-            onSubmit(accessKey, secretKey);
+        if (!validateForm()) return;
+
+        try {
+            setIsLoading(true);
+            const response = await updateUpbitApiKey(accessKey, secretKey);
+            
+            if (response.success) {
+                if (onSubmit) {
+                    onSubmit(accessKey, secretKey);
+                } else {
+                    router.push('/dashboard');
+                }
+            } else {
+                setErrors({
+                    accessKey: response.error || '',
+                    secretKey: response.error || ''
+                });
+            }
+        } catch (error) {
+            setErrors({
+                accessKey: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+                secretKey: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
+            });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -88,9 +115,10 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
             </div>
             <button
                 type="submit"
-                className="w-full px-4 py-3 bg-navy-500 text-white rounded-lg font-medium hover:bg-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2 transition-colors"
+                disabled={isLoading}
+                className="w-full px-4 py-3 bg-navy-500 text-white rounded-lg font-medium hover:bg-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                저장
+                {isLoading ? '처리 중...' : '저장'}
             </button>
         </form>
     );

@@ -27,6 +27,9 @@ public class Member extends BaseTime {
     @Setter
     private String upbitSecretKey;
 
+    @Setter
+    private boolean isUpbitConnected;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 

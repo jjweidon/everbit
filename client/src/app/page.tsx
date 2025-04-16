@@ -1,15 +1,22 @@
 'use client';
 
-import Link from 'next/link';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const handleStart = () => {
+    router.push('/dashboard');
+  };
 
   return (
     <div className="min-h-screen">
@@ -30,12 +37,12 @@ export default function Home() {
               Upbit API 기반의 안전하고 효율적인 자동 트레이딩
             </p>
             <div className={`pt-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <Link
-                href="/dashboard"
-                className="inline-block px-10 py-4 bg-white text-navy-700 rounded-lg text-lg font-medium hover:bg-navy-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+              <button
+                onClick={handleStart}
+                className="px-8 py-4 bg-navy-500 text-white rounded-lg font-medium hover:bg-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2 transition-colors"
               >
                 시작하기
-              </Link>
+              </button>
             </div>
           </div>
         </div>
