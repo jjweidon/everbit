@@ -9,7 +9,7 @@ export interface UpbitAccount {
 
 export interface AccountSummary {
     totalBalance: number;   // 총 보유 자산
-    availableBalance: number; // 사용 가능한 자산
+    availableBalance: number; // 사용 가능한 잔액
     totalProfit: number;    // 총 평가 손익
     profitRate: number;     // 수익률
     accounts: UpbitAccount[];  // 계좌 목록

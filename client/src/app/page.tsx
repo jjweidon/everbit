@@ -1,136 +1,73 @@
 'use client';
 
-import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import Link from 'next/link';
+import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-navy-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              everbit
-            </h1>
-            <p className="mt-6 text-xl text-navy-100 max-w-3xl mx-auto">
-              업비트 API를 활용한 안전하고 효율적인 비트코인 자동 트레이딩
-            </p>
-            <div className="mt-10">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-navy-700 bg-white hover:bg-navy-50"
-              >
-                대시보드 시작하기
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="py-16 bg-white">
+      <section className="relative h-screen flex items-center justify-center bg-gradient-to-b from-navy-500 to-navy-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-navy-900 sm:text-4xl">
-              주요 기능
-            </h2>
-            <p className="mt-4 text-lg text-navy-600">
-              업비트 API를 활용한 다양한 트레이딩 기능
+          <div className="text-center space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-navy-100 tracking-wide">
+                비트코인 자동 트레이딩 시스템
+              </h3>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight">
+                everbit
+              </h1>
+              <div className="w-24 h-1 bg-navy-300 mx-auto"></div>
+            </div>
+            <p className="text-xl sm:text-2xl text-navy-100 max-w-2xl mx-auto leading-relaxed">
+              Upbit API 기반의 안전하고 효율적인 자동 트레이딩
             </p>
-          </div>
-
-          <div className="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Feature 1 */}
-            <div className="pt-6">
-              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
-                    <FaChartLine className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
-                    실시간 차트 분석
-                  </h3>
-                  <p className="mt-5 text-base text-navy-600">
-                    실시간으로 업비트 시장 데이터를 분석하여 최적의 매매 시점을 포착합니다.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="pt-6">
-              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
-                    <FaRobot className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
-                    자동 매매 시스템
-                  </h3>
-                  <p className="mt-5 text-base text-navy-600">
-                    설정한 전략에 따라 자동으로 매매를 실행하여 수익을 극대화합니다.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="pt-6">
-              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
-                    <FaHistory className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
-                    거래 내역 관리
-                  </h3>
-                  <p className="mt-5 text-base text-navy-600">
-                    모든 거래 내역을 자동으로 기록하고 분석하여 투자 성과를 추적합니다.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="pt-6">
-              <div className="flow-root bg-navy-50 rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-navy-500 rounded-md shadow-lg">
-                    <FaBriefcase className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-navy-900 tracking-tight">
-                    포트폴리오 관리
-                  </h3>
-                  <p className="mt-5 text-base text-navy-600">
-                    보유 자산과 수익률을 실시간으로 모니터링하여 투자 전략을 최적화합니다.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="bg-navy-50">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-          <h2 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
-            <span className="block">지금 바로 시작하세요</span>
-            <span className="block text-navy-500">업비트 API 키만 있으면 됩니다.</span>
-          </h2>
-          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-            <div className="inline-flex rounded-md shadow">
+            <div className="pt-4">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-navy-500 hover:bg-navy-600"
+                className="inline-block px-10 py-4 bg-white text-navy-700 rounded-lg text-lg font-medium hover:bg-navy-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
               >
                 시작하기
               </Link>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-navy-50 p-6 rounded-lg">
+              <FaChartLine className="text-navy-500 text-4xl mb-4" />
+              <h3 className="text-xl font-bold text-navy-800 mb-2">실시간 시장 분석</h3>
+              <p className="text-navy-600">최신 시장 데이터를 기반으로 한 정확한 분석</p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-navy-50 p-6 rounded-lg">
+              <FaRobot className="text-navy-500 text-4xl mb-4" />
+              <h3 className="text-xl font-bold text-navy-800 mb-2">자동화된 트레이딩</h3>
+              <p className="text-navy-600">24시간 자동으로 작동하는 트레이딩 시스템</p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-navy-50 p-6 rounded-lg">
+              <FaHistory className="text-navy-500 text-4xl mb-4" />
+              <h3 className="text-xl font-bold text-navy-800 mb-2">거래 내역 추적</h3>
+              <p className="text-navy-600">모든 거래 내역을 실시간으로 확인 가능</p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="bg-navy-50 p-6 rounded-lg">
+              <FaBriefcase className="text-navy-500 text-4xl mb-4" />
+              <h3 className="text-xl font-bold text-navy-800 mb-2">포트폴리오 관리</h3>
+              <p className="text-navy-600">자산 현황과 수익률을 한눈에 파악</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 } 
