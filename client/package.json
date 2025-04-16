@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write ."
+    "dev": "yarn next dev",
+    "build": "yarn next build",
+    "start": "yarn next start",
+    "lint": "yarn next lint",
+    "format": "yarn prettier --write ."
   },
   "engines": {
     "node": ">=18.x",
-    "npm": ">=9.x"
+    "yarn": ">=1.22.x"
   },
   "dependencies": {
     "@emotion/react": "^11.11.3",
