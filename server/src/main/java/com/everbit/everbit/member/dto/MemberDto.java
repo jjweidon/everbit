@@ -1,19 +1,17 @@
 package com.everbit.everbit.member.dto;
 
 import com.everbit.everbit.member.entity.Member;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-public class MemberDto {
-    private String role;
-    private String username;
-
+public record MemberDto(
+    String memberId,
+    String role,
+    String username
+) {
     public static MemberDto from(Member member) {
-        return MemberDto.builder()
-                .role(member.getRole().name())
-                .username(member.getUsername())
-                .build();
+        return new MemberDto(
+            member.getId(),
+            member.getRole().name(),
+            member.getUsername()
+        );
     }
 }

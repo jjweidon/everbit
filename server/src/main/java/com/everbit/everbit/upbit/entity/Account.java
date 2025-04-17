@@ -1,10 +1,9 @@
 package com.everbit.everbit.upbit.entity;
 
 import com.everbit.everbit.global.entity.BaseTime;
+import com.everbit.everbit.member.entity.Member;
 import de.huxhorn.sulky.ulid.ULID;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -18,12 +17,13 @@ public class Account extends BaseTime {
     @Builder.Default
     private final String id = new ULID().nextULID();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
     @Setter
     private String upbitAccessKey;
 
     @Setter
     private String upbitSecretKey;
-
-
-
 }

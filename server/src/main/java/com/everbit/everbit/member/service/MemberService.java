@@ -1,11 +1,15 @@
 package com.everbit.everbit.member.service;
 
+import com.everbit.everbit.member.dto.UpbitApiKeyRequest;
 import com.everbit.everbit.member.entity.Member;
 import com.everbit.everbit.member.entity.enums.Role;
 import com.everbit.everbit.member.exception.MemberException;
 import com.everbit.everbit.oauth2.dto.KakaoResponse;
 import com.everbit.everbit.oauth2.dto.OAuth2Response;
 import com.everbit.everbit.member.repository.MemberRepository;
+import com.everbit.everbit.upbit.entity.Account;
+import com.everbit.everbit.upbit.exception.AccountException;
+import com.everbit.everbit.upbit.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,17 +18,22 @@ import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.util.Optional;
-
+import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
-    private final String encryptionPassword = "your-secure-password"; // 실제 운영에서는 환경변수로 관리
-    private final String encryptionSalt = "your-salt"; // 실제 운영에서는 환경변수로 관리
+    private final AccountRepository accountRepository;
 
+    @Value("${upbit.encryption.password}")
+    private final String encryptionPassword;
+    @Value("${upbit.encryption.salt}")
+    private final String encryptionSalt;
+
+    @Transactional
     public Member createMember(OAuth2User oAuth2Member) {
         OAuth2Response oAuth2Response = new KakaoResponse(oAuth2Member.getAttributes());
         String username = oAuth2Response.getName()+" "+oAuth2Response.getProviderId();
@@ -46,22 +55,28 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    @Transactional(readOnly = true)
     public MemberResponse getMemberResponse(String username) {
         Member member = findMemberByUsername(username);
         return MemberResponse.from(member);
     }
 
-    public void saveUpbitApiKeys(String memberId, String accessKey, String secretKey) {
+    @Transactional
+    public MemberResponse saveUpbitApiKeys(String memberId, UpbitApiKeyRequest request) {
         Member member = findMemberByMemberId(memberId);
+        Account account = findAccountByMember(member);
         
         TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
-        String encryptedAccessKey = encryptor.encrypt(accessKey);
-        String encryptedSecretKey = encryptor.encrypt(secretKey);
+        String encryptedAccessKey = encryptor.encrypt(request.accessKey());
+        String encryptedSecretKey = encryptor.encrypt(request.secretKey());
         
-        member.setUpbitAccessKey(encryptedAccessKey);
-        member.setUpbitSecretKey(encryptedSecretKey);
+        account.setUpbitAccessKey(encryptedAccessKey);
+        account.setUpbitSecretKey(encryptedSecretKey);
         
+        accountRepository.save(account);
+        member.setUpbitConnected(true);
         memberRepository.save(member);
+        return MemberResponse.from(member);
     }
 
     public Member findMemberByMemberId(String memberId) {
@@ -72,5 +87,10 @@ public class MemberService {
     public Member findMemberByUsername(String username) {
         return memberRepository.findByUsername(username)
                 .orElseThrow(() -> MemberException.notFound(username));
+    }
+
+    public Account findAccountByMember(Member member) {
+        return accountRepository.findByMember(member)
+                .orElseThrow(() -> AccountException.noAccountMember(member));
     }
 }

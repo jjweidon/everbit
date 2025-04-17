@@ -67,13 +67,13 @@ public class JwtFilter extends OncePerRequestFilter {
             String role = jwtUtil.getRole(authorization);
             
             // 사용자 DTO 생성
-            MemberDto userDto = MemberDto.builder()
+            MemberDto memberDto = MemberDto.builder()
                     .username(username)
                     .role(role)
                     .build();
             
             // UserDetails에 회원 정보 객체 담기
-            CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDto);
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(memberDto);
             
             // 스프링 시큐리티 인증 토큰 생성
             Authentication authToken = new UsernamePasswordAuthenticationToken(

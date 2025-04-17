@@ -2,6 +2,7 @@ package com.everbit.everbit.global.exception;
 
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.member.exception.MemberException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -24,5 +25,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ApiResponse<Object> handleException(Exception ex) {
         return ApiResponse.of(CustomHttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ApiResponse<Object> handleAuthenticationException(AuthenticationException ex) {
+        return ApiResponse.of(CustomHttpStatus.UNAUTHORIZED);
     }
 }

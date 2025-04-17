@@ -16,9 +16,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OAuthController {
 
-    /**
-     * OAuth2 콜백 엔드포인트 - Spring Security의 OAuth2 처리를 보완하는 역할
-     */
     @GetMapping("/api/login/oauth2/code/kakao")
     public ResponseEntity<?> kakaoCallback(
             @RequestParam(value = "code", required = false) String code,
@@ -41,11 +38,7 @@ public class OAuthController {
         
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * OAuth2 인증 성공 후 처리를 위한 컨트롤러
-     * 이 엔드포인트는 OAuth2 인증 성공 시 사용자 정보를 반환합니다.
-     */
+
     @GetMapping("/api/auth/me")
     public ResponseEntity<?> getAuthenticatedUser(HttpServletRequest request) {
         // 더미 응답 반환

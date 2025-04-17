@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -59,6 +60,10 @@ public class SecurityConfig {
                                "/api/auth/me",
                                "/favicon.ico",
                                "/error").permitAll()
+                // members API 엔드포인트 보안 설정
+                .requestMatchers(HttpMethod.GET, "/api/members/me").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/members/upbit-keys").authenticated()
+                .requestMatchers("/api/members/**").authenticated()
                 .anyRequest().authenticated()
         );
 
