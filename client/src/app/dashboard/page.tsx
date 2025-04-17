@@ -1,10 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
 import { useRouter } from 'next/navigation';
-import { loginApi } from '@/api/login';
 import { memberApi } from '@/api/member';
 
 const formatNumber = (num?: number) => {
@@ -25,8 +23,9 @@ export default function Dashboard() {
         // 1. 로그인 상태 확인
         const authStatus = localStorage.getItem('AuthStatus');
         if (!authStatus || authStatus !== 'authenticated') {
-          // 로그인 API 호출
-          await loginApi.kakaoLogin();
+          // 로그인 페이지로 이동
+          router.push('/login');
+          return;
         }
 
         // 2. 사용자 정보 조회
@@ -53,29 +52,9 @@ export default function Dashboard() {
     checkAuthAndUpbitConnection();
   }, [router]);
 
-  if (isLoading) {
+  if (isLoading || error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-500 mx-auto"></div>
-          <p className="mt-4 text-navy-600">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500">{error}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="mt-4 px-4 py-2 bg-navy-500 text-white rounded-lg hover:bg-navy-600"
-          >
-            홈으로 돌아가기
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-navy-500 to-navy-700">
       </div>
     );
   }
