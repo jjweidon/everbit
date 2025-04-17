@@ -8,6 +8,8 @@ import com.everbit.everbit.oauth2.dto.OAuth2Response;
 import com.everbit.everbit.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import com.everbit.everbit.member.dto.MemberResponse;
 import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -44,8 +46,13 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    public MemberResponse getMemberResponse(String username) {
+        Member member = findMemberByUsername(username);
+        return MemberResponse.from(member);
+    }
+
     public void saveUpbitApiKeys(String memberId, String accessKey, String secretKey) {
-        Member member = getMemberByMemberId(memberId);
+        Member member = findMemberByMemberId(memberId);
         
         TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
         String encryptedAccessKey = encryptor.encrypt(accessKey);
@@ -57,12 +64,12 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    public Member getMemberByMemberId(String memberId) {
+    public Member findMemberByMemberId(String memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberException.notFound(memberId));
     }
 
-    public Member getMemberByUsername(String username) {
+    public Member findMemberByUsername(String username) {
         return memberRepository.findByUsername(username)
                 .orElseThrow(() -> MemberException.notFound(username));
     }

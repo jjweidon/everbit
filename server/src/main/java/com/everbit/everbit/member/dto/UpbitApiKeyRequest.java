@@ -1,11 +1,10 @@
 package com.everbit.everbit.member.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
-@Getter
-@Setter
-public class UpbitApiKeyRequest {
-    private String accessKey;
-    private String secretKey;
-} 
+@JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy.class)
+public record UpbitApiKeyRequest(
+    String accessKey,
+    String secretKey
+) {} 

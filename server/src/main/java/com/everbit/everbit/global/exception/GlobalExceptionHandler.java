@@ -1,0 +1,28 @@
+package com.everbit.everbit.global.exception;
+
+import com.everbit.everbit.global.dto.ApiResponse;
+import com.everbit.everbit.member.exception.MemberException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    // UserNotFoundException 처리
+    @ExceptionHandler(MemberException.class)
+    public ApiResponse<Object> handleUserNotFoundException(MemberException ex) {
+        return ApiResponse.of(CustomHttpStatus.NOT_FOUND);
+    }
+
+    // IllegalStateException 처리
+    @ExceptionHandler(IllegalStateException.class)
+    public ApiResponse<Object> handleIllegalStateException(IllegalStateException ex) {
+        return ApiResponse.of(CustomHttpStatus.BAD_REQUEST);
+    }
+
+    // 기타 모든 예외 처리 (500 서버 에러)
+    @ExceptionHandler(Exception.class)
+    public ApiResponse<Object> handleException(Exception ex) {
+        return ApiResponse.of(CustomHttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}

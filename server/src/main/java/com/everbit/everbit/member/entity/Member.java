@@ -20,20 +20,13 @@ public class Member extends BaseTime {
     @Column(nullable = false)
     private String username;
 
-    private String image;
-
-    @Setter
-    private String upbitAccessKey;
-
-    @Setter
-    private String upbitSecretKey;
-
-    @Setter
-    private boolean isUpbitConnected;
-
     @Enumerated(EnumType.STRING)
     private Role role;
 
     private String nickname;
 
+    private String image;
+
+    @Setter
+    private boolean isUpbitConnected;
 }
