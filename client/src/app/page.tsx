@@ -39,7 +39,7 @@ export default function Home() {
             <div className={`pt-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <button
                 onClick={handleStart}
-                className="px-8 py-4 bg-navy-500 text-white rounded-lg font-medium hover:bg-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2 transition-colors"
+                className="px-16 py-4 bg-white text-navy-900 rounded-lg font-medium hover:bg-navy-200 focus:outline-none focus:ring-2 focus:ring-navy-300 focus:ring-offset-2 transition-colors shadow-lg hover:shadow-xl"
               >
                 시작하기
               </button>

@@ -17,5 +17,14 @@ export const loginApi = {
             console.error('카카오 로그인 에러:', error);
             throw error;
         }
+    },
+    naverLogin: async (): Promise<void> => {
+        try {
+            console.log('네이버 로그인 요청 시작');
+            window.location.href = 'https://api.everbit.kr/api/login/naver';
+        } catch (error) {
+            console.error('네이버 로그인 에러:', error);
+            throw error;
+        }
     }
 };

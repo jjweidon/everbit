@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { loginApi } from '@/api/login';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
+import KakaoIcon from '@/components/icons/KakaoIcon';
+import NaverIcon from '@/components/icons/NaverIcon';
 
 export default function Login() {
   const router = useRouter();
@@ -16,15 +18,29 @@ export default function Login() {
     }
   };
 
+  const handleNaverLogin = async () => {
+    try {
+      await loginApi.naverLogin();
+    } catch (error) {
+      console.error('네이버 로그인 에러:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-navy-500 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="flex justify-center mb-8">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center">
-            <FaChartLine className="h-12 w-12 text-navy-500" />
+        <div className="flex justify-center">
+          <div className="rounded-full flex items-center justify-center animate-float">
+            <Image
+              src="/logos/logo-icon-2d.webp"
+              alt="everbit logo"
+              width={150}
+              height={150}
+              className="object-contain"
+            />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-5xl font-extrabold text-white font-logo">
+        <h2 className="text-center text-5xl font-extrabold text-white font-logo">
           everbit
         </h2>
         <p className="mt-4 text-center text-xl text-navy-100">
@@ -36,22 +52,24 @@ export default function Login() {
         <div className="bg-white py-12 px-8 shadow-xl sm:rounded-lg">
           <div className="space-y-8">
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-navy-900 mb-2">시작하기</h3>
-              <p className="text-navy-600">카카오 계정으로 간편하게 로그인하세요</p>
+              <h3 className="text-2xl font-bold text-navy-900 mb-2">비트코인 자동 매매하기</h3>
+              <p className="text-navy-600">지금 로그인하고 24시간 자동 수익을 만들어 보세요</p>
             </div>
             
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center space-y-4">
               <button
                 onClick={handleKakaoLogin}
-                className="w-full max-w-md flex justify-center items-center"
+                className="w-64 flex items-center justify-center space-x-2 px-4 py-3 bg-[#FEE500] text-[#3C1E1E] rounded-lg font-medium hover:bg-[#FEE500]/90 transition-colors"
               >
-                <Image
-                  src="/images/kakao_login_button.png"
-                  alt="카카오 로그인"
-                  width={300}
-                  height={45}
-                  className="cursor-pointer"
-                />
+                <KakaoIcon />
+                <span>카카오 로그인</span>
+              </button>
+              <button
+                onClick={handleNaverLogin}
+                className="w-64 flex items-center justify-center space-x-2 px-4 py-3 bg-[#03CF5D] text-white rounded-lg font-medium hover:bg-[#03CF5D]/90 transition-colors"
+              >
+                <NaverIcon />
+                <span>네이버 로그인</span>
               </button>
             </div>
 

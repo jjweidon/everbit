@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes float {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(-10px, -15px) rotate(-3deg) scale(1.05);
+  }
+  50% {
+    transform: translate(10px, -20px) rotate(3deg) scale(1);
+  }
+  75% {
+    transform: translate(-10px, -5px) rotate(-2deg) scale(1.03);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 :root {
   --foreground-rgb: 41, 62, 125;
   --background-start-rgb: 255, 255, 255;
