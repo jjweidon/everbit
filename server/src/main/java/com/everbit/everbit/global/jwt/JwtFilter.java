@@ -1,7 +1,8 @@
 package com.everbit.everbit.global.jwt;
 
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
-import com.everbit.everbit.member.dto.MemberDto;
+import com.everbit.everbit.member.entity.Member;
+import com.everbit.everbit.member.entity.enums.Role;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -66,14 +67,14 @@ public class JwtFilter extends OncePerRequestFilter {
             String username = jwtUtil.getUsername(authorization);
             String role = jwtUtil.getRole(authorization);
             
-            // 사용자 DTO 생성
-            MemberDto memberDto = MemberDto.builder()
+            // Member 엔티티 생성
+            Member member = Member.builder()
                     .username(username)
-                    .role(role)
+                    .role(Role.valueOf(role))
                     .build();
             
             // UserDetails에 회원 정보 객체 담기
-            CustomOAuth2User customOAuth2User = new CustomOAuth2User(memberDto);
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(member);
             
             // 스프링 시큐리티 인증 토큰 생성
             Authentication authToken = new UsernamePasswordAuthenticationToken(

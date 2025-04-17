@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,9 +30,9 @@ public class MemberService {
     private final AccountRepository accountRepository;
 
     @Value("${upbit.encryption.password}")
-    private final String encryptionPassword;
+    private String encryptionPassword;
     @Value("${upbit.encryption.salt}")
-    private final String encryptionSalt;
+    private String encryptionSalt;
 
     @Transactional
     public Member createMember(OAuth2User oAuth2Member) {
@@ -56,8 +57,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public MemberResponse getMemberResponse(String username) {
-        Member member = findMemberByUsername(username);
+    public MemberResponse getMemberResponse(String memberId) {
+        Member member = findMemberByMemberId(memberId);
         return MemberResponse.from(member);
     }
 

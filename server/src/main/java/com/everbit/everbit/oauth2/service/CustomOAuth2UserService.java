@@ -48,9 +48,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             
             Member member = memberService.createMember(oAuth2User);
             log.info("사용자 생성/조회 완료 - ID: {}, username: {}", member.getId(), member.getUsername());
-            
-            MemberDto memberDto = MemberDto.from(member);
-            return new CustomOAuth2User(memberDto);
+
+            return new CustomOAuth2User(member);
         } catch (Exception e) {
             log.error("OAuth2 사용자 정보 로드 중 오류 발생", e);
             throw e;

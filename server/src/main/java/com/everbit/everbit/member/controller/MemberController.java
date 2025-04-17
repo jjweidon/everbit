@@ -9,7 +9,6 @@ import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -21,8 +20,8 @@ public class MemberController {
 
     @GetMapping("/me")
     public ApiResponse<Response> getCurrentMember(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-        String username = oAuth2User.getName();
-        MemberResponse response = memberService.getMemberResponse(username);
+        String memberId = oAuth2User.getId();
+        MemberResponse response = memberService.getMemberResponse(memberId);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
     }
 

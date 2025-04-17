@@ -60,7 +60,6 @@ public class SecurityConfig {
                                "/api/auth/me",
                                "/favicon.ico",
                                "/error").permitAll()
-                // members API 엔드포인트 보안 설정
                 .requestMatchers(HttpMethod.GET, "/api/members/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/members/upbit-keys").authenticated()
                 .requestMatchers("/api/members/**").authenticated()
