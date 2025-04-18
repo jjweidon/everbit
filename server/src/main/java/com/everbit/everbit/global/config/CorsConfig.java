@@ -54,9 +54,6 @@ public class CorsConfig {
                 "Access-Control-Allow-Credentials"
         ));
         
-        // 자격 증명 허용
-        config.setAllowCredentials(true);
-        
         // preflight 요청 캐시 시간 설정 (1시간)
         config.setMaxAge(3600L);
 

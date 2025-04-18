@@ -5,7 +5,9 @@ export const loginApi = {
     kakaoLogin: async (): Promise<void> => {
         try {
             console.log('카카오 로그인 요청 시작');
-            const response = await apiClient.get<ApiResponse<LoginResponse>>('/login/kakao');
+            const response = await apiClient.get<ApiResponse<LoginResponse>>('/login/kakao', {
+                withCredentials: false
+            });
             if (response.data.success && response.data.data.redirectUrl) {
                 window.location.href = response.data.data.redirectUrl;
             }
@@ -17,7 +19,9 @@ export const loginApi = {
     naverLogin: async (): Promise<void> => {
         try {
             console.log('네이버 로그인 요청 시작');
-            const response = await apiClient.get<ApiResponse<LoginResponse>>('/login/naver');
+            const response = await apiClient.get<ApiResponse<LoginResponse>>('/login/naver', {
+                withCredentials: false
+            });
             if (response.data.success && response.data.data.redirectUrl) {
                 window.location.href = response.data.data.redirectUrl;
             }

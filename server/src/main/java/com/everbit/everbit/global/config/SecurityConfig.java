@@ -53,8 +53,7 @@ public class SecurityConfig {
         
         // 인증 없이 접근 가능한 경로 설정
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", 
-                               "/api/login/**", 
+                .requestMatchers("/api/login/**",
                                "/api/oauth2/code/**",
                                "/api/login/oauth2/code/**",
                                "/api/auth/me").permitAll()
