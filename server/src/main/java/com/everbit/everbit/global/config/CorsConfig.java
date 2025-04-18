@@ -27,8 +27,7 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
                 "https://everbit.kr",
-                "https://www.everbit.kr",
-                "https://api.everbit.kr"
+                "https://www.everbit.kr"
         ));
         
         // 허용할 HTTP 메서드 설정
@@ -54,11 +53,22 @@ public class CorsConfig {
                 "Access-Control-Allow-Credentials"
         ));
         
+        // 자격 증명 허용
+        config.setAllowCredentials(true);
+        
         // preflight 요청 캐시 시간 설정 (1시간)
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        
+        // 로그인 API에 대한 특별 CORS 설정
+        CorsConfiguration loginConfig = new CorsConfiguration(config);
+        loginConfig.setAllowCredentials(false);
+        source.registerCorsConfiguration("/api/login/**", loginConfig);
+        
+        // 다른 모든 경로에 대한 기본 CORS 설정
         source.registerCorsConfiguration("/**", config);
+        
         log.info("CORS Configuration has been set up with allowed origin patterns: {}", config.getAllowedOriginPatterns());
         return source;
     }
