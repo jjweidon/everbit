@@ -2,23 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes float {
+@keyframes rotate-scale {
   0% {
-    transform: translate(0px, 0px) rotate(0deg) scale(1);
+    transform: rotate(0deg) scale(1);
   }
-  33% {
-    transform: translate(-20px, -15px) rotate(-3deg) scale(1.05);
-  }
-  66% {
-    transform: translate(35px, -20px) rotate(3deg) scale(1);
+  50% {
+    transform: rotate(720deg) scale(1.2);
   }
   100% {
-    transform: translate(0px, 0px) rotate(0deg) scale(1);
+    transform: rotate(0deg) scale(1);
   }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+.animate-rotate-scale {
+  animation: rotate-scale 5s ease-in-out infinite alternate;
 }
 
 :root {
@@ -54,4 +51,4 @@ body {
   background: linear-gradient(to right, var(--navy-dark), var(--navy-medium));
   -webkit-background-clip: text;
   color: transparent;
-} 
+}

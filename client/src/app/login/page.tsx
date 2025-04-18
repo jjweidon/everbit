@@ -30,7 +30,10 @@ export default function Login() {
     <div className="min-h-screen bg-navy-500 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-2xl mx-auto">
         <div className="flex justify-center">
-          <div className="rounded-full flex items-center justify-center animate-float">
+          <div 
+            className="rounded-full flex items-center justify-center animate-rotate-scale cursor-pointer"
+            onClick={() => router.push('/')}
+          >
             <Image
               src="/logos/logo-icon-2d.webp"
               alt="everbit logo"
