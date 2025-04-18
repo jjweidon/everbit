@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class OAuthService {
     public KakaoLoginResponse kakaoLogin() {
-        return new KakaoLoginResponse("/login/oauth2/code/kakao");
+        return new KakaoLoginResponse("/api/login/oauth2/code/kakao");
     }
 } 

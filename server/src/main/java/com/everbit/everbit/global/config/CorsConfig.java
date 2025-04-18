@@ -19,7 +19,6 @@ public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        log.info("CORS Configuration is being set up");
         CorsConfiguration config = new CorsConfiguration();
         
         // 허용할 출처 패턴 설정
@@ -53,29 +52,16 @@ public class CorsConfig {
                 "Access-Control-Allow-Credentials"
         ));
         
-        // 자격 증명 허용
-        config.setAllowCredentials(true);
-        
         // preflight 요청 캐시 시간 설정 (1시간)
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        
-        // 로그인 API에 대한 특별 CORS 설정
-        CorsConfiguration loginConfig = new CorsConfiguration(config);
-        loginConfig.setAllowCredentials(false);
-        source.registerCorsConfiguration("/api/login/**", loginConfig);
-        
-        // 다른 모든 경로에 대한 기본 CORS 설정
         source.registerCorsConfiguration("/**", config);
-        
-        log.info("CORS Configuration has been set up with allowed origin patterns: {}", config.getAllowedOriginPatterns());
         return source;
     }
 
     @Bean
     public CorsFilter corsFilter() {
-        log.info("CORS Filter is being created");
         return new CorsFilter(corsConfigurationSource());
     }
 }
