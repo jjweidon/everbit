@@ -57,9 +57,7 @@ public class SecurityConfig {
                                "/api/login/**", 
                                "/api/oauth2/code/**",
                                "/api/login/oauth2/code/**",
-                               "/api/auth/me",
-                               "/favicon.ico",
-                               "/error").permitAll()
+                               "/api/auth/me").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/members/upbit-keys").authenticated()
                 .requestMatchers("/api/members/**").authenticated()

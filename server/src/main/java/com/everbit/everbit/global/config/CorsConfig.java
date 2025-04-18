@@ -22,8 +22,8 @@ public class CorsConfig {
         log.info("CORS Configuration is being set up");
         CorsConfiguration config = new CorsConfiguration();
         
-        // 허용할 출처 설정
-        config.setAllowedOrigins(Arrays.asList(
+        // 허용할 출처 패턴 설정
+        config.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
                 "https://everbit.kr",
@@ -62,7 +62,7 @@ public class CorsConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-        log.info("CORS Configuration has been set up with allowed origins: {}", config.getAllowedOrigins());
+        log.info("CORS Configuration has been set up with allowed origin patterns: {}", config.getAllowedOriginPatterns());
         return source;
     }
 
