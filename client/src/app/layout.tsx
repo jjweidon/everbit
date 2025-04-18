@@ -1,15 +1,6 @@
 import type { Metadata } from 'next';
-import { Noto_Sans_KR } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
-
-const notoSansKr = Noto_Sans_KR({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  display: 'swap',
-  variable: '--font-noto-sans-kr',
-  preload: true,
-});
 
 const logoFont = localFont({
   src: '../../public/fonts/logo_font.ttf',
@@ -31,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={`${notoSansKr.variable} ${logoFont.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${logoFont.variable}`}>
       <head>
         <meta name="color-scheme" content="light only" />
       </head>

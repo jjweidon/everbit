@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Itim&family=Noto+Sans+KR:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,9 +21,8 @@
 }
 
 :root {
-  --foreground-rgb: 41, 62, 125;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
   --navy-light: #E6E8F0;
   --navy-medium: #293E7D;
   --navy-dark: #19254B;
@@ -29,13 +30,8 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  font-family: var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: rgb(var(--background-rgb));
+  font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* 네이비 강조 효과 */
