@@ -1,7 +1,6 @@
 package com.everbit.everbit.oauth2.dto;
 
 import com.everbit.everbit.member.entity.Member;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
@@ -9,16 +8,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-@RequiredArgsConstructor
-public class CustomOAuth2User implements OAuth2User {
-    private final Member member;
-
+public record CustomOAuth2User(Member member) implements OAuth2User {
     @Override
     public Map<String, Object> getAttributes() {
         return Map.of(
-            "id", member.getId(),
-            "username", member.getUsername(),
-            "role", member.getRole()
+                "id", member.getId(),
+                "username", member.getUsername(),
+                "role", member.getRole()
         );
     }
 
@@ -43,7 +39,4 @@ public class CustomOAuth2User implements OAuth2User {
         return member.getId();
     }
 
-    public Member getMember() {
-        return member;
-    }
 }

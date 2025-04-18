@@ -37,7 +37,7 @@ public class MemberService {
     @Transactional
     public Member createMember(OAuth2User oAuth2Member) {
         OAuth2Response oAuth2Response = new KakaoResponse(oAuth2Member.getAttributes());
-        String username = oAuth2Response.getName()+" "+oAuth2Response.getProviderId();
+        String username = oAuth2Response.getName() + oAuth2Response.getProviderId();
         
         // 이미 존재하는 사용자는 새로 생성하지 않고 기존 정보 반환
         Optional<Member> existingMember = memberRepository.findByUsername(username);
