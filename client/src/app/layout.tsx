@@ -31,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable} ${logoFont.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${notoSansKr.variable} ${logoFont.variable}`}>
+      <head>
+        <meta name="color-scheme" content="light only" />
+      </head>
       <body className="font-sans bg-white text-navy-800">
         {children}
       </body>

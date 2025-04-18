@@ -27,14 +27,6 @@
   --navy-dark: #19254B;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 25, 25, 25;
-    --background-end-rgb: 25, 25, 25;
-  }
-}
-
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
