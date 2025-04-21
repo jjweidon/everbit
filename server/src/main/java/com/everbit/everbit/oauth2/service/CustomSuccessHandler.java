@@ -38,6 +38,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
 
         String token = jwtUtil.createJwt(username, role, 60*60*2L);
+        log.info("Authorization 토큰 응답, {}", token);
 
         response.addCookie(createCookie("Authorization", token));
         response.sendRedirect("https://www.everbit.kr/");
