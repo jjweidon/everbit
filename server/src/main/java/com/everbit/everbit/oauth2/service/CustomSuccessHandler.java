@@ -23,73 +23,34 @@ import java.util.Iterator;
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    
-    // 토큰 유효기간 설정 (60시간)
-    private static final long JWT_EXPIRATION_MS = 60 * 60 * 60 * 1000L; // 밀리초 단위
-    private static final int COOKIE_MAX_AGE_SECONDS = 2 * 60 * 60; // 초 단위
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        try {
-            log.info("OAuth2 인증 성공 처리");
-            
-            // OAuth2User 정보 추출
-            if (!(authentication.getPrincipal() instanceof CustomOAuth2User)) {
-                log.error("인증 객체가 CustomOAuth2User 타입이 아닙니다: {}", authentication.getPrincipal().getClass().getName());
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다.");
-                return;
-            }
-            
-            CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
-            String username = customUserDetails.getName();
-            log.info("인증된 사용자: {}", username);
-            
-            // 권한 정보 추출
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-            if (authorities.isEmpty()) {
-                log.warn("사용자 권한이 없습니다.");
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
-                return;
-            }
-            
-            Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-            GrantedAuthority auth = iterator.next();
-            String role = auth.getAuthority();
-            
-            // JWT 토큰 생성 (밀리초 단위로 유효기간 전달)
-            String token = jwtUtil.createJwt(username, role, JWT_EXPIRATION_MS);
-            
-            // 쿠키 생성 및 설정
-            Cookie cookie = createCookie("Authorization", token);
-            response.addCookie(cookie);
-            
-            // JS 접근 가능한 추가 쿠키 설정 (인증 상태 확인용)
-            Cookie authStatusCookie = new Cookie("AuthStatus", "loggedIn");
-            authStatusCookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 7,200초 (2시간)
-            authStatusCookie.setSecure(true); // HTTPS에서만 전송
-            authStatusCookie.setPath("/");
-            authStatusCookie.setHttpOnly(false); // 자바스크립트에서 접근 가능하게 설정
-            authStatusCookie.setDomain("everbit.kr"); // 서브도메인 간 쿠키 공유를 위한 설정
-            response.addCookie(authStatusCookie);
-            
-            // 클라이언트 리다이렉트
-            String redirectUrl = "https://www.everbit.kr/"; // 메인페이지로 직접 리다이렉트
-            log.info("인증 성공. 리다이렉트: {}", redirectUrl);
-            response.sendRedirect(redirectUrl);
-        } catch (Exception e) {
-            log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다.");
-        }
+
+        //OAuth2User
+        CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
+
+        String username = customUserDetails.getName();
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+        GrantedAuthority auth = iterator.next();
+        String role = auth.getAuthority();
+
+        String token = jwtUtil.createJwt(username, role, 60*60*2L);
+
+        response.addCookie(createCookie("Authorization", token));
+        response.sendRedirect("https://www.everbit.kr/");
     }
 
     private Cookie createCookie(String key, String value) {
+
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS); // 7,200초 (2시간)
-        cookie.setSecure(true); // HTTPS에서만 전송
+        cookie.setMaxAge(60*60*2);
+        cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setHttpOnly(true); // 자바스크립트에서 접근 불가
-        cookie.setDomain("everbit.kr"); // 서브도메인 간 쿠키 공유를 위한 설정
-        
+        cookie.setHttpOnly(true);
+
         return cookie;
     }
 }
