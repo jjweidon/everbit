@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'api.everbit.kr';
 
 export const apiClient = axios.create({
-    baseURL: `https://${API_HOST}/api`,
+    baseURL: `${API_HOST}`,
     headers: {
         'Content-Type': 'application/json',
     }
