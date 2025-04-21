@@ -1,6 +1,3 @@
-import { apiClient } from './config';
-import { ApiResponse, LoginResponse } from './dto/ApiResponse';
-
 export const loginApi = {
     kakaoLogin: (): void => {
         try {

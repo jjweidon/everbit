@@ -2,6 +2,7 @@ package com.everbit.everbit.global.exception;
 
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.member.exception.MemberException;
+import org.apache.kafka.common.errors.AuthorizationException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -29,6 +30,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ApiResponse<Object> handleAuthenticationException(AuthenticationException ex) {
-        return ApiResponse.of(CustomHttpStatus.UNAUTHORIZED);
+        return ApiResponse.of(CustomHttpStatus.UNAUTHENTICATED);
+    }
+
+    @ExceptionHandler(AuthorizationException.class)
+    public ApiResponse<Object> handleAuthorizationException(AuthorizationException ex) {
+        return ApiResponse.of(CustomHttpStatus.FORBIDDEN);
     }
 }
