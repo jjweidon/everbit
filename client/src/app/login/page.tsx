@@ -6,24 +6,135 @@ import { loginApi } from '@/api/login';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import KakaoIcon from '@/components/icons/KakaoIcon';
 import NaverIcon from '@/components/icons/NaverIcon';
+import { useEffect } from 'react';
 
 export default function Login() {
   const router = useRouter();
 
+  useEffect(() => {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      // 인증 상태 확인
+      const authStatus = localStorage.getItem('AuthStatus');
+      const authToken = localStorage.getItem('Authorization');
+      console.log('로그인 페이지 로드 - authStatus:', authStatus);
+      console.log('로그인 페이지 로드 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
+      
+      // 인증 상태가 'loggedIn'이거나 유효한 인증 토큰이 있는 경우 대시보드로 리디렉션
+      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+        console.log('인증된 사용자 감지, 대시보드로 이동합니다.');
+        // 지연 시간을 두어 리디렉션 실행
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 100);
+      }
+    }
+  }, [router]);
+
   const handleKakaoLogin = async () => {
+    console.log('==== 카카오 로그인 핸들러 시작 ====');
     try {
+      console.log('카카오 로그인 드가자 로그인 페이지에서');
+      
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') {
+        console.log('브라우저 환경이 아닙니다. 로그인을 진행할 수 없습니다.');
+        return;
+      }
+      
+      // 인증 상태 확인
+      const authStatus = localStorage.getItem('AuthStatus');
+      const authToken = localStorage.getItem('Authorization');
+      console.log('카카오 로그인 버튼 클릭 - authStatus:', authStatus);
+      console.log('카카오 로그인 버튼 클릭 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
+      
+      // 이미 인증된 사용자는 대시보드로 리디렉션
+      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+        console.log('이미 인증된 사용자, 대시보드로 이동');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 100);
+        return;
+      }
+      
+      // 로그인 진행 중인지 확인하여 중복 요청 방지
+      const isLoggingIn = localStorage.getItem('isLoggingIn');
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      const now = Date.now();
+      
+      // 마지막 로그인 시도가 10초 이내에 있었으면 새 요청을 보내지 않음
+      if (isLoggingIn === 'true' && loginTimestamp && (now - parseInt(loginTimestamp)) < 10000) {
+        console.log('로그인 요청이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      // 로그인 진행 상태 저장
+      localStorage.setItem('isLoggingIn', 'true');
+      localStorage.setItem('loginTimestamp', now.toString());
+      
+      console.log('=== 카카오 로그인 API 호출 직전 ===');
       await loginApi.kakaoLogin();
+      console.log('=== 카카오 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
     } catch (error) {
       console.error('카카오 로그인 에러:', error);
+      // 로그인 시도 종료 표시
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggingIn');
+      }
     }
+    console.log('==== 카카오 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
   };
 
   const handleNaverLogin = async () => {
+    console.log('==== 네이버 로그인 핸들러 시작 ====');
     try {
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') {
+        console.log('브라우저 환경이 아닙니다. 로그인을 진행할 수 없습니다.');
+        return;
+      }
+      
+      // 인증 상태 확인
+      const authStatus = localStorage.getItem('AuthStatus');
+      const authToken = localStorage.getItem('Authorization');
+      console.log('네이버 로그인 버튼 클릭 - authStatus:', authStatus);
+      console.log('네이버 로그인 버튼 클릭 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
+      
+      // 이미 인증된 사용자는 대시보드로 리디렉션
+      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+        console.log('이미 인증된 사용자, 대시보드로 이동');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 100);
+        return;
+      }
+      
+      // 로그인 진행 중인지 확인하여 중복 요청 방지
+      const isLoggingIn = localStorage.getItem('isLoggingIn');
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      const now = Date.now();
+      
+      // 마지막 로그인 시도가 10초 이내에 있었으면 새 요청을 보내지 않음
+      if (isLoggingIn === 'true' && loginTimestamp && (now - parseInt(loginTimestamp)) < 10000) {
+        console.log('로그인 요청이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      // 로그인 진행 상태 저장
+      localStorage.setItem('isLoggingIn', 'true');
+      localStorage.setItem('loginTimestamp', now.toString());
+      
+      console.log('=== 네이버 로그인 API 호출 직전 ===');
       await loginApi.naverLogin();
+      console.log('=== 네이버 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
     } catch (error) {
       console.error('네이버 로그인 에러:', error);
+      // 로그인 시도 종료 표시
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggingIn');
+      }
     }
+    console.log('==== 네이버 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
   };
 
   return (

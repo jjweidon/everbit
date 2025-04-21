@@ -20,10 +20,13 @@ export default function Dashboard() {
   useEffect(() => {
     const checkAuthAndUpbitConnection = async () => {
       try {
+        console.log('로그인 상태 확인 필요');
         // 1. 로그인 상태 확인
         const authStatus = localStorage.getItem('AuthStatus');
+        console.log('authStatus', authStatus);
         if (!authStatus || authStatus !== 'authenticated') {
           // 로그인 페이지로 이동
+          console.log('인증 필요해서 로그인 페이지로 이동');
           router.push('/login');
           return;
         }
@@ -33,6 +36,8 @@ export default function Dashboard() {
         if (!memberInfo.success) {
           throw new Error('사용자 정보를 가져오는데 실패했습니다.');
         }
+
+        console.log('업비트 연동 상태 확인 필요: memberInfo', memberInfo);
 
         // 3. 업비트 연동 상태 확인
         if (!memberInfo.data?.isUpbitConnected) {
