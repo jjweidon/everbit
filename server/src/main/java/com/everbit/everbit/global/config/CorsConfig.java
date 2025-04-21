@@ -28,32 +28,12 @@ public class CorsConfig {
                 "https://everbit.kr",
                 "https://www.everbit.kr"
         ));
-        
-        // 허용할 HTTP 메서드 설정
-        config.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
-        ));
-        
-        // 허용할 헤더 설정
-        config.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
-        ));
-        
-        // 노출할 헤더 설정
-        config.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Credentials"
-        ));
-        
-        // preflight 요청 캐시 시간 설정 (1시간)
-        config.setMaxAge(3600L);
+
+        config.addAllowedMethod("*");
+        config.addAllowedHeader("*");
+        config.addExposedHeader("Set-Cookie");
+        config.addExposedHeader("Authorization");
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
