@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
  */
 export function useAuth(requireAuth = true) {
   const router = useRouter();
-  const { token, status, isTokenValid } = useAuthStore();
+  const { token, isTokenValid } = useAuthStore();
 
   useEffect(() => {
     // 인증이 필요하지 않은 페이지(예: 메인 페이지, 로그인 페이지)에서는 체크 건너뜀
@@ -19,18 +19,17 @@ export function useAuth(requireAuth = true) {
 
     // 인증 상태 확인
     const checkAuth = () => {
-      if (status !== 'authenticated' || !token || !isTokenValid()) {
+      if (!token || !isTokenValid()) {
         console.log('인증되지 않은 상태: 로그인 페이지로 이동');
         router.push('/login');
       }
     };
 
     checkAuth();
-  }, [requireAuth, router, token, status, isTokenValid]);
+  }, [requireAuth, router, token, isTokenValid]);
 
   return { 
-    isAuthenticated: status === 'authenticated' && !!token && isTokenValid(),
+    isAuthenticated: !!token && isTokenValid(),
     token,
-    status
   };
 } 

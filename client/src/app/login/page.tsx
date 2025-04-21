@@ -8,22 +8,15 @@ import KakaoIcon from '@/components/icons/KakaoIcon';
 import NaverIcon from '@/components/icons/NaverIcon';
 import { useEffect } from 'react';
 import { useAuthStore, getExpirationFromToken } from '@/store/authStore';
-import { debugToken, debugCurrentUrl } from '@/utils/debugUtils';
 
 export default function Login() {
   const router = useRouter();
-  const { token, status, isTokenValid, login, logout } = useAuthStore();
+  const { token, isTokenValid } = useAuthStore();
 
   useEffect(() => {
     // 디버깅: 페이지 로드 시 URL과 헤더 정보 출력
     if (typeof window !== 'undefined') {
       console.log('-------------- 로그인 페이지 로드 디버깅 --------------');
-      
-      // URL 디버깅
-      debugCurrentUrl();
-      
-      // 토큰 디버깅
-      debugToken();
       
       // 로컬 스토리지 상태 확인
       console.log('로컬 스토리지 상태:');
@@ -32,32 +25,12 @@ export default function Login() {
       
       // Zustand 스토어 상태 확인
       console.log('Zustand 상태:');
-      console.log('  status:', status);
       console.log('  token:', token ? '토큰 있음' : '토큰 없음');
       console.log('  isTokenValid:', token ? isTokenValid() : false);
       
-      // 디버깅용 API 호출로 현재 세션 헤더 확인
-      fetch('/api/debug-headers', {
-        method: 'GET',
-        credentials: 'include'
-      })
-      .then(response => {
-        console.log('응답 헤더:');
-        response.headers.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-        return response.json();
-      })
-      .then(data => {
-        console.log('응답 데이터:', data);
-      })
-      .catch(error => {
-        console.error('헤더 확인 중 오류:', error);
-      });
-      
       console.log('----------------------------------------------------');
     }
-  }, [status, token, isTokenValid]);
+  }, [token, isTokenValid]);
 
   useEffect(() => {
     // 클라이언트 사이드에서만 실행
@@ -70,21 +43,6 @@ export default function Login() {
         console.log('----- 로그인 성공 감지: 토큰 확인 -----');
         console.log('토큰 존재 확인: 토큰 있음');
         console.log('authStatus:', authStatus);
-        
-        try {
-          // 토큰 정보 디코딩
-          const tokenParts = authToken.split('.');
-          if (tokenParts.length === 3) {
-            const header = JSON.parse(atob(tokenParts[0]));
-            const payload = JSON.parse(atob(tokenParts[1]));
-            
-            console.log('토큰 헤더:', header);
-            console.log('토큰 페이로드:', payload);
-            console.log('만료 시간:', new Date(payload.exp * 1000).toLocaleString());
-          }
-        } catch (e) {
-          console.error('토큰 디코딩 오류:', e);
-        }
         
         // 인증 상태가 'loggedIn'이거나 유효한 인증 토큰이 있는 경우 대시보드로 리디렉션
         if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
@@ -113,28 +71,13 @@ export default function Login() {
       }
       
       // 현재 상태 확인
-      if (status === 'authenticated' && token && isTokenValid()) {
+      if (token && isTokenValid()) {
         console.log('이미 인증된 사용자, 대시보드로 이동');
         setTimeout(() => {
           router.push('/dashboard');
         }, 100);
         return;
       }
-      
-      // API 호출 전 헤더 로깅
-      console.log('카카오 로그인 요청 전 헤더:');
-      fetch('/api/debug-headers', {
-        method: 'GET',
-        credentials: 'include'
-      })
-      .then(response => {
-        response.headers.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-      })
-      .catch(error => {
-        console.error('헤더 확인 중 오류:', error);
-      });
       
       console.log('=== 카카오 로그인 API 호출 직전 ===');
       await loginApi.kakaoLogin();
@@ -155,28 +98,13 @@ export default function Login() {
       }
       
       // 현재 상태 확인
-      if (status === 'authenticated' && token && isTokenValid()) {
+      if (token && isTokenValid()) {
         console.log('이미 인증된 사용자, 대시보드로 이동');
         setTimeout(() => {
           router.push('/dashboard');
         }, 100);
         return;
       }
-      
-      // API 호출 전 헤더 로깅
-      console.log('네이버 로그인 요청 전 헤더:');
-      fetch('/api/debug-headers', {
-        method: 'GET',
-        credentials: 'include'
-      })
-      .then(response => {
-        response.headers.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-      })
-      .catch(error => {
-        console.error('헤더 확인 중 오류:', error);
-      });
       
       console.log('=== 네이버 로그인 API 호출 직전 ===');
       await loginApi.naverLogin();
