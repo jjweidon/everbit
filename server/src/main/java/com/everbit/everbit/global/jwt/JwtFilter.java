@@ -22,8 +22,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -47,6 +47,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // Authorization 쿠키가 없는 경우
         if (authorization == null) {
+            log.info("Authorization NULL");
             filterChain.doFilter(request, response);
             return;
         }
