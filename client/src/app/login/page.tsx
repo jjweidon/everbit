@@ -1,32 +1,102 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { loginApi } from '@/api/login';
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import KakaoIcon from '@/components/icons/KakaoIcon';
 import NaverIcon from '@/components/icons/NaverIcon';
 import { useEffect } from 'react';
+import { useAuthStore, getExpirationFromToken } from '@/store/authStore';
+import { debugToken, debugCurrentUrl } from '@/utils/debugUtils';
 
 export default function Login() {
   const router = useRouter();
+  const { token, status, isTokenValid, login, logout } = useAuthStore();
+
+  useEffect(() => {
+    // 디버깅: 페이지 로드 시 URL과 헤더 정보 출력
+    if (typeof window !== 'undefined') {
+      console.log('-------------- 로그인 페이지 로드 디버깅 --------------');
+      
+      // URL 디버깅
+      debugCurrentUrl();
+      
+      // 토큰 디버깅
+      debugToken();
+      
+      // 로컬 스토리지 상태 확인
+      console.log('로컬 스토리지 상태:');
+      console.log('  AuthStatus:', localStorage.getItem('AuthStatus'));
+      console.log('  Authorization:', localStorage.getItem('Authorization') ? '토큰 있음' : '토큰 없음');
+      
+      // Zustand 스토어 상태 확인
+      console.log('Zustand 상태:');
+      console.log('  status:', status);
+      console.log('  token:', token ? '토큰 있음' : '토큰 없음');
+      console.log('  isTokenValid:', token ? isTokenValid() : false);
+      
+      // 디버깅용 API 호출로 현재 세션 헤더 확인
+      fetch('/api/debug-headers', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        console.log('응답 헤더:');
+        response.headers.forEach((value, key) => {
+          console.log(`  ${key}: ${value}`);
+        });
+        return response.json();
+      })
+      .then(data => {
+        console.log('응답 데이터:', data);
+      })
+      .catch(error => {
+        console.error('헤더 확인 중 오류:', error);
+      });
+      
+      console.log('----------------------------------------------------');
+    }
+  }, [status, token, isTokenValid]);
 
   useEffect(() => {
     // 클라이언트 사이드에서만 실행
     if (typeof window !== 'undefined') {
-      // 인증 상태 확인
       const authStatus = localStorage.getItem('AuthStatus');
       const authToken = localStorage.getItem('Authorization');
-      console.log('로그인 페이지 로드 - authStatus:', authStatus);
-      console.log('로그인 페이지 로드 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
       
-      // 인증 상태가 'loggedIn'이거나 유효한 인증 토큰이 있는 경우 대시보드로 리디렉션
-      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
-        console.log('인증된 사용자 감지, 대시보드로 이동합니다.');
-        // 지연 시간을 두어 리디렉션 실행
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 100);
+      // 로그인 후 토큰이 있는지 확인
+      if (authToken) {
+        console.log('----- 로그인 성공 감지: 토큰 확인 -----');
+        console.log('토큰 존재 확인: 토큰 있음');
+        console.log('authStatus:', authStatus);
+        
+        try {
+          // 토큰 정보 디코딩
+          const tokenParts = authToken.split('.');
+          if (tokenParts.length === 3) {
+            const header = JSON.parse(atob(tokenParts[0]));
+            const payload = JSON.parse(atob(tokenParts[1]));
+            
+            console.log('토큰 헤더:', header);
+            console.log('토큰 페이로드:', payload);
+            console.log('만료 시간:', new Date(payload.exp * 1000).toLocaleString());
+          }
+        } catch (e) {
+          console.error('토큰 디코딩 오류:', e);
+        }
+        
+        // 인증 상태가 'loggedIn'이거나 유효한 인증 토큰이 있는 경우 대시보드로 리디렉션
+        if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+          console.log('인증된 사용자 감지, 대시보드로 이동합니다.');
+          // 지연 시간을 두어 리디렉션 실행
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 100);
+        }
+      } else {
+        console.log('로그인 페이지 로드 - authStatus:', authStatus);
+        console.log('로그인 페이지 로드 - authToken: 토큰 없음');
       }
     }
   }, [router]);
@@ -42,14 +112,8 @@ export default function Login() {
         return;
       }
       
-      // 인증 상태 확인
-      const authStatus = localStorage.getItem('AuthStatus');
-      const authToken = localStorage.getItem('Authorization');
-      console.log('카카오 로그인 버튼 클릭 - authStatus:', authStatus);
-      console.log('카카오 로그인 버튼 클릭 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
-      
-      // 이미 인증된 사용자는 대시보드로 리디렉션
-      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+      // 현재 상태 확인
+      if (status === 'authenticated' && token && isTokenValid()) {
         console.log('이미 인증된 사용자, 대시보드로 이동');
         setTimeout(() => {
           router.push('/dashboard');
@@ -57,30 +121,26 @@ export default function Login() {
         return;
       }
       
-      // 로그인 진행 중인지 확인하여 중복 요청 방지
-      const isLoggingIn = localStorage.getItem('isLoggingIn');
-      const loginTimestamp = localStorage.getItem('loginTimestamp');
-      const now = Date.now();
-      
-      // 마지막 로그인 시도가 10초 이내에 있었으면 새 요청을 보내지 않음
-      if (isLoggingIn === 'true' && loginTimestamp && (now - parseInt(loginTimestamp)) < 10000) {
-        console.log('로그인 요청이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.');
-        return;
-      }
-      
-      // 로그인 진행 상태 저장
-      localStorage.setItem('isLoggingIn', 'true');
-      localStorage.setItem('loginTimestamp', now.toString());
+      // API 호출 전 헤더 로깅
+      console.log('카카오 로그인 요청 전 헤더:');
+      fetch('/api/debug-headers', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        response.headers.forEach((value, key) => {
+          console.log(`  ${key}: ${value}`);
+        });
+      })
+      .catch(error => {
+        console.error('헤더 확인 중 오류:', error);
+      });
       
       console.log('=== 카카오 로그인 API 호출 직전 ===');
       await loginApi.kakaoLogin();
       console.log('=== 카카오 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
     } catch (error) {
       console.error('카카오 로그인 에러:', error);
-      // 로그인 시도 종료 표시
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggingIn');
-      }
     }
     console.log('==== 카카오 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
   };
@@ -94,14 +154,8 @@ export default function Login() {
         return;
       }
       
-      // 인증 상태 확인
-      const authStatus = localStorage.getItem('AuthStatus');
-      const authToken = localStorage.getItem('Authorization');
-      console.log('네이버 로그인 버튼 클릭 - authStatus:', authStatus);
-      console.log('네이버 로그인 버튼 클릭 - authToken:', authToken ? '토큰 있음' : '토큰 없음');
-      
-      // 이미 인증된 사용자는 대시보드로 리디렉션
-      if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
+      // 현재 상태 확인
+      if (status === 'authenticated' && token && isTokenValid()) {
         console.log('이미 인증된 사용자, 대시보드로 이동');
         setTimeout(() => {
           router.push('/dashboard');
@@ -109,30 +163,26 @@ export default function Login() {
         return;
       }
       
-      // 로그인 진행 중인지 확인하여 중복 요청 방지
-      const isLoggingIn = localStorage.getItem('isLoggingIn');
-      const loginTimestamp = localStorage.getItem('loginTimestamp');
-      const now = Date.now();
-      
-      // 마지막 로그인 시도가 10초 이내에 있었으면 새 요청을 보내지 않음
-      if (isLoggingIn === 'true' && loginTimestamp && (now - parseInt(loginTimestamp)) < 10000) {
-        console.log('로그인 요청이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.');
-        return;
-      }
-      
-      // 로그인 진행 상태 저장
-      localStorage.setItem('isLoggingIn', 'true');
-      localStorage.setItem('loginTimestamp', now.toString());
+      // API 호출 전 헤더 로깅
+      console.log('네이버 로그인 요청 전 헤더:');
+      fetch('/api/debug-headers', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        response.headers.forEach((value, key) => {
+          console.log(`  ${key}: ${value}`);
+        });
+      })
+      .catch(error => {
+        console.error('헤더 확인 중 오류:', error);
+      });
       
       console.log('=== 네이버 로그인 API 호출 직전 ===');
       await loginApi.naverLogin();
       console.log('=== 네이버 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
     } catch (error) {
       console.error('네이버 로그인 에러:', error);
-      // 로그인 시도 종료 표시
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggingIn');
-      }
     }
     console.log('==== 네이버 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
   };

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
 import { useRouter } from 'next/navigation';
 import { memberApi } from '@/api/member';
+import { useAuth } from '@/hooks/useAuth';
 
 const formatNumber = (num?: number) => {
   if (num === undefined) return '0';
@@ -16,37 +17,27 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [account, setAccount] = useState<UpbitAccount | null>(null);
   const [summary, setSummary] = useState<AccountSummary | null>(null);
+  const { isAuthenticated, token } = useAuth();
 
   useEffect(() => {
-    const checkAuthAndUpbitConnection = async () => {
-      try {
-        console.log('로그인 상태 확인 필요');
-        // 1. 로그인 상태 확인
-        const authStatus = localStorage.getItem('AuthStatus');
-        console.log('authStatus', authStatus);
-        if (!authStatus || authStatus !== 'authenticated') {
-          // 로그인 페이지로 이동
-          console.log('인증 필요해서 로그인 페이지로 이동');
-          router.push('/login');
-          return;
-        }
+    const checkUpbitConnection = async () => {
+      if (!isAuthenticated) {
+        return;
+      }
 
-        // 2. 사용자 정보 조회
+      try {
         const memberInfo = await memberApi.getMemberInfo();
         if (!memberInfo.success) {
           throw new Error('사용자 정보를 가져오는데 실패했습니다.');
         }
 
-        console.log('업비트 연동 상태 확인 필요: memberInfo', memberInfo);
+        console.log('업비트 연동 상태 확인: memberInfo', memberInfo);
 
-        // 3. 업비트 연동 상태 확인
         if (!memberInfo.data?.isUpbitConnected) {
-          // 업비트 키가 등록되지 않은 경우
           router.push('/upbit-api-key');
           return;
         }
 
-        // 4. 모든 조건이 충족되면 대시보드 표시
         setIsLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
@@ -54,12 +45,24 @@ export default function Dashboard() {
       }
     };
 
-    checkAuthAndUpbitConnection();
-  }, [router]);
+    checkUpbitConnection();
+  }, [router, isAuthenticated, token]);
 
   if (isLoading || error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-navy-500 to-navy-700">
+        {error && (
+          <div className="flex items-center justify-center h-screen">
+            <div className="text-white bg-red-600 px-6 py-4 rounded-lg">
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+        {isLoading && (
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          </div>
+        )}
       </div>
     );
   }
