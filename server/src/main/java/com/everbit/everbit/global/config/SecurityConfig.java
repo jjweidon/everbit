@@ -2,6 +2,7 @@ package com.everbit.everbit.global.config;
 
 import com.everbit.everbit.global.jwt.JwtFilter;
 import com.everbit.everbit.global.jwt.JwtUtil;
+import com.everbit.everbit.member.repository.MemberRepository;
 import com.everbit.everbit.oauth2.service.CustomOAuth2UserService;
 import com.everbit.everbit.oauth2.service.CustomSuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final JwtUtil jwtUtil;
+    private final MemberRepository memberRepository;
     private final CorsConfig corsConfig;
 
     @Bean
@@ -34,7 +36,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtFilter(jwtUtil, memberRepository), UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 로그인 설정
         http
