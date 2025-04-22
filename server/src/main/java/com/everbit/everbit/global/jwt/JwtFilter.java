@@ -40,6 +40,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 if (cookie.getName().equals("Authorization")) {
                     authorization = cookie.getValue();
                 }
+
             }
         }
 
@@ -62,8 +63,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         //토큰에서 username과 role 획득
         String username = jwtUtil.getUsername(token);
-        String role = jwtUtil.getRole(token);
-
+        
         //memberDto를 생성하여 값 set - 토큰에서 추출한 role 사용
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(()-> MemberException.notFound(username));
@@ -77,16 +77,5 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
-    }
-    
-    /**
-     * 쿠키를 제거하는 유틸리티 메서드
-     */
-    private Cookie createExpiredCookie(String key) {
-        Cookie cookie = new Cookie(key, null);
-        cookie.setMaxAge(0); // 즉시 만료
-        cookie.setPath("/");
-        cookie.setDomain("everbit.kr");
-        return cookie;
     }
 }

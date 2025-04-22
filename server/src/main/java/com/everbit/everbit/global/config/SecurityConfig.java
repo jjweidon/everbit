@@ -41,11 +41,9 @@ public class SecurityConfig {
         // OAuth2 로그인 설정
         http
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
                         .authorizationEndpoint(endpoint -> 
                             endpoint.baseUri("/api/login")
-                        )
-                        .redirectionEndpoint(endpoint ->
-                                endpoint.baseUri("/api/login/oauth2/code/*")
                         )
                         .userInfoEndpoint(userInfo -> 
                             userInfo.userService(customOAuth2UserService)
