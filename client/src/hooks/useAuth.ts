@@ -1,35 +1,46 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { authStore } from '@/store/authStore';
 
 /**
- * 인증이 필요한 페이지에서 사용하는 훅
- * 인증되지 않은 사용자를 로그인 페이지로 리디렉션
- * @param requireAuth - 인증이 필요한지 여부 (기본값: true)
+ * 인증 관련 React 훅
+ * - 라우팅 처리
+ * - 인증이 필요한 페이지 보호
+ * - authStore와 React 컴포넌트 연동
  */
-export function useAuth(requireAuth = true) {
+export const useAuth = (options: { required?: boolean } = {}) => {
+  const { required = false } = options;
   const router = useRouter();
-  const { token, isTokenValid } = useAuthStore();
+  const auth = authStore();  // Zustand store를 구독
 
   useEffect(() => {
-    // 인증이 필요하지 않은 페이지(예: 메인 페이지, 로그인 페이지)에서는 체크 건너뜀
-    if (!requireAuth) {
-      return;
-    }
-
-    // 인증 상태 확인
-    const checkAuth = () => {
-      if (!token || !isTokenValid()) {
-        console.log('인증되지 않은 상태: 로그인 페이지로 이동');
-        router.push('/login');
+    const checkAuth = async () => {
+      if (!auth.isAuthenticated) {
+        try {
+          await auth.fetchUser();
+        } catch (error) {
+          if (required) {
+            router.push('/login');
+          }
+        }
       }
     };
-
+    
     checkAuth();
-  }, [requireAuth, router, token, isTokenValid]);
+  }, [required, router, auth.isAuthenticated, auth.fetchUser]);
 
-  return { 
-    isAuthenticated: !!token && isTokenValid(),
-    token,
+  return {
+    ...auth,  // authStore의 모든 상태와 메서드
+    
+    // 라우팅 유틸리티
+    redirectToLogin: () => router.push('/login'),
+    redirectToDashboard: () => router.push('/dashboard')
   };
-} 
+};
+
+/**
+ * 인증이 필요한 페이지를 위한 훅
+ */
+export const useRequireAuth = () => {
+  return useAuth({ required: true });
+}; 

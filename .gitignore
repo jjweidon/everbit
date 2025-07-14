@@ -60,24 +60,6 @@ client/yarn-debug.log*
 client/yarn-error.log*
 client/next-env.d.ts
 
-# 알고리즘 (Python)
-algorithm/__pycache__/
-algorithm/*.py[cod]
-algorithm/*$py.class
-algorithm/.env
-algorithm/.venv/
-algorithm/venv/
-algorithm/ENV/
-algorithm/env/
-algorithm/.pytest_cache/
-algorithm/htmlcov/
-algorithm/.coverage
-algorithm/coverage/
-algorithm/*.egg-info/
-algorithm/dist/
-algorithm/build/
-.venv/
-
 # 데이터 파일
 data/
 *.csv

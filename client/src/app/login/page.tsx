@@ -1,119 +1,35 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-import { loginApi } from '@/api/login';
-import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
-import KakaoIcon from '@/components/icons/KakaoIcon';
-import NaverIcon from '@/components/icons/NaverIcon';
 import { useEffect } from 'react';
-import { useAuthStore, getExpirationFromToken } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { FaChartLine, FaRobot, FaHistory } from 'react-icons/fa';
+import LoginButton from '@/components/LoginButton';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Login() {
   const router = useRouter();
-  const { token, isTokenValid } = useAuthStore();
+  const { isAuthenticated, fetchUser } = useAuth();
 
   useEffect(() => {
-    // 디버깅: 페이지 로드 시 URL과 헤더 정보 출력
-    if (typeof window !== 'undefined') {
-      console.log('-------------- 로그인 페이지 로드 디버깅 --------------');
-      
-      // 로컬 스토리지 상태 확인
-      console.log('로컬 스토리지 상태:');
-      console.log('  AuthStatus:', localStorage.getItem('AuthStatus'));
-      console.log('  Authorization:', localStorage.getItem('Authorization') ? '토큰 있음' : '토큰 없음');
-      
-      // Zustand 스토어 상태 확인
-      console.log('Zustand 상태:');
-      console.log('  token:', token ? '토큰 있음' : '토큰 없음');
-      console.log('  isTokenValid:', token ? isTokenValid() : false);
-      
-      console.log('----------------------------------------------------');
-    }
-  }, [token, isTokenValid]);
-
-  useEffect(() => {
-    // 클라이언트 사이드에서만 실행
-    if (typeof window !== 'undefined') {
-      const authStatus = localStorage.getItem('AuthStatus');
-      const authToken = localStorage.getItem('Authorization');
-      
-      // 로그인 후 토큰이 있는지 확인
-      if (authToken) {
-        console.log('----- 로그인 성공 감지: 토큰 확인 -----');
-        console.log('토큰 존재 확인: 토큰 있음');
-        console.log('authStatus:', authStatus);
+    // 로그인 상태 확인
+    const checkLoginStatus = async () => {
+      try {
+        // 인증 상태 확인 (API 요청)
+        await fetchUser();
         
-        // 인증 상태가 'loggedIn'이거나 유효한 인증 토큰이 있는 경우 대시보드로 리디렉션
-        if ((authStatus && authStatus === 'loggedIn') || (authToken && authToken.length > 0)) {
-          console.log('인증된 사용자 감지, 대시보드로 이동합니다.');
-          // 지연 시간을 두어 리디렉션 실행
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 100);
+        // 이미 로그인된 경우 대시보드로 리디렉션
+        if (isAuthenticated) {
+          console.log('이미 로그인된 사용자, 대시보드로 이동');
+          router.push('/dashboard');
         }
-      } else {
-        console.log('로그인 페이지 로드 - authStatus:', authStatus);
-        console.log('로그인 페이지 로드 - authToken: 토큰 없음');
+      } catch (error) {
+        console.error('로그인 상태 확인 중 오류:', error);
       }
-    }
-  }, [router]);
-
-  const handleKakaoLogin = async () => {
-    console.log('==== 카카오 로그인 핸들러 시작 ====');
-    try {
-      console.log('카카오 로그인 드가자 로그인 페이지에서');
-      
-      // 브라우저 환경인지 확인
-      if (typeof window === 'undefined') {
-        console.log('브라우저 환경이 아닙니다. 로그인을 진행할 수 없습니다.');
-        return;
-      }
-      
-      // 현재 상태 확인
-      if (token && isTokenValid()) {
-        console.log('이미 인증된 사용자, 대시보드로 이동');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 100);
-        return;
-      }
-      
-      console.log('=== 카카오 로그인 API 호출 직전 ===');
-      await loginApi.kakaoLogin();
-      console.log('=== 카카오 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
-    } catch (error) {
-      console.error('카카오 로그인 에러:', error);
-    }
-    console.log('==== 카카오 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
-  };
-
-  const handleNaverLogin = async () => {
-    console.log('==== 네이버 로그인 핸들러 시작 ====');
-    try {
-      // 브라우저 환경인지 확인
-      if (typeof window === 'undefined') {
-        console.log('브라우저 환경이 아닙니다. 로그인을 진행할 수 없습니다.');
-        return;
-      }
-      
-      // 현재 상태 확인
-      if (token && isTokenValid()) {
-        console.log('이미 인증된 사용자, 대시보드로 이동');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 100);
-        return;
-      }
-      
-      console.log('=== 네이버 로그인 API 호출 직전 ===');
-      await loginApi.naverLogin();
-      console.log('=== 네이버 로그인 API 호출 이후 ==='); // 이 로그는 리디렉션으로 인해 출력되지 않을 수 있음
-    } catch (error) {
-      console.error('네이버 로그인 에러:', error);
-    }
-    console.log('==== 네이버 로그인 핸들러 종료 ===='); // 예외가 발생하지 않는 한 이 로그가 출력되어야 함
-  };
+    };
+    
+    checkLoginStatus();
+  }, [isAuthenticated, router, fetchUser]);
 
   return (
     <div className="min-h-screen bg-navy-500 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
@@ -149,20 +65,8 @@ export default function Login() {
             </div>
             
             <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-              <button
-                onClick={handleKakaoLogin}
-                className="w-full sm:w-64 flex items-center justify-center space-x-2 px-4 py-3 bg-[#FEE500] text-[#3C1E1E] rounded-lg font-medium hover:bg-[#FFEB34]/90 transition-colors"
-              >
-                <KakaoIcon />
-                <span>카카오 로그인</span>
-              </button>
-              <button
-                onClick={handleNaverLogin}
-                className="w-full sm:w-64 flex items-center justify-center space-x-2 px-4 py-3 bg-[#03CF5D] text-white rounded-lg font-medium hover:bg-[#14D96B]/90 transition-colors"
-              >
-                <NaverIcon />
-                <span>네이버 로그인</span>
-              </button>
+              <LoginButton provider="kakao" className="sm:w-64" />
+              <LoginButton provider="naver" className="sm:w-64" />
             </div>
 
             <div className="hidden sm:grid mt-8 grid-cols-3 gap-4">

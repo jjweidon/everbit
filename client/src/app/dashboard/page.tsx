@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
 import { useRouter } from 'next/navigation';
-import { memberApi } from '@/api/member';
-import { useAuth } from '@/hooks/useAuth';
+import { userApi } from '@/api/userApi';
+import { useRequireAuth } from '@/hooks/useAuth';
 
 const formatNumber = (num?: number) => {
   if (num === undefined) return '0';
@@ -15,25 +15,19 @@ export default function Dashboard() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [account, setAccount] = useState<UpbitAccount | null>(null);
-  const [summary, setSummary] = useState<AccountSummary | null>(null);
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useRequireAuth();
 
   useEffect(() => {
     const checkUpbitConnection = async () => {
       if (!isAuthenticated) {
+        console.log('로그인 상태가 없습니다.');
         return;
       }
 
       try {
-        const memberInfo = await memberApi.getMemberInfo();
-        if (!memberInfo.success) {
-          throw new Error('사용자 정보를 가져오는데 실패했습니다.');
-        }
-
-        console.log('업비트 연동 상태 확인: memberInfo', memberInfo);
-
-        if (!memberInfo.data?.isUpbitConnected) {
+        const userInfo = await userApi.getCurrentUser();
+        console.log('업비트 연동 상태 확인: userInfo', userInfo);
+        if (!userInfo.isUpbitConnected) {
           router.push('/upbit-api-key');
           return;
         }
@@ -46,7 +40,7 @@ export default function Dashboard() {
     };
 
     checkUpbitConnection();
-  }, [router, isAuthenticated, token]);
+  }, [router, isAuthenticated]);
 
   if (isLoading || error) {
     return (

@@ -3,18 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UpbitApiKeyForm from '@/components/UpbitApiKeyForm';
-import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useAuth';
 
 export default function UpbitApiKeyPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     // useAuth 훅 사용 - 인증되지 않은 사용자는 로그인 페이지로 리디렉션
-    const { isAuthenticated, token } = useAuth();
+    const { isAuthenticated } = useRequireAuth();
 
     const handleSubmit = async (accessKey: string, secretKey: string) => {
         try {
             // 제출 전 인증 상태 다시 확인
-            if (!isAuthenticated || !token) {
+            if (!isAuthenticated) {
                 setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
                 setTimeout(() => {
                     router.push('/login');
@@ -25,9 +25,9 @@ export default function UpbitApiKeyPage() {
             const response = await fetch('/api/members/upbit-keys', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include', // 쿠키에 있는 인증 토큰 포함
                 body: JSON.stringify({ accessKey, secretKey }),
             });
 

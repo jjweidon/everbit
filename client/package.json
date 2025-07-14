@@ -29,7 +29,9 @@
     "react-icons": "^4.11.0",
     "swr": "^2.2.2",
     "timeago.js": "^4.0.2",
+    "ts-case-convert": "^2.1.0",
     "uuid": "^11.1.0",
+    "zod": "^4.0.5",
     "zustand": "^4.4.1"
   },
   "devDependencies": {

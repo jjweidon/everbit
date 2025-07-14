@@ -1,112 +1,75 @@
+// stores/useAuthStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { userApi } from '@/api/userApi';
+import { UserResponse } from '@/api/dto/UserResponse';
 
-// JWT 토큰에서 만료 시간을 추출하는 유틸리티 함수
-export const getExpirationFromToken = (token: string): number | null => {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload));
-    
-    if (decoded.exp) {
-      return decoded.exp * 1000;
-    }
-    return null;
-  } catch (error) {
-    console.error('토큰 디코딩 오류:', error);
-    return null;
-  }
-};
-
-// 인증 상태 타입 정의
 interface AuthState {
-  // 상태
-  isLoggedIn: boolean;
-  token: string | null;
-  expiresAt: number | null;
-  userId: string | null;
-  userName: string | null;
-  userNickname: string | null;
-  
-  // 액션
-  login: (tokenData: { token: string, userId?: string, userName?: string, userNickname?: string }) => void;
+  user: UserResponse | null;
+  isAuthenticated: boolean;
   logout: () => void;
-  isTokenValid: () => boolean;
+  fetchUser: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
+export const authStore = create<AuthState>()(
   persist(
-    (set, get) => ({
-      // 초기 상태
-      isLoggedIn: false,
-      token: null,
-      expiresAt: null,
-      userId: null,
-      userName: null,
-      userNickname: null,
-      
-      // 로그인 액션
-      login: (tokenData) => {
-        const { token, userId = null, userName = null, userNickname = null } = tokenData;
-        const expiresAt = getExpirationFromToken(token);
-        
-        set({ 
-          isLoggedIn: true,
-          token,
-          expiresAt,
-          userId,
-          userName,
-          userNickname
-        });
-        
-        // 로컬스토리지 동기화 (레거시 코드 지원)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('Authorization', token);
-          localStorage.setItem('AuthStatus', 'loggedIn');
-        }
-      },
-      
-      // 로그아웃 액션
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+
       logout: () => {
-        set({ 
-          isLoggedIn: false,
-          token: null, 
-          expiresAt: null,
-          userId: null,
-          userName: null,
-          userNickname: null
-        });
+        // 상태 초기화
+        set((state) => ({
+          ...state,
+          user: null,
+          isAuthenticated: false
+        }));
         
-        // 로컬스토리지 정리 (레거시 코드 지원)
+        // persist 저장소 초기화
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('Authorization');
-          localStorage.removeItem('AuthStatus');
-          localStorage.removeItem('isLoggingIn');
-          localStorage.removeItem('loginTimestamp');
+          localStorage.removeItem('auth-storage');
+          
+          // 모든 쿠키 제거
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
         }
       },
-      
-      // 토큰 유효성 검사
-      isTokenValid: () => {
-        const { token, expiresAt } = get();
-        
-        if (!token || !expiresAt) {
-          return false;
+
+      fetchUser: async () => {
+        try {
+          console.log('사용자 정보 로드 시도...');
+          
+          const userData = await userApi.getCurrentUser();
+
+          if (!userData || !userData.userId) {
+            console.error('유효하지 않은 사용자 데이터:', userData);
+            throw new Error('유효하지 않은 사용자 데이터');
+          }
+
+          console.log('사용자 정보 로드 성공:', userData);
+          set((state) => ({
+            ...state,
+            user: userData,
+            isAuthenticated: true
+          }));
+        } catch (err) {
+          console.error('fetchUser 실패:', err);
+          set((state) => ({
+            ...state,
+            user: null,
+            isAuthenticated: false
+          }));
+          throw err;
         }
-        
-        // 현재 시간과 만료 시간 비교
-        return Date.now() < expiresAt;
-      }
+      },
     }),
     {
-      name: 'auth-storage', // 스토리지 이름
+      name: 'auth-storage',
       partialize: (state) => ({
-        isLoggedIn: state.isLoggedIn,
-        token: state.token,
-        expiresAt: state.expiresAt,
-        userId: state.userId,
-        userName: state.userName,
-        userNickname: state.userNickname
-      })
+        user: state.user,
+        isAuthenticated: state.isAuthenticated
+      }),
     }
   )
-); 
+);

@@ -8,9 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function Home() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { isAuthenticated } = useAuth(false);
+  const { isAuthenticated } = useAuth({ required: false });
 
   useEffect(() => {
     setIsVisible(true);
