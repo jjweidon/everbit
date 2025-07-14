@@ -1,19 +1,20 @@
-package com.everbit.everbit.member.service;
+package com.everbit.everbit.user.service;
 
-import com.everbit.everbit.member.dto.UpbitApiKeyRequest;
-import com.everbit.everbit.member.entity.Member;
-import com.everbit.everbit.member.entity.enums.Role;
-import com.everbit.everbit.member.exception.MemberException;
 import com.everbit.everbit.oauth2.dto.KakaoResponse;
 import com.everbit.everbit.oauth2.dto.OAuth2Response;
-import com.everbit.everbit.member.repository.MemberRepository;
 import com.everbit.everbit.upbit.entity.Account;
 import com.everbit.everbit.upbit.exception.AccountException;
 import com.everbit.everbit.upbit.repository.AccountRepository;
+import com.everbit.everbit.user.dto.UserResponse;
+import com.everbit.everbit.user.dto.UpbitApiKeyRequest;
+import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.user.entity.enums.Role;
+import com.everbit.everbit.user.exception.UserException;
+import com.everbit.everbit.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import com.everbit.everbit.member.dto.MemberResponse;
 import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -25,8 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MemberService {
-    private final MemberRepository memberRepository;
+public class UserService {
+    private final UserRepository userRepository;
     private final AccountRepository accountRepository;
 
     @Value("${upbit.encryption.password}")
@@ -35,37 +36,37 @@ public class MemberService {
     private String encryptionSalt;
 
     @Transactional
-    public Member createMember(OAuth2User oAuth2Member) {
-        OAuth2Response oAuth2Response = new KakaoResponse(oAuth2Member.getAttributes());
+    public User createUser(OAuth2User oAuth2User) {
+        OAuth2Response oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
         String username = oAuth2Response.getName() + oAuth2Response.getProviderId();
         
         // 이미 존재하는 사용자는 새로 생성하지 않고 기존 정보 반환
-        Optional<Member> existingMember = memberRepository.findByUsername(username);
-        if (existingMember.isPresent()) {
+        Optional<User> existinguser = userRepository.findByUsername(username);
+        if (existinguser.isPresent()) {
             log.info("기존 사용자 로그인: {}", username);
-            return existingMember.get();
+            return existinguser.get();
         }
 
         // 새로운 사용자 생성
         log.info("새로운 사용자 등록: {}", username);
-        Member member = Member.builder()
+        User user = User.builder()
                 .username(username)
                 .image(oAuth2Response.getImage())
                 .role(Role.ROLE_USER)
                 .build();
-        return memberRepository.save(member);
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
-    public MemberResponse getMemberResponse(String memberId) {
-        Member member = findMemberByMemberId(memberId);
-        return MemberResponse.from(member);
+    public UserResponse getUserResponse(String userId) {
+        User user = findUserByUserId(userId);
+        return UserResponse.from(user);
     }
 
     @Transactional
-    public MemberResponse saveUpbitApiKeys(String memberId, UpbitApiKeyRequest request) {
-        Member member = findMemberByMemberId(memberId);
-        Account account = findAccountByMember(member);
+    public UserResponse saveUpbitApiKeys(String userId, UpbitApiKeyRequest request) {
+        User user = findUserByUserId(userId);
+        Account account = findAccountByUser(user);
         
         TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
         String encryptedAccessKey = encryptor.encrypt(request.accessKey());
@@ -75,23 +76,23 @@ public class MemberService {
         account.setUpbitSecretKey(encryptedSecretKey);
         
         accountRepository.save(account);
-        member.setUpbitConnected(true);
-        memberRepository.save(member);
-        return MemberResponse.from(member);
+        user.setUpbitConnected(true);
+        userRepository.save(user);
+        return UserResponse.from(user);
     }
 
-    public Member findMemberByMemberId(String memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> MemberException.notFound(memberId));
+    public User findUserByUserId(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> UserException.notFound(userId));
     }
 
-    public Member findMemberByUsername(String username) {
-        return memberRepository.findByUsername(username)
-                .orElseThrow(() -> MemberException.notFound(username));
+    public User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> UserException.notFound(username));
     }
 
-    public Account findAccountByMember(Member member) {
-        return accountRepository.findByMember(member)
-                .orElseThrow(() -> AccountException.noAccountMember(member));
+    public Account findAccountByUser(User user) {
+        return accountRepository.findByUser(user)
+                .orElseThrow(() -> AccountException.noAccount(user));
     }
 }

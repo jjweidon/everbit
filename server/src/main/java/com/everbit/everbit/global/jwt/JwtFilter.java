@@ -1,9 +1,10 @@
 package com.everbit.everbit.global.jwt;
 
-import com.everbit.everbit.member.entity.Member;
-import com.everbit.everbit.member.exception.MemberException;
-import com.everbit.everbit.member.repository.MemberRepository;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
+import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.user.exception.UserException;
+import com.everbit.everbit.user.repository.UserRepository;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -24,7 +25,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final MemberRepository memberRepository;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -65,8 +66,8 @@ public class JwtFilter extends OncePerRequestFilter {
         String username = jwtUtil.getUsername(token);
         
         //memberDto를 생성하여 값 set - 토큰에서 추출한 role 사용
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(()-> MemberException.notFound(username));
+        User member = userRepository.findByUsername(username)
+                .orElseThrow(()-> UserException.notFound(username));
 
         //UserDetails에 회원 정보 객체 담기
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(member);

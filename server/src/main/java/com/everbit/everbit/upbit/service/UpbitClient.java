@@ -3,11 +3,10 @@ package com.everbit.everbit.upbit.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
-import com.everbit.everbit.member.entity.Member;
-import com.everbit.everbit.member.exception.MemberException;
-import com.everbit.everbit.member.repository.MemberRepository;
-import com.everbit.everbit.member.service.MemberService;
 import com.everbit.everbit.upbit.entity.Account;
+import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.user.service.UserService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ import java.util.UUID;
 public class UpbitClient {
 
     private final UpbitConfig upbitConfig;
-    private final MemberService memberService;
+    private final UserService userService;
 
     private URI buildUrl(String path) {
         String baseUrl = upbitConfig.getBaseUrl();
@@ -44,8 +43,8 @@ public class UpbitClient {
         try {
             URI uri = buildUrl("/v1/accounts");
             URL url = uri.toURL();
-            Member member = memberService.findMemberByUsername(username);
-            String token = createAuthHeaders("", member);
+            User user = userService.findUserByUsername(username);
+            String token = createAuthHeaders("", user);
 
             log.info("Request URL: {}", url);
             log.info("Request Headers: Bearer {}", token);
@@ -90,9 +89,9 @@ public class UpbitClient {
     /**
      * 인증 헤더 생성
      */
-    private String createAuthHeaders(String queryString, Member member) {
+    private String createAuthHeaders(String queryString, User user) {
         try {
-            Account account = memberService.findAccountByMember(member);
+            Account account = userService.findAccountByUser(user);
             String accessKey = account.getUpbitAccessKey();
             String secretKey = account.getUpbitSecretKey();
             String nonce = UUID.randomUUID().toString();

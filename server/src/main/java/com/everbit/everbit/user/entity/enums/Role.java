@@ -1,4 +1,4 @@
-package com.everbit.everbit.member.entity.enums;
+package com.everbit.everbit.user.entity.enums;
 
 public enum Role {
     ROLE_ADMIN,

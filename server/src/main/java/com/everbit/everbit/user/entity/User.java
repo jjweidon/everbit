@@ -1,7 +1,8 @@
-package com.everbit.everbit.member.entity;
+package com.everbit.everbit.user.entity;
 
-import com.everbit.everbit.member.entity.enums.Role;
 import com.everbit.everbit.global.entity.BaseTime;
+import com.everbit.everbit.user.entity.enums.Role;
+
 import jakarta.persistence.*;
 import lombok.*;
 import de.huxhorn.sulky.ulid.ULID;
@@ -11,9 +12,9 @@ import de.huxhorn.sulky.ulid.ULID;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member extends BaseTime {
+public class User extends BaseTime {
     @Id
-    @Column(name = "member_id")
+    @Column(name = "user_id")
     @Builder.Default
     private final String id = new ULID().nextULID();
 

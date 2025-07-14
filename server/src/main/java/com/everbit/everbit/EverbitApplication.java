@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-public class EverbitServerApplication {
+public class EverbitApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(EverbitServerApplication.class, args);
+		SpringApplication.run(EverbitApplication.class, args);
 	}
 
 }

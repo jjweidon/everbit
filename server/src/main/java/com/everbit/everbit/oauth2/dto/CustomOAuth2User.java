@@ -1,20 +1,21 @@
 package com.everbit.everbit.oauth2.dto;
 
-import com.everbit.everbit.member.entity.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import com.everbit.everbit.user.entity.User;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-public record CustomOAuth2User(Member member) implements OAuth2User {
+public record CustomOAuth2User(User user) implements OAuth2User {
     @Override
     public Map<String, Object> getAttributes() {
         return Map.of(
-                "id", member.getId(),
-                "username", member.getUsername(),
-                "role", member.getRole()
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "role", user.getRole()
         );
     }
 
@@ -24,7 +25,7 @@ public record CustomOAuth2User(Member member) implements OAuth2User {
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return member.getRole().name();
+                return user.getRole().name();
             }
         });
         return collection;
@@ -32,11 +33,11 @@ public record CustomOAuth2User(Member member) implements OAuth2User {
 
     @Override
     public String getName() {
-        return member.getUsername();
+        return user.getUsername();
     }
 
     public String getId() {
-        return member.getId();
+        return user.getId();
     }
 
 }

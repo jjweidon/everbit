@@ -2,9 +2,10 @@ package com.everbit.everbit.global.config;
 
 import com.everbit.everbit.global.jwt.JwtFilter;
 import com.everbit.everbit.global.jwt.JwtUtil;
-import com.everbit.everbit.member.repository.MemberRepository;
 import com.everbit.everbit.oauth2.service.CustomOAuth2UserService;
 import com.everbit.everbit.oauth2.service.CustomSuccessHandler;
+import com.everbit.everbit.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +26,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final JwtUtil jwtUtil;
-    private final MemberRepository memberRepository;
+    private final UserRepository userRepository;
     private final CorsConfig corsConfig;
 
     @Bean
@@ -36,7 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtFilter(jwtUtil, memberRepository), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 로그인 설정
         http
@@ -57,9 +58,9 @@ public class SecurityConfig {
                                "/api/oauth2/code/**",
                                "/api/login/oauth2/code/**",
                                "/api/auth/me").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/members/me").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/members/upbit-keys").authenticated()
-                .requestMatchers("/api/members/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/users/upbit-keys").authenticated()
+                .requestMatchers("/api/users/**").authenticated()
                 .anyRequest().authenticated()
         );
 

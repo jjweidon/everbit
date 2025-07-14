@@ -1,7 +1,8 @@
 package com.everbit.everbit.global.exception;
 
 import com.everbit.everbit.global.dto.ApiResponse;
-import com.everbit.everbit.member.exception.MemberException;
+import com.everbit.everbit.user.exception.UserException;
+
 import org.apache.kafka.common.errors.AuthorizationException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,8 +12,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 public class GlobalExceptionHandler {
 
     // UserNotFoundException 처리
-    @ExceptionHandler(MemberException.class)
-    public ApiResponse<Object> handleUserNotFoundException(MemberException ex) {
+    @ExceptionHandler(UserException.class)
+    public ApiResponse<Object> handleUserNotFoundException(UserException ex) {
         return ApiResponse.of(CustomHttpStatus.NOT_FOUND);
     }
 
