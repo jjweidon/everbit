@@ -5,6 +5,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+docker-compose.dev.yaml
 
 # Python
 .venv/
@@ -82,3 +83,6 @@ data/
 # 로그 파일
 logs/
 *.log
+
+# 스크립트
+run-everbit.sh

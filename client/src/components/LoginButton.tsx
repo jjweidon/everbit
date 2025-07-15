@@ -40,7 +40,7 @@ export default function LoginButton({ provider, className = '' }: LoginButtonPro
       case 'kakao':
         return {
           bg: 'bg-[#FEE500]',
-          hoverBg: 'hover:bg-[#FFEB34]/90',
+          hoverBg: 'hover:bg-[#EBD71E]',
           text: 'text-[#3C1E1E]',
           label: '카카오 로그인',
           icon: <KakaoIcon />
@@ -48,7 +48,7 @@ export default function LoginButton({ provider, className = '' }: LoginButtonPro
       case 'naver':
         return {
           bg: 'bg-[#03CF5D]',
-          hoverBg: 'hover:bg-[#14D96B]/90',
+          hoverBg: 'hover:bg-[#14D96B]',
           text: 'text-white',
           label: '네이버 로그인',
           icon: <NaverIcon />

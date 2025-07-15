@@ -1,3 +1,7 @@
+networks:
+  everbit-network:
+    driver: bridge
+
 services:
   client:
     build:
@@ -20,26 +24,6 @@ services:
     volumes:
       - ./server/src/main/resources:/app/config
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3308/everbit
+      - SPRING_PROFILES_ACTIVE=prod
     networks: 
       - everbit-network
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - client
-      - server
-    networks:
-      - everbit-network
-
-volumes:
-  mysql_data:
-
-networks:
-  everbit-network:
-    driver: bridge
