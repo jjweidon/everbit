@@ -1,47 +1,67 @@
 package com.everbit.everbit.global.jwt;
 
-import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
-import com.everbit.everbit.user.entity.User;
-import com.everbit.everbit.user.exception.UserException;
-import com.everbit.everbit.user.repository.UserRepository;
-
+import org.springframework.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.everbit.everbit.global.config.util.SecurityConstants;
+import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
+
 import java.io.IOException;
 
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
+
+    @Value("${spring.security.oauth2.logout-redirect-uri}")
+    private String logoutRedirectUri;
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        
+        // GET 요청이고 public URL인 경우에만 필터를 거치지 않음
+        return HttpMethod.GET.matches(method) && SecurityConstants.isPublicUrl(path);
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        //cookie들을 불러온 뒤 Authorization Key에 담긴 쿠키를 찾음
         String authorization = null;
-        Cookie[] cookies = request.getCookies();
 
-        // 쿠키가 null인 경우 체크
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                log.debug("Cookie name: {}", cookie.getName());
-                if (cookie.getName().equals("Authorization")) {
-                    authorization = cookie.getValue();
+        // 1. Authorization 헤더 우선 확인
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            authorization = authHeader.substring(7);
+            log.info("Authorization 헤더에서 토큰 추출");
+        }
+
+        // 2. Authorization 쿠키 확인 (헤더 없을 때만)
+        if (authorization == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("Authorization".equals(cookie.getName())) {
+                        authorization = cookie.getValue();
+                        log.info("Authorization 쿠키에서 값 추출");
+                        break;
+                    }
                 }
-
             }
         }
 
@@ -58,19 +78,26 @@ public class JwtFilter extends OncePerRequestFilter {
         //토큰 소멸 시간 검증
         if (jwtUtil.isExpired(token)) {
             log.debug("Token is expired");
-            filterChain.doFilter(request, response);
+            // 토큰이 만료되면 쿠키 삭제
+            Cookie cookie = new Cookie("Authorization", null);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+            
+            // 로그인 페이지로 리다이렉트
+            response.sendRedirect(logoutRedirectUri);
             return;
         }
 
         //토큰에서 username과 role 획득
         String username = jwtUtil.getUsername(token);
-        
-        //memberDto를 생성하여 값 set - 토큰에서 추출한 role 사용
-        User member = userRepository.findByUsername(username)
-                .orElseThrow(()-> UserException.notFound(username));
+        String role = jwtUtil.getRole(token);
+
+        //userDto를 생성하여 값 set - 토큰에서 추출한 role 사용
+        TokenDto tokenDto = TokenDto.create(username, role);
 
         //UserDetails에 회원 정보 객체 담기
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(member);
+        CustomOAuth2User customOAuth2User = new CustomOAuth2User(tokenDto);
 
         //스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());

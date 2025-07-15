@@ -40,11 +40,13 @@ public class KakaoResponse implements OAuth2Response {
     public String getName() {
         return profile.containsKey("nickname") ? 
                profile.get("nickname").toString() : 
-               "카카오";
+               "익명";
     }
 
     @Override
     public String getImage() {
-        return "";
+        return profile.containsKey("profile_image_url") ? 
+               profile.get("profile_image_url").toString() : 
+               "";
     }
 }

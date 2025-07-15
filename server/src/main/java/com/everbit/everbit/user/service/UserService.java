@@ -38,7 +38,7 @@ public class UserService {
     @Transactional
     public User createUser(OAuth2User oAuth2User) {
         OAuth2Response oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        String username = oAuth2Response.getName() + oAuth2Response.getProviderId();
+        String username = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
         
         // 이미 존재하는 사용자는 새로 생성하지 않고 기존 정보 반환
         Optional<User> existinguser = userRepository.findByUsername(username);
@@ -51,15 +51,16 @@ public class UserService {
         log.info("새로운 사용자 등록: {}", username);
         User user = User.builder()
                 .username(username)
-                .image(oAuth2Response.getImage())
                 .role(Role.ROLE_USER)
+                .nickname(oAuth2Response.getName())
+                .image(oAuth2Response.getImage())
                 .build();
         return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
-    public UserResponse getUserResponse(String userId) {
-        User user = findUserByUserId(userId);
+    public UserResponse getUserResponse(String username) {
+        User user = findUserByUsername(username);
         return UserResponse.from(user);
     }
 

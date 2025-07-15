@@ -21,8 +21,8 @@ public class UserController {
 
     @GetMapping("/me")
     public ApiResponse<Response> getCurrentUser(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-        String userId = oAuth2User.getId();
-        UserResponse response = userService.getUserResponse(userId);
+        String username = oAuth2User.getName();
+        UserResponse response = userService.getUserResponse(username);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
     }
 
@@ -30,8 +30,8 @@ public class UserController {
     public ApiResponse<Response> saveUpbitApiKeys(
             @RequestBody UpbitApiKeyRequest request,
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-        String userId = oAuth2User.getId();
-        UserResponse response = userService.saveUpbitApiKeys(userId, request);
+        String username = oAuth2User.getName();
+        UserResponse response = userService.saveUpbitApiKeys(username, request);
         return ApiResponse.success(response, "업비트 API 키 저장 성공");
     }
 } 

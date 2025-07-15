@@ -1,69 +1,70 @@
 package com.everbit.everbit.global.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-@Slf4j
 @Component
 public class JwtUtil {
 
-    private final SecretKey secretKey;
+    private SecretKey secretKey;
 
-    public JwtUtil(@Value("${jwt.secret}")String secret) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    @Value("${spring.jwt.secret}")
+    private String secret;
+
+    @Value("${spring.jwt.expiration}")
+    private long expiration;
+
+    @Value("${spring.jwt.access-expiration}")
+    private long accessExpiration;
+
+    @Value("${spring.jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    @PostConstruct
+    public void init() {
+        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), 
+            Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
     public String getUsername(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("username", String.class);
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
     }
 
     public String getRole(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("role", String.class);
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
     }
 
     public Boolean isExpired(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-            
-            return claims.getExpiration().before(new Date());
-        } catch (ExpiredJwtException e) {
-            log.debug("토큰이 만료되었습니다.");
-            return true;
-        } catch (Exception e) {
-            log.error("토큰 만료 확인 중 오류 발생: {}", e.getMessage());
-            return true;
-        }
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String getCategory(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
+    }
+
+    private long getExpirationTime(String category) {
+        return switch (category) {
+            case "access" -> accessExpiration;
+            case "refresh" -> refreshExpiration;
+            default -> expiration;
+        };
+    }
+
+    public String createJwt(String category, String username, String role) {
         return Jwts.builder()
+                .claim("category", category)
                 .claim("username", username)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .expiration(new Date(System.currentTimeMillis() +  getExpirationTime(category)))
                 .signWith(secretKey)
                 .compact();
     }

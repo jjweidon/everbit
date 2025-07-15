@@ -1,5 +1,6 @@
 package com.everbit.everbit.oauth2.service;
 
+import com.everbit.everbit.global.jwt.TokenDto;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
@@ -22,13 +23,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-
-        log.info("OAuth2 로그인 진행 중 - 공급자: {}", userRequest.getClientRegistration().getRegistrationId());
-        log.debug("OAuth2User 속성: {}", oAuth2User.getAttributes());
-
+        
         User user = userService.createUser(oAuth2User);
-        log.info("사용자 생성/조회 완료 - ID: {}, username: {}", user.getId(), user.getUsername());
+        
+        log.info("loadUser - ID: {}, 이메일: {}", user.getId(), user.getUsername());
 
-        return new CustomOAuth2User(user);
+        TokenDto tokenDto = TokenDto.create(user.getUsername(), user.getRole().name());
+
+        return new CustomOAuth2User(tokenDto);
     }
 }
