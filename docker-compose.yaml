@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_HOST=${API_HOST}
+      - NEXT_PUBLIC_API_HOST=https://everbit.kr
     depends_on:
       - server
     networks:
@@ -17,15 +17,12 @@ services:
       context: ./server
     ports:
       - "8080:8080"
+    volumes:
+      - ./server/src/main/resources:/app/config
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/everbit
-      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3308/everbit
+    networks: 
       - everbit-network
 
   nginx:
@@ -39,25 +36,6 @@ services:
       - server
     networks:
       - everbit-network
-
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: everbit
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - everbit-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   mysql_data:

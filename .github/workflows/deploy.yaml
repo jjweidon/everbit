@@ -7,9 +7,9 @@ on:
 
 jobs:
   Deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: SSH로 EC2 원격 접속하기
+      - name: self-hosted runner
         uses: appleboy/ssh-action@v1.0.3
         env:
           APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }}
@@ -20,11 +20,13 @@ jobs:
           envs: APPLICATION_PROPERTIES
           script_stop: true
           script: |
-            cd /home/ubuntu/everbit/server
-            rm -rf src/main/resources/application.yaml
+            cd /home/ubuntu/everbit
+
             git reset --hard origin/main
             git pull origin main --rebase
-            echo "$APPLICATION_PROPERTIES" > src/main/resources/application.yaml
-            ./gradlew clean build -x test
-            sudo fuser -k -n tcp 8080 || true
-            nohup java -Duser.timezone=Asia/Seoul -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
+
+            echo "$APPLICATION_PROPERTIES" > ./server/src/main/resources/application.yaml
+
+            docker-compose down
+            docker-compose build
+            docker-compose up -d

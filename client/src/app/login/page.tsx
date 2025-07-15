@@ -66,7 +66,6 @@ export default function Login() {
             
             <div className="flex flex-col items-center space-y-3 sm:space-y-4">
               <LoginButton provider="kakao" className="sm:w-64" />
-              <LoginButton provider="naver" className="sm:w-64" />
             </div>
 
             <div className="hidden sm:grid mt-8 grid-cols-3 gap-4">
