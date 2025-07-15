@@ -4,10 +4,10 @@ import { UserResponse } from './dto/UserResponse';
 export const userApi = {
 
     getCurrentUser: async (): Promise<UserResponse> => {
-        return apiClient.get<UserResponse>('/api/users/me');
+        return apiClient.get<UserResponse>('/users/me');
     },
 
     saveUpbitApiKeys: async (apiKey: string, secretKey: string): Promise<UserResponse> => {
-        return apiClient.post<UserResponse>('/api/users/upbit-keys', { apiKey, secretKey });
+        return apiClient.post<UserResponse>('/users/upbit-keys', { apiKey, secretKey });
     }
 };

@@ -55,7 +55,7 @@ public class SecurityConfig {
         http
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/api/login")
+                                endpoint.baseUri("/api/login/kakao")
                         )
                         .redirectionEndpoint(redirection ->
                                 redirection.baseUri("/api/login/oauth2/code/*")

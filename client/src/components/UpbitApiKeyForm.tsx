@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateUpbitApiKey } from '@/services/upbit';
+import { userApi } from '@/api/userApi';
 
 interface UpbitApiKeyFormProps {
     onSubmit?: (accessKey: string, secretKey: string) => void;
@@ -34,9 +34,9 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
 
         try {
             setIsLoading(true);
-            const response = await updateUpbitApiKey(accessKey, secretKey);
+            const response = await userApi.saveUpbitApiKeys(accessKey, secretKey);
             
-            if (response.success) {
+            if (response) {
                 if (onSubmit) {
                     onSubmit(accessKey, secretKey);
                 } else {
@@ -44,8 +44,8 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
                 }
             } else {
                 setErrors({
-                    accessKey: response.error || '',
-                    secretKey: response.error || ''
+                    accessKey: '',
+                    secretKey: ''
                 });
             }
         } catch (error) {

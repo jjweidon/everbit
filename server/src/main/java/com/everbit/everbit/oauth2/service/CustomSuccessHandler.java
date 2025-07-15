@@ -32,19 +32,24 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        log.info("OAuth2 로그인 성공 처리 시작");
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request URL: {}", request.getRequestURL());
 
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
 
         String username = customUserDetails.getName();
+        log.info("인증된 사용자: {}", username);
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
+        log.info("사용자 권한: {}", role);
 
         //토큰 생성
         String access = jwtUtil.createJwt("access", username, role);
-        // String refresh = jwtUtil.createJwt("refresh", username, role, 86400000L);
+        log.info("JWT 토큰 생성 완료");
             
         // ResponseCookie를 사용하여 쿠키 설정
         ResponseCookie cookie = createCookie("Authorization", access);
@@ -52,6 +57,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         log.info("토큰 쿠키 생성 완료: {}", access);
         log.info("리다이렉트: {}", authenticatedRedirectUri);
         response.sendRedirect(authenticatedRedirectUri);
+        log.info("리다이렉트 완료");
     }
 
     private ResponseCookie createCookie(String name, String value) {
