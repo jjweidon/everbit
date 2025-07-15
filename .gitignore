@@ -6,6 +6,18 @@
 .env.test.local
 .env.production.local
 
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env/
+.python-version
+
 # IntelliJ
 .idea/
 *.iml
@@ -39,6 +51,7 @@ server/dist/
 server/nbdist/
 server/.nb-gradle/
 server/**/application.yaml
+server/**/application-dev.yaml
 
 # 예외 처리 (서버)
 !server/gradle/wrapper/gradle-wrapper.jar
@@ -68,4 +81,4 @@ data/
 
 # 로그 파일
 logs/
-*.log 
+*.log

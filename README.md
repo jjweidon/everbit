@@ -25,3 +25,14 @@
 - **알고리즘**: Python, TensorFlow, scikit-learn, PyTorch, Backtrader, Zipline
 - **프론트엔드**: Next.js, TypeScript, TailwindCSS, Chakra UI, TradingView API, SWR
 - **인프라**: Docker, Github Actions, AWS
+
+
+### 실행
+```sh
+docker compose -f docker-compose.yaml up -d --build --force-recreate
+```
+
+### 종료
+```sh
+docker compose -f docker-compose.yaml down
+```
