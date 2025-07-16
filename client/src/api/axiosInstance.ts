@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 // 요청 인터셉터
 axiosInstance.interceptors.request.use(
     (config) => {
-      console.log(`[요청] ${config.method?.toUpperCase()} ${config.url}`);
+      console.log(`[요청] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
       
       // 필요 시 공통 헤더
       config.headers['Content-Type'] = 'application/json';

@@ -3,7 +3,7 @@ package com.everbit.everbit.upbit.controller;
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
-import com.everbit.everbit.user.dto.UpbitApiKeyRequest;
+import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.dto.UserResponse;
 import com.everbit.everbit.user.service.UserService;
 import com.everbit.everbit.upbit.service.UpbitClient;
@@ -27,7 +27,7 @@ public class UpbitController {
 
     @PostMapping
     public ApiResponse<Response> saveUpbitApiKeys(
-            @RequestBody UpbitApiKeyRequest request,
+            @RequestBody UpbitKeyRequest request,
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         UserResponse response = userService.saveUpbitApiKeys(username, request);

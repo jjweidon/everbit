@@ -18,7 +18,7 @@ public class User extends BaseTime {
     @Builder.Default
     private final String id = new ULID().nextULID();
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String username;
 
     @Enumerated(EnumType.STRING)

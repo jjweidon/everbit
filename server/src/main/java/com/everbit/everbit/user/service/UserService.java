@@ -6,7 +6,7 @@ import com.everbit.everbit.upbit.entity.Account;
 import com.everbit.everbit.upbit.exception.AccountException;
 import com.everbit.everbit.upbit.repository.AccountRepository;
 import com.everbit.everbit.user.dto.UserResponse;
-import com.everbit.everbit.user.dto.UpbitApiKeyRequest;
+import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.entity.enums.Role;
 import com.everbit.everbit.user.exception.UserException;
@@ -65,7 +65,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse saveUpbitApiKeys(String userId, UpbitApiKeyRequest request) {
+    public UserResponse saveUpbitApiKeys(String userId, UpbitKeyRequest request) {
         User user = findUserByUserId(userId);
         Account account = findAccountByUser(user);
         
