@@ -43,7 +43,10 @@ class ApiClient {
   private async request<T>(config: AxiosRequestConfig): Promise<T> {
     try {
       const response = await axiosInstance(config);
-      return response.data;
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '서버 응답 실패 or data 없음');
+      }
+      return response.data.data;
     } catch (error: any) {
       if (!error.response) {
         throw new Error('네트워크 오류가 발생했습니다.');
