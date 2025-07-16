@@ -28,7 +28,10 @@ public class User extends BaseTime {
 
     private String image;
     
-    @Setter
     @Builder.Default
     private boolean isUpbitConnected = false;
+
+    public void connectUpbit() {
+        this.isUpbitConnected = true;
+    }
 }

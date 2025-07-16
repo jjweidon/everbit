@@ -86,4 +86,8 @@ public class UserService {
         return accountRepository.findByUser(user)
                 .orElseThrow(() -> AccountException.noAccount(user));
     }
+
+    public void saveUser(User user) {
+        userRepository.save(user);
+    }
 }

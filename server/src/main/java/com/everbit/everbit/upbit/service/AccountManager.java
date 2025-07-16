@@ -1,7 +1,6 @@
 package com.everbit.everbit.upbit.service;
 
 import com.everbit.everbit.upbit.entity.Account;
-import com.everbit.everbit.upbit.exception.AccountException;
 
 import org.springframework.stereotype.Service;
 
@@ -20,11 +19,11 @@ public class AccountManager {
 
     public UserResponse createAccount(String username, UpbitKeyRequest request) {
         User user = userService.findUserByUsername(username);
-        if (accountService.isAccountExists(user)) {
-            throw AccountException.alreadyExists(user);
-        }
+        accountService.checkAccountExists(user);
         Account account = Account.of(user, request.accessKey(), request.secretKey());
         accountService.saveAccount(account);
+        user.connectUpbit();
+        userService.saveUser(user);
 
         return UserResponse.from(user);
     }
