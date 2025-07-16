@@ -42,7 +42,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
 
         //토큰 생성
-        String access = jwtUtil.createJwt("access", username, role);
+        // String access = jwtUtil.createJwt("access", username, role);
+        String access = jwtUtil.createJwt("default", username, role);
             
         // ResponseCookie를 사용하여 쿠키 설정
         ResponseCookie cookie = createCookie("Authorization", access);

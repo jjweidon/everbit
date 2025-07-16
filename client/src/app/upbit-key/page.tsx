@@ -3,47 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UpbitApiKeyForm from '@/components/UpbitApiKeyForm';
-import { useAuthStore } from '@/store/authStore';
+import { upbitApi } from '@/api/upbitApi';
 
 export default function UpbitApiKeyPage() {
     const [error, setError] = useState('');
     const router = useRouter();
-    // useAuth 훅 사용 - 인증되지 않은 사용자는 로그인 페이지로 리디렉션
-    const { isAuthenticated } = useAuthStore();
 
     const handleSubmit = async (accessKey: string, secretKey: string) => {
         try {
-            // 제출 전 인증 상태 다시 확인
-            if (!isAuthenticated) {
-                setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
-                setTimeout(() => {
-                    router.push('/login');
-                }, 2000);
-                return;
-            }
-
-            const response = await fetch('/api/members/upbit-keys', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include', // 쿠키에 있는 인증 토큰 포함
-                body: JSON.stringify({ accessKey, secretKey }),
-            });
-
-            if (response.ok) {
-                router.push('/dashboard');
-            } else {
-                const errorData = await response.json();
-                if (response.status === 401) {
-                    setError("인증이 만료되었습니다. 로그인 페이지로 이동합니다.");
-                    setTimeout(() => {
-                        router.push('/login');
-                    }, 2000);
-                } else {
-                    throw new Error('API 키 등록에 실패했습니다.');
-                }
-            }
+            const response = await upbitApi.saveUpbitApiKeys(accessKey, secretKey);
+            router.push('/dashboard');
         } catch (error) {
             console.error('Error:', error);
             setError('API 키 등록에 실패했습니다.');
@@ -80,8 +49,8 @@ export default function UpbitApiKeyPage() {
                         업비트 API 키 등록
                     </h2>
                     <p className="text-sm sm:text-base text-navy-600 mb-4 sm:mb-6">
-                        업비트에서 발급받은 API 키를 등록하여 서비스를 이용할 수 있습니다.
-                        API 키는 안전하게 보관되며, 읽기 전용 권한만 사용합니다.
+                        업비트에서 발급받은 API 키를 등록해야 서비스를 이용할 수 있습니다.
+                        API 키는 암호화되어 보관되며, 읽기 전용 권한만 사용합니다.
                     </p>
 
                     <UpbitApiKeyForm onSubmit={handleSubmit} />

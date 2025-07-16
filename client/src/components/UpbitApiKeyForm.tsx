@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { userApi } from '@/api/userApi';
+import { upbitApi } from '@/api/upbitApi';
 
 interface UpbitApiKeyFormProps {
     onSubmit?: (accessKey: string, secretKey: string) => void;
@@ -34,9 +34,9 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
 
         try {
             setIsLoading(true);
-            const response = await userApi.saveUpbitApiKeys(accessKey, secretKey);
+            const response = await upbitApi.saveUpbitApiKeys(accessKey, secretKey);
             
-            if (response) {
+            if (response.isUpbitConnected) {
                 if (onSubmit) {
                     onSubmit(accessKey, secretKey);
                 } else {
@@ -44,8 +44,8 @@ export default function UpbitApiKeyForm({ onSubmit }: UpbitApiKeyFormProps) {
                 }
             } else {
                 setErrors({
-                    accessKey: '',
-                    secretKey: ''
+                    accessKey: response.isUpbitConnected ? '' : '업비트 연동에 실패했습니다.',
+                    secretKey: response.isUpbitConnected ? '' : '업비트 연동에 실패했습니다.'
                 });
             }
         } catch (error) {
