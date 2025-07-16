@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import KakaoIcon from '@/components/icons/KakaoIcon';
 import NaverIcon from '@/components/icons/NaverIcon';
 import { loginApi } from '@/api/loginApi';
@@ -15,7 +15,7 @@ interface LoginButtonProps {
  */
 export default function LoginButton({ provider, className = '' }: LoginButtonProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
 
   // 이미 로그인된 경우 대시보드로 이동
   if (isAuthenticated) {

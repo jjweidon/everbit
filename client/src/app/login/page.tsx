@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FaChartLine, FaRobot, FaHistory } from 'react-icons/fa';
 import LoginButton from '@/components/LoginButton';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Login() {
   const router = useRouter();
-  const { isAuthenticated, fetchUser } = useAuth();
+  const { isAuthenticated, fetchUser } = useAuthStore();
 
   useEffect(() => {
     // 로그인 상태 확인

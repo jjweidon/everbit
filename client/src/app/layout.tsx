@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import RouteGuard from '@/components/RouteGuard';
 
 const logoFont = localFont({
   src: '../../public/fonts/logo_font.ttf',
@@ -27,7 +28,9 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
       </head>
       <body className="font-sans bg-white text-navy-800">
-        {children}
+        <RouteGuard>
+          {children}
+        </RouteGuard>
       </body>
     </html>
   );

@@ -3,23 +3,17 @@
 import { FaChartLine, FaRobot, FaHistory, FaBriefcase } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
-  const { isAuthenticated } = useAuth({ required: false });
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   const handleStart = () => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
-    }
+    router.push('/dashboard');
   };
 
   return (
@@ -45,7 +39,7 @@ export default function Home() {
                 onClick={handleStart}
                 className="w-full sm:w-auto px-8 sm:px-16 py-3 sm:py-4 bg-white text-navy-900 rounded-lg font-medium hover:bg-navy-100 focus:outline-none transition-colors shadow-lg hover:shadow-xl"
               >
-                {isAuthenticated ? '대시보드로 이동' : '시작하기'}
+                시작하기
               </button>
             </div>
           </div>

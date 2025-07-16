@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { UpbitAccount, AccountSummary } from '@/types/upbit';
 import { useRouter } from 'next/navigation';
 import { userApi } from '@/api/userApi';
-import { useRequireAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 
 const formatNumber = (num?: number) => {
   if (num === undefined) return '0';
@@ -15,7 +15,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const { isAuthenticated } = useRequireAuth();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const checkUpbitConnection = async () => {

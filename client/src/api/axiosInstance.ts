@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "./config";
 import { objectToCamel, objectToSnake } from "ts-case-convert";
-import { authStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/authStore";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -60,7 +60,7 @@ axiosInstance.interceptors.response.use(
       // 401 Unauthorized 처리
       if (error.response?.status === 401) {
         console.log('인증 오류: 로그아웃 처리');
-        const logout = authStore.getState().logout;
+        const logout = useAuthStore.getState().logout;
         logout();
       }
       

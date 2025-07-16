@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UpbitApiKeyForm from '@/components/UpbitApiKeyForm';
-import { useRequireAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 
 export default function UpbitApiKeyPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     // useAuth 훅 사용 - 인증되지 않은 사용자는 로그인 페이지로 리디렉션
-    const { isAuthenticated } = useRequireAuth();
+    const { isAuthenticated } = useAuthStore();
 
     const handleSubmit = async (accessKey: string, secretKey: string) => {
         try {
