@@ -18,12 +18,13 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        // 공개 경로인 경우 인증 체크 건너뛰기
-        if (publicPaths.includes(pathname)) {
-          return;
-        }
+      // 공개 경로인 경우 인증 체크 건너뛰기
+      if (publicPaths.includes(pathname)) {
+        console.log('RouteGuard: 공개 경로, 인증 체크 건너뛰기', { pathname });
+        return;
+      }
 
+      try {
         console.log('RouteGuard: 인증 체크 시작', { pathname });
         
         // 항상 최신 사용자 정보를 가져와서 확인
@@ -58,7 +59,10 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
         console.log('RouteGuard: 인증 및 업비트 연동 체크 완료');
       } catch (error) {
         console.error('RouteGuard: 인증 체크 실패:', error);
-        router.replace('/login');
+        // 공개 경로가 아닌 경우에만 로그인 페이지로 리다이렉트
+        if (!publicPaths.includes(pathname)) {
+          router.replace('/login');
+        }
       }
     };
 

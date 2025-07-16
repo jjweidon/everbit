@@ -36,8 +36,8 @@ export default function Login() {
       <div className="w-full max-w-2xl mx-auto">
         <div className="flex justify-center">
           <div 
-            className="rounded-full flex items-center justify-center animate-rotate-scale cursor-pointer"
-            onClick={() => router.push('/')}
+            className="rounded-full flex items-center justify-center login-logo-animation hover:login-logo-hover cursor-pointer"
+            onClick={() => router.push('/docs')}
           >
             <Image
               src="/logos/logo-icon-2d.webp"
