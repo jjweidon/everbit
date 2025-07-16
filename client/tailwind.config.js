@@ -46,6 +46,7 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-noto-sans-kr)'],
         logo: ['var(--font-logo)'],
+        kimm: ['var(--font-kimm)'],
       },
       animation: {
         'fade-in': 'fadeIn 1s ease-in-out',

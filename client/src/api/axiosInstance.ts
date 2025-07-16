@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 5000, // 5초
+  withCredentials: true
 });
 
 // 요청 인터셉터

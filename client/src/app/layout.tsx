@@ -9,6 +9,12 @@ const logoFont = localFont({
   display: 'swap',
 });
 
+const kimmBold = localFont({
+  src: '../../public/fonts/KIMM_BOLD.ttf',
+  variable: '--font-kimm',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'everbit - 비트코인 자동 트레이딩 시스템',
   description: 'Upbit API 기반 비트코인 자동 트레이딩 시스템',
@@ -23,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={`${logoFont.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${logoFont.variable} ${kimmBold.variable}`}>
       <head>
         <meta name="color-scheme" content="light only" />
       </head>

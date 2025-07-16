@@ -15,28 +15,29 @@ RUN apk add --no-cache libc6-compat
 # 명령어를 실행할 디렉터리 지정
 WORKDIR /app
 
-#  Dependancy install을 위해 package.json, package-lock.json, yarn.lock 복사 
-COPY package*.json yarn.lock ./
+# package.json만 먼저 복사
+COPY package.json yarn.lock ./
 
-#새로운 lock 파일 수정 또는 생성 방지
-RUN yarn --frozen-lockfile
+# node_modules를 클린 설치
+RUN rm -rf node_modules
+RUN yarn install --frozen-lockfile
 
 # 2단계 
 FROM base AS builder 
 
 WORKDIR /app
 
-#node_modules 등의 dependancy를 복사
+# node_modules를 먼저 복사
 COPY --from=deps /app/node_modules ./node_modules
 
-# 모든 소스 파일을 복사
+# 소스 파일 복사 (node_modules 제외)
 COPY . .
+RUN rm -rf node_modules/.cache
 
 # Next.js 애플리케이션을 빌드
 RUN yarn build
 
-#3단계
-
+# 3단계
 FROM base AS runner
 WORKDIR /app
 
@@ -51,7 +52,6 @@ RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
 # 빌드 결과물 중 public 폴더를 복사
-# builder된 곳에서 만들어진 public을 해당 runner 이미지에 추가해주기 위함
 COPY --from=builder /app/public ./public
 # standalone 결과물에는 public 폴더와 static 폴더 내용은 포함되지 않으므로, 따로 복사
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
