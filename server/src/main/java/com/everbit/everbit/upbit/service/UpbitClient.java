@@ -23,9 +23,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
-/**
- * Upbit API 클라이언트
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -86,9 +83,6 @@ public class UpbitClient {
         }
     }
 
-    /**
-     * 인증 헤더 생성
-     */
     private String createAuthHeaders(String queryString, User user) {
         try {
             Account account = userService.findAccountByUser(user);
@@ -125,9 +119,6 @@ public class UpbitClient {
         }
     }
 
-    /**
-     * 쿼리 해시 생성
-     */
     private String makeQueryHash(String queryString) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("utf8"));
