@@ -25,7 +25,22 @@ public class MainController {
             return ResponseEntity.badRequest().body("HELLO ERROR🥲");
         }
     }
-    
+
+    @GetMapping("/api")
+    public ResponseEntity<?> api(HttpServletRequest request) {
+        return ResponseEntity.ok().body("API");
+    }
+
+    @GetMapping("/api/permitAll")
+    public ResponseEntity<?> permitAll(HttpServletRequest request) {
+        return ResponseEntity.ok().body("PERMIT ALL");
+    }
+
+    @GetMapping("/api/requireAuth")
+    public ResponseEntity<?> requireAuth(HttpServletRequest request) {
+        return ResponseEntity.ok().body("REQUIRE AUTH");
+    }
+
     /**
      * 클라이언트 IP 주소를 가져옵니다.
      * 프록시나 로드 밸런서 환경을 고려하여 X-Forwarded-For 헤더를 먼저 확인합니다.

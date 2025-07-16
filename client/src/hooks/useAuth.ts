@@ -20,7 +20,7 @@ export const useAuth = (options: { required?: boolean } = {}) => {
           await auth.fetchUser();
         } catch (error) {
           if (required) {
-            router.push('/login');
+            router.push('/');
           }
         }
       }
@@ -33,7 +33,7 @@ export const useAuth = (options: { required?: boolean } = {}) => {
     ...auth,  // authStore의 모든 상태와 메서드
     
     // 라우팅 유틸리티
-    redirectToLogin: () => router.push('/login'),
+    redirectToLogin: () => router.push('/'),
     redirectToDashboard: () => router.push('/dashboard')
   };
 };

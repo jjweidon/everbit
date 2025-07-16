@@ -7,7 +7,8 @@ public class SecurityConstants {
     public static final List<String> PUBLIC_URLS = List.of(
             "/",
             "/api/login/**",
-            "/api/login/oauth2/code/**"
+            "/api/login/oauth2/code/**",
+            "/api/permitAll"
     );
 
     // URL 패턴이 일치하는지 확인하는 메서드
