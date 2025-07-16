@@ -48,7 +48,6 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             authorization = authHeader.substring(7);
-            log.info("Authorization 헤더에서 토큰 추출");
         }
 
         // 2. Authorization 쿠키 확인 (헤더 없을 때만)
@@ -58,7 +57,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 for (Cookie cookie : cookies) {
                     if ("Authorization".equals(cookie.getName())) {
                         authorization = cookie.getValue();
-                        log.info("Authorization 쿠키에서 값 추출");
                         break;
                     }
                 }
@@ -88,6 +86,8 @@ public class JwtFilter extends OncePerRequestFilter {
             response.sendRedirect(logoutRedirectUri);
             return;
         }
+
+        log.info("token: {}", token);
 
         //토큰에서 username과 role 획득
         String username = jwtUtil.getUsername(token);

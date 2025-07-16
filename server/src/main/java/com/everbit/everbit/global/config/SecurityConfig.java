@@ -55,27 +55,11 @@ public class SecurityConfig {
 
         // OAuth2 로그인/로그아웃 설정
         http
-                .oauth2Login(oauth2 -> {
-                    log.info("OAuth2 로그인 설정 시작");
-                    
-                    oauth2.authorizationEndpoint(endpoint -> {
-                        log.info("인증 엔드포인트 설정: /api/login");
-                        endpoint.baseUri("/api/login");
-                    });
-                    
-                    oauth2.redirectionEndpoint(redirection -> {
-                        log.info("리다이렉션 엔드포인트 설정: /api/login/oauth2/code/*");
-                        redirection.baseUri("/api/login/oauth2/code/*");
-                    });
-                    
-                    oauth2.userInfoEndpoint(userInfo -> {
-                        log.info("사용자 정보 엔드포인트 설정");
-                        userInfo.userService(customOAuth2UserService);
-                    });
-                    
-                    oauth2.successHandler(customSuccessHandler);
-                    log.info("OAuth2 로그인 설정 완료");
-                });
+                .oauth2Login(oauth2 -> oauth2
+                    .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/login"))
+                    .redirectionEndpoint(redirection -> redirection.baseUri("/api/login/oauth2/code/*"))
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .successHandler(customSuccessHandler));
 
         //경로별 인가 작업
         http

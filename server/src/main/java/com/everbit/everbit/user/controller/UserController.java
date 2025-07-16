@@ -4,7 +4,6 @@ import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.user.dto.UserResponse;
-import com.everbit.everbit.user.dto.UpbitApiKeyRequest;
 import com.everbit.everbit.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,14 +23,5 @@ public class UserController {
         String username = oAuth2User.getName();
         UserResponse response = userService.getUserResponse(username);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
-    }
-
-    @PutMapping("/upbit-keys")
-    public ApiResponse<Response> saveUpbitApiKeys(
-            @RequestBody UpbitApiKeyRequest request,
-            @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-        String username = oAuth2User.getName();
-        UserResponse response = userService.saveUpbitApiKeys(username, request);
-        return ApiResponse.success(response, "업비트 API 키 저장 성공");
     }
 } 
