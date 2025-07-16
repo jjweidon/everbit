@@ -4,6 +4,11 @@
 # 환경 설정 및 dependancy 설치
 
 FROM node:20-alpine AS base
+
+# 타임존 설정
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Seoul
+
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 

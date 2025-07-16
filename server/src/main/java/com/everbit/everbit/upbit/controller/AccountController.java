@@ -5,7 +5,7 @@ import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.dto.UserResponse;
-import com.everbit.everbit.user.service.UserService;
+import com.everbit.everbit.upbit.service.AccountManager;
 import com.everbit.everbit.upbit.service.UpbitClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,17 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/accounts")
-public class UpbitController {
+public class AccountController {
 
     private final UpbitClient upbitClient;
-    private final UserService userService;
+    private final AccountManager accountManager;
 
+    // 업비트 API 키 저장
     @PostMapping
     public ApiResponse<Response> saveUpbitApiKeys(
             @RequestBody UpbitKeyRequest request,
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
-        UserResponse response = userService.saveUpbitApiKeys(username, request);
+        log.info("POST 업비트 API 키 저장: {}", username);
+        UserResponse response = accountManager.createAccount(username, request);
         return ApiResponse.success(response, "업비트 API 키 저장 성공");
     }
 

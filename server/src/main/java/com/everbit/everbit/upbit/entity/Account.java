@@ -19,7 +19,7 @@ public class Account extends BaseTime {
     private final String id = new ULID().nextULID();
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Setter
@@ -27,4 +27,12 @@ public class Account extends BaseTime {
 
     @Setter
     private String upbitSecretKey;
+
+    public static Account of(User user, String accessKey, String secretKey) {
+        return Account.builder()
+                .user(user)
+                .upbitAccessKey(accessKey)
+                .upbitSecretKey(secretKey)
+                .build();
+    }
 }

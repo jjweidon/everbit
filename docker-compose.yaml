@@ -11,6 +11,7 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_HOST=https://everbit.kr
+      - TZ=Asia/Seoul
     depends_on:
       - server
     networks:
@@ -23,5 +24,6 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - TZ=Asia/Seoul
     networks: 
       - everbit-network

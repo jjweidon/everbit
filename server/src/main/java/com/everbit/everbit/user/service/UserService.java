@@ -5,8 +5,6 @@ import com.everbit.everbit.oauth2.dto.OAuth2Response;
 import com.everbit.everbit.upbit.entity.Account;
 import com.everbit.everbit.upbit.exception.AccountException;
 import com.everbit.everbit.upbit.repository.AccountRepository;
-import com.everbit.everbit.user.dto.UserResponse;
-import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.entity.enums.Role;
 import com.everbit.everbit.user.exception.UserException;
@@ -15,8 +13,6 @@ import com.everbit.everbit.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.security.crypto.encrypt.Encryptors;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,29 +54,23 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
-    public UserResponse getUserResponse(String username) {
-        User user = findUserByUsername(username);
-        return UserResponse.from(user);
-    }
-
-    @Transactional
-    public UserResponse saveUpbitApiKeys(String userId, UpbitKeyRequest request) {
-        User user = findUserByUserId(userId);
-        Account account = findAccountByUser(user);
+    // @Transactional
+    // public UserResponse saveUpbitApiKeys(String userId, UpbitKeyRequest request) {
+    //     User user = findUserByUserId(userId);
+    //     Account account = findAccountByUser(user);
         
-        TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
-        String encryptedAccessKey = encryptor.encrypt(request.accessKey());
-        String encryptedSecretKey = encryptor.encrypt(request.secretKey());
+    //     TextEncryptor encryptor = Encryptors.text(encryptionPassword, encryptionSalt);
+    //     String encryptedAccessKey = encryptor.encrypt(request.accessKey());
+    //     String encryptedSecretKey = encryptor.encrypt(request.secretKey());
         
-        account.setUpbitAccessKey(encryptedAccessKey);
-        account.setUpbitSecretKey(encryptedSecretKey);
+    //     account.setUpbitAccessKey(encryptedAccessKey);
+    //     account.setUpbitSecretKey(encryptedSecretKey);
         
-        accountRepository.save(account);
-        user.setUpbitConnected(true);
-        userRepository.save(user);
-        return UserResponse.from(user);
-    }
+    //     accountRepository.save(account);
+    //     user.setUpbitConnected(true);
+    //     userRepository.save(user);
+    //     return UserResponse.from(user);
+    // }
 
     public User findUserByUserId(String userId) {
         return userRepository.findById(userId)
@@ -89,7 +79,7 @@ public class UserService {
 
     public User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> UserException.notFound(username));
+                .orElseThrow(() -> UserException.notFoundByUsername(username));
     }
 
     public Account findAccountByUser(User user) {
