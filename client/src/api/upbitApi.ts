@@ -10,5 +10,5 @@ export const upbitApi = {
 
     getAccounts: async (): Promise<UpbitAccount[]> => {
         return apiClient.get<UpbitAccount[]>('/accounts/me');
-    }
-}; 
+    },
+};

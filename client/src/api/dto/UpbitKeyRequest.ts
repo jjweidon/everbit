@@ -6,4 +6,3 @@ export const UpbitKeyRequest = z.object({
 });
 
 export type UpbitKeyRequest = z.infer<typeof UpbitKeyRequest>;
-

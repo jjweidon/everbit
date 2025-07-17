@@ -8,17 +8,20 @@ interface FormInputProps {
     placeholder: string;
 }
 
-export const FormInput = ({ 
-    id, 
-    type, 
-    value, 
-    onChange, 
-    error, 
-    label, 
-    placeholder 
+export const FormInput = ({
+    id,
+    type,
+    value,
+    onChange,
+    error,
+    label,
+    placeholder,
 }: FormInputProps) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-navy-700 dark:text-gray-300 mb-1">
+        <label
+            htmlFor={id}
+            className="block text-sm font-medium text-navy-700 dark:text-gray-300 mb-1"
+        >
             {label}
         </label>
         <input
@@ -31,8 +34,6 @@ export const FormInput = ({
             }`}
             placeholder={placeholder}
         />
-        {error && (
-            <p className="mt-1 text-xs text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
-); 
+);

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL } from './config';
 
 export const loginApi = {
     kakaoLogin: (): void => {
@@ -9,5 +9,5 @@ export const loginApi = {
             console.error('카카오 로그인 에러:', error);
             throw error;
         }
-    }
+    },
 };

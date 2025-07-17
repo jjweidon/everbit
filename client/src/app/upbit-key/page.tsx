@@ -9,11 +9,14 @@ import {
     FormInput,
     UpbitKeyGuide,
     UpbitApiKeyDescription,
-    UpbitApiKeyLink
+    UpbitApiKeyLink,
 } from './components';
 
 const ErrorAlert = ({ message }: { message: string }) => (
-    <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative" role="alert">
+    <div
+        className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative"
+        role="alert"
+    >
         <span className="block sm:inline">{message}</span>
     </div>
 );
@@ -35,17 +38,17 @@ const useUpbitKeyForm = () => {
     const [error, setError] = useState('');
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
         accessKey: '',
-        secretKey: ''
+        secretKey: '',
     });
     const [isLoading, setIsLoading] = useState(false);
 
     const validateForm = () => {
         const newErrors = {
             accessKey: !accessKey.trim() ? 'Access Key는 필수값입니다.' : '',
-            secretKey: !secretKey.trim() ? 'Secret Key는 필수값입니다.' : ''
+            secretKey: !secretKey.trim() ? 'Secret Key는 필수값입니다.' : '',
         };
         setValidationErrors(newErrors);
-        return !Object.values(newErrors).some(error => error);
+        return !Object.values(newErrors).some((error) => error);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +69,7 @@ const useUpbitKeyForm = () => {
 
     const clearValidationError = (field: keyof ValidationErrors) => {
         if (validationErrors[field]) {
-            setValidationErrors(prev => ({ ...prev, [field]: '' }));
+            setValidationErrors((prev) => ({ ...prev, [field]: '' }));
         }
     };
 
@@ -84,7 +87,7 @@ const useUpbitKeyForm = () => {
             setSecretKey(value);
             clearValidationError('secretKey');
         },
-        handleSubmit
+        handleSubmit,
     };
 };
 
@@ -97,7 +100,7 @@ export default function UpbitApiKeyPage() {
         isLoading,
         setAccessKey,
         setSecretKey,
-        handleSubmit
+        handleSubmit,
     } = useUpbitKeyForm();
 
     return (
@@ -139,4 +142,4 @@ export default function UpbitApiKeyPage() {
             </div>
         </div>
     );
-} 
+}

@@ -51,6 +51,17 @@
   }
 }
 
+/* 거래 유형 배지 스타일 */
+@layer components {
+  .trade-badge-entry {
+    @apply bg-red-100 text-red-800 dark:bg-red-600/30 dark:text-red-300;
+  }
+  
+  .trade-badge-exit {
+    @apply bg-navy-100 text-navy-800 dark:bg-navy-300/30 dark:text-navy-100;
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;

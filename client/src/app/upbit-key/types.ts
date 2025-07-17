@@ -8,4 +8,4 @@ export type GuideStep = {
     title: string;
     description: string;
     imagePath: string;
-}; 
+};

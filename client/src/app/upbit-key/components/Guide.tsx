@@ -16,11 +16,7 @@ const GuideStepCard = ({ step }: { step: GuideStep }) => (
                 {step.description}
             </p>
             <div className="rounded-lg overflow-hidden border border-navy-200 dark:border-navy-700">
-                <img
-                    src={step.imagePath}
-                    alt={step.title}
-                    className="w-full h-auto"
-                />
+                <img src={step.imagePath} alt={step.title} className="w-full h-auto" />
             </div>
         </div>
     </div>
@@ -37,4 +33,4 @@ export const UpbitKeyGuide = () => (
             ))}
         </div>
     </div>
-); 
+);
