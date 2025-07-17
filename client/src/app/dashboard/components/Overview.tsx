@@ -1,15 +1,8 @@
 import { formatNumber, formatPercent } from '../utils/format';
+import { OverviewData } from '../types';
 
 interface OverviewProps {
-  overviewData: {
-    totalAsset: number;
-    profitRate: number;
-    realizedProfit: number;
-    notifications: Array<{
-      type: string;
-      message: string;
-    }>;
-  };
+  overviewData: Readonly<OverviewData>;
   botStatus: boolean;
   setBotStatus: (status: boolean) => void;
 }

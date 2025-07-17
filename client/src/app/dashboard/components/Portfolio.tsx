@@ -1,15 +1,8 @@
 import { formatNumber, formatPercent } from '../utils/format';
+import { PortfolioData } from '../types';
 
 interface PortfolioProps {
-  portfolioData: {
-    coins: Array<{
-      symbol: string;
-      entryPrice: number;
-      currentPrice: number;
-      profitRate: number;
-      amount: number;
-    }>;
-  };
+  portfolioData: Readonly<PortfolioData>;
 }
 
 export default function Portfolio({ portfolioData }: PortfolioProps) {

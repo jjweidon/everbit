@@ -1,28 +1,8 @@
+import { BotSettingsData, BacktestData } from '../types';
+
 interface SettingsProps {
-  botSettingsData: {
-    algorithms: Array<{
-      id: string;
-      name: string;
-      description: string;
-    }>;
-    currentSettings: {
-      algorithm: string;
-      params: {
-        period: number;
-        tradeRatio: number;
-        stopLoss: number;
-        takeProfit: number;
-      };
-    };
-  };
-  backtestData: {
-    results: {
-      cagr: number;
-      mdd: number;
-      winRate: number;
-      profitFactor: number;
-    };
-  };
+  botSettingsData: Readonly<BotSettingsData>;
+  backtestData: Readonly<BacktestData>;
 }
 
 export default function Settings({ botSettingsData, backtestData }: SettingsProps) {

@@ -1,16 +1,9 @@
 import { FaFileExport } from 'react-icons/fa';
 import { formatNumber } from '../utils/format';
+import { TradeHistoryData } from '../types';
 
 interface HistoryProps {
-  tradeHistoryData: {
-    trades: Array<{
-      time: string;
-      symbol: string;
-      type: string;
-      amount: number;
-      profit: number | null;
-    }>;
-  };
+  tradeHistoryData: Readonly<TradeHistoryData>;
 }
 
 export default function History({ tradeHistoryData }: HistoryProps) {
@@ -39,12 +32,12 @@ export default function History({ tradeHistoryData }: HistoryProps) {
               {tradeHistoryData.trades.map((trade, index) => (
                 <tr key={index} className="hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600 dark:text-navy-300">{trade.time}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-navy-900 dark:text-white">{trade.symbol}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-navy-900 dark:text-white font-kimm">{trade.symbol}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600 dark:text-navy-300">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       trade.type === 'entry' 
-                        ? 'bg-navy-100 text-navy-800 dark:bg-navy-900/30 dark:text-navy-300' 
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-navy-100 text-navy-800 dark:bg-navy-900/30 dark:text-navy-300' 
                     }`}>
                       {trade.type === 'entry' ? '매수' : '매도'}
                     </span>
