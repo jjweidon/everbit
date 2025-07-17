@@ -1,7 +1,7 @@
 import { apiClient } from '../lib/apiClient';
 import { InquiryRequest } from '../types';
 
-export const inquiryApi = {
+export const supportApi = {
     submitInquiry: async (request: InquiryRequest): Promise<void> => {
         return apiClient.post('/inquiries', request);
     },

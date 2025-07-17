@@ -23,7 +23,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        User user = userService.createUser(oAuth2User);
+        User user = userService.createOrFindUser(oAuth2User);
         TokenDto tokenDto = TokenDto.create(user.getUsername(), user.getRole().name());
         return new CustomOAuth2User(tokenDto);
     }

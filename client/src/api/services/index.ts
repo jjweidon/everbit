@@ -1,4 +1,4 @@
 export * from './userApi';
 export * from './upbitApi';
-export * from './inquiryApi';
+export * from './supportApi';
 export * from './authApi'; 

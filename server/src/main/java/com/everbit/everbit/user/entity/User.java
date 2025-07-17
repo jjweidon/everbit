@@ -1,6 +1,7 @@
 package com.everbit.everbit.user.entity;
 
 import com.everbit.everbit.global.entity.BaseTime;
+import com.everbit.everbit.oauth2.dto.OAuth2Response;
 import com.everbit.everbit.user.entity.enums.Role;
 
 import jakarta.persistence.*;
@@ -29,15 +30,27 @@ public class User extends BaseTime {
     private String nickname;
 
     private String image;
-    
-    @Builder.Default
-    private boolean isUpbitConnected = false;
 
-    public void connectUpbit() {
-        this.isUpbitConnected = true;
+    private String upbitAccessKey;
+
+    private String upbitSecretKey;
+
+    public static User init(OAuth2Response oAuth2Response) {
+        String username = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
+        return User.builder()
+                .username(username)
+                .role(Role.ROLE_USER)
+                .nickname(oAuth2Response.getName())
+                .image(oAuth2Response.getImage())
+                .build();
     }
 
     public void updateEmail(String email) {
         this.email = email;
+    }
+
+    public void updateKeys(String accessKey, String secretKey) {
+        this.upbitAccessKey = accessKey;
+        this.upbitSecretKey = secretKey;
     }
 }

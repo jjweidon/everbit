@@ -24,7 +24,7 @@ public record UserResponse(
             user.getNickname(),
             user.getImage(),
             user.getCreatedAt().toString(),
-            user.isUpbitConnected(),
+            user.getUpbitAccessKey() != null && user.getUpbitSecretKey() != null,
             user.getRole().name()
         );
     }

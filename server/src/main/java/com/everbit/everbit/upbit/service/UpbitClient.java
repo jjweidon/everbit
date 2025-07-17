@@ -3,7 +3,6 @@ package com.everbit.everbit.upbit.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
-import com.everbit.everbit.upbit.entity.Account;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 
@@ -85,9 +84,8 @@ public class UpbitClient {
 
     private String createAuthHeaders(String queryString, User user) {
         try {
-            Account account = userService.findAccountByUser(user);
-            String accessKey = account.getUpbitAccessKey();
-            String secretKey = account.getUpbitSecretKey();
+            String accessKey = user.getUpbitAccessKey();
+            String secretKey = user.getUpbitSecretKey();
             String nonce = UUID.randomUUID().toString();
 
             log.info("Access Key: {}", accessKey);

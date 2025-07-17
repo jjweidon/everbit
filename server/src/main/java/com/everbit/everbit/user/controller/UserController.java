@@ -4,6 +4,7 @@ import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.user.dto.EmailRequest;
+import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.dto.UserResponse;
 import com.everbit.everbit.user.service.UserManager;
 
@@ -24,6 +25,17 @@ public class UserController {
         String username = oAuth2User.getName();
         UserResponse response = userManager.getUserResponse(username);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
+    }
+
+    // 업비트 API 키 등록
+    @PatchMapping("/me/upbit-keys")
+    public ApiResponse<Response> registerUpbitApiKeys(
+            @RequestBody UpbitKeyRequest request,
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+        String username = oAuth2User.getName();
+        log.info("POST 업비트 API 키 등록: {}", username);
+        UserResponse response = userManager.registerUpbitApiKeys(username, request);
+        return ApiResponse.success(response, "업비트 API 키 등록 성공");
     }
 
     @PatchMapping("/me/email")

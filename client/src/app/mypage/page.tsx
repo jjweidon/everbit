@@ -2,7 +2,7 @@
 
 import MainHeader from '@/components/MainHeader';
 import { useEffect, useState } from 'react';
-import { userApi, upbitApi, inquiryApi } from '@/api/services';
+import { userApi, upbitApi, supportApi } from '@/api/services';
 import { UserResponse, EmailRequest, UpbitKeyRequest, InquiryRequest } from '@/api/types';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
@@ -55,7 +55,7 @@ export default function MyPage() {
     const handleInquirySubmit = async (content: string) => {
         try {
             const request: InquiryRequest = { content };
-            await inquiryApi.submitInquiry(request);
+            await supportApi.submitInquiry(request);
             alert('문의사항이 성공적으로 제출되었습니다.');
         } catch (error) {
             console.error('문의사항 제출 실패:', error);
