@@ -1,32 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { UserList, TradeLog, ServerLog } from './components';
 import MainHeader from '@/components/MainHeader';
 
 export default function AdminPage() {
-  const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const checkAdminAuth = async () => {
-      try {
-        // TODO: 관리자 권한 체크 로직 구현
-        setIsAdmin(true);
-        setIsLoading(false);
-      } catch (error) {
-        setError('관리자 권한이 없습니다.');
-        setIsLoading(false);
-        router.push('/');
-      }
-    };
-    
-    checkAdminAuth();
-  }, [router]);
 
   if (isLoading || error) {
     return (

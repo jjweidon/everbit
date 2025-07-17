@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
@@ -12,15 +12,19 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
     const router = useRouter();
     const pathname = usePathname();
     const { fetchUser } = useAuthStore();
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
     // 공개 경로 목록
     const publicPaths = ['/', '/login', '/docs'];
+    // 관리자 전용 경로 목록
+    const adminPaths = ['/admin'];
 
     useEffect(() => {
         const checkAuth = async () => {
             // 공개 경로인 경우 인증 체크 건너뛰기
             if (publicPaths.includes(pathname)) {
                 console.log('RouteGuard: 공개 경로, 인증 체크 건너뛰기', { pathname });
+                setIsAuthorized(true);
                 return;
             }
 
@@ -35,6 +39,7 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
                 console.log('RouteGuard: 현재 인증 상태', {
                     isAuthenticated: currentAuthState.isAuthenticated,
                     isUpbitConnected: currentAuthState.user?.isUpbitConnected,
+                    role: currentAuthState.user?.role,
                     pathname,
                 });
 
@@ -42,6 +47,13 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
                 if (!currentAuthState.isAuthenticated) {
                     console.log('RouteGuard: 인증되지 않음, 로그인 페이지로 리다이렉트');
                     router.replace('/login');
+                    return;
+                }
+
+                // 관리자 전용 페이지 접근 체크
+                if (adminPaths.some(path => pathname.startsWith(path)) && currentAuthState.user?.role !== 'ROLE_ADMIN') {
+                    console.log('RouteGuard: 관리자 권한 없음, 대시보드로 리다이렉트');
+                    router.replace('/dashboard');
                     return;
                 }
 
@@ -57,6 +69,7 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
                 }
 
                 console.log('RouteGuard: 인증 및 업비트 연동 체크 완료');
+                setIsAuthorized(true);
             } catch (error) {
                 console.error('RouteGuard: 인증 체크 실패:', error);
                 // 공개 경로가 아닌 경우에만 로그인 페이지로 리다이렉트
@@ -66,10 +79,12 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
             }
         };
 
+        setIsAuthorized(false);
         checkAuth();
     }, [pathname, fetchUser, router]);
 
-    return <>{children}</>;
+    // 권한 체크가 완료되고 authorized된 경우에만 children을 렌더링
+    return isAuthorized ? <>{children}</> : null;
 };
 
 export default RouteGuard;

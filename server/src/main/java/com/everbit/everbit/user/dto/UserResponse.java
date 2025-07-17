@@ -12,7 +12,8 @@ public record UserResponse(
     String nickname,
     String image,
     String createdAt,
-    Boolean isUpbitConnected
+    Boolean isUpbitConnected,
+    String role
 ) implements Response {
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -21,7 +22,8 @@ public record UserResponse(
             user.getNickname(),
             user.getImage(),
             user.getCreatedAt().toString(),
-            user.isUpbitConnected()
+            user.isUpbitConnected(),
+            user.getRole().name()
         );
     }
 }

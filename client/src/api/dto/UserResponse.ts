@@ -7,6 +7,7 @@ const UserResponse = z.object({
     image: z.string(),
     createdAt: z.string(),
     isUpbitConnected: z.boolean(),
+    role: z.string(),
 });
 
 export type UserResponse = z.infer<typeof UserResponse>;
