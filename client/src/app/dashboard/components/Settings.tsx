@@ -1,4 +1,5 @@
 import { BotSettingsData, BacktestData } from '../types';
+import { useState } from 'react';
 
 interface SettingsProps {
   botSettingsData: Readonly<BotSettingsData>;
@@ -6,6 +7,30 @@ interface SettingsProps {
 }
 
 export default function Settings({ botSettingsData, backtestData }: SettingsProps) {
+  const [settings, setSettings] = useState(botSettingsData.currentSettings);
+
+  const handleAlgorithmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSettings(prev => ({
+      ...prev,
+      algorithm: e.target.value
+    }));
+  };
+
+  const handleParamChange = (param: keyof typeof settings.params) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSettings(prev => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        [param]: Number(e.target.value)
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    // TODO: API 연동 시 저장 로직 구현
+    console.log('Settings saved:', settings);
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-6 rounded-2xl shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
@@ -16,7 +41,8 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
           <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">알고리즘 선택</label>
           <select
             className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-            value={botSettingsData.currentSettings.algorithm}
+            value={settings.algorithm}
+            onChange={handleAlgorithmChange}
           >
             {botSettingsData.algorithms.map(algo => (
               <option key={algo.id} value={algo.id}>{algo.name}</option>
@@ -31,7 +57,8 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
             <input
               type="number"
               className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-              value={botSettingsData.currentSettings.params.period}
+              value={settings.params.period}
+              onChange={handleParamChange('period')}
             />
           </div>
           <div>
@@ -39,7 +66,8 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
             <input
               type="number"
               className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-              value={botSettingsData.currentSettings.params.tradeRatio}
+              value={settings.params.tradeRatio}
+              onChange={handleParamChange('tradeRatio')}
             />
           </div>
           <div>
@@ -47,7 +75,8 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
             <input
               type="number"
               className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-              value={botSettingsData.currentSettings.params.stopLoss}
+              value={settings.params.stopLoss}
+              onChange={handleParamChange('stopLoss')}
             />
           </div>
           <div>
@@ -55,12 +84,16 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
             <input
               type="number"
               className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-              value={botSettingsData.currentSettings.params.takeProfit}
+              value={settings.params.takeProfit}
+              onChange={handleParamChange('takeProfit')}
             />
           </div>
         </div>
 
-        <button className="mt-6 w-full px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white rounded-lg transition-all duration-200 shadow-lg shadow-navy-500/30">
+        <button 
+          onClick={handleSave}
+          className="mt-6 w-full px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white rounded-lg transition-all duration-200 shadow-lg shadow-navy-500/30"
+        >
           설정 저장
         </button>
       </div>

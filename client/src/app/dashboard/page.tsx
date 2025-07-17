@@ -1,20 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Overview,
-  Portfolio,
-  History,
-  Settings,
-  Navigation,
-  DashboardHeader,
-} from './components';
+import { Overview, Portfolio, History, Settings, Navigation } from './components';
 import { DashboardTab } from './types';
 import { MOCK_DATA } from './constants';
+import MainHeader from '@/components/MainHeader';
 
 export default function Dashboard() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [botStatus, setBotStatus] = useState(false);
@@ -70,7 +62,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-navy-900 dark:to-navy-800">
-      <DashboardHeader botStatus={botStatus} />
+      <MainHeader title="Dashboard" botStatus={botStatus} />
       <Navigation selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}

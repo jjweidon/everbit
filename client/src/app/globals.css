@@ -59,10 +59,43 @@
   --navy-dark: #19254B;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+html {
+  height: 100%;
+  background-color: rgb(var(--background-end-rgb));
+}
+
 body {
+  min-height: 100vh;
+  background-color: rgb(15 21 42);
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  overflow-x: hidden;
   font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(51 65 85); /* bg-navy-700 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105); /* bg-navy-600 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139); /* bg-navy-500 */
 }
 
 /* 네이비 강조 효과 */

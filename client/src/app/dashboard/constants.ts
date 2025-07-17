@@ -1,12 +1,12 @@
 import { IconType } from 'react-icons';
-import { FaChartLine, FaChartBar, FaHistory, FaCog } from 'react-icons/fa';
+import { FaChartLine, FaChartBar, FaHistory, FaRobot } from 'react-icons/fa';
 import { DashboardTab } from './types';
 
 export const DASHBOARD_TABS: { id: DashboardTab; label: string; icon: IconType }[] = [
   { id: 'overview', label: '개요', icon: FaChartLine },
   { id: 'portfolio', label: '포트폴리오', icon: FaChartBar },
   { id: 'history', label: '거래 내역', icon: FaHistory },
-  { id: 'settings', label: '봇 설정', icon: FaCog },
+  { id: 'settings', label: '봇 설정', icon: FaRobot },
 ];
 
 // 임시 데이터 (추후 API 연동 시 제거)
