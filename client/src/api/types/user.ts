@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Response Types
-export const UserResponse = z.object({
+export const User = z.object({
     userId: z.string(),
     username: z.string(),
     nickname: z.string(),
@@ -11,12 +11,17 @@ export const UserResponse = z.object({
     isUpbitConnected: z.boolean(),
     role: z.string(),
 });
+export type UserResponse = z.infer<typeof User>;
 
-export type UserResponse = z.infer<typeof UserResponse>;
+export const UpbitApiKeys = z.object({
+    accessKey: z.string(),
+    secretKey: z.string(),
+});
+export type UpbitApiKeysResponse = z.infer<typeof UpbitApiKeys>;
+export type UpbitApiKeysRequest = z.infer<typeof UpbitApiKeys>;
 
 // Request Types
-export const EmailRequest = z.object({
+export const Email = z.object({
     email: z.string(),
 });
-
-export type EmailRequest = z.infer<typeof EmailRequest>; 
+export type EmailRequest = z.infer<typeof Email>;

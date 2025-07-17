@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.everbit.everbit.global.util.EncryptionUtil;
 import com.everbit.everbit.user.dto.UpbitKeyRequest;
+import com.everbit.everbit.user.dto.UpbitApiKeysResponse;
 import com.everbit.everbit.user.dto.UserResponse;
 import com.everbit.everbit.user.entity.User;
 
@@ -30,6 +31,12 @@ public class UserManager {
         user.updateKeys(encryptedAccessKey, encryptedSecretKey);
         userService.saveUser(user);
         return UserResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UpbitApiKeysResponse getUpbitApiKeys(String username) {
+        User user = userService.findUserByUsername(username);
+        return UpbitApiKeysResponse.from(user);
     }
 
     @Transactional

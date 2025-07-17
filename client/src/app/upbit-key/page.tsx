@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { upbitApi } from '@/api/services';
+import { userApi } from '@/api/services';
 import {
     ValidationErrors,
     FormInput,
@@ -11,6 +11,7 @@ import {
     UpbitApiKeyLink,
 } from './components';
 import MainHeader from '@/components/MainHeader';
+import { UpbitApiKeysRequest } from '@/api/types';
 
 const ErrorAlert = ({ message }: { message: string }) => (
     <div
@@ -57,7 +58,8 @@ const useUpbitKeyForm = () => {
 
         try {
             setIsLoading(true);
-            await upbitApi.registerUpbitApiKeys({ accessKey, secretKey });
+            const request: UpbitApiKeysRequest = { accessKey, secretKey };
+            await userApi.registerUpbitApiKeys(request);
             router.push('/dashboard');
         } catch (error) {
             console.error('Error:', error);

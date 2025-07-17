@@ -1,9 +1,17 @@
 import { apiClient } from '../lib/apiClient';
-import { EmailRequest, UserResponse } from '../types';
+import { EmailRequest, UpbitApiKeysRequest, UpbitApiKeysResponse, UserResponse } from '../types';
 
 export const userApi = {
     getCurrentUser: async (): Promise<UserResponse> => {
         return apiClient.get<UserResponse>('/users/me');
+    },
+
+    registerUpbitApiKeys: async (request: UpbitApiKeysRequest): Promise<UserResponse> => {
+        return apiClient.patch<UserResponse>('/users/me/upbit-keys', request);
+    },
+
+    getUpbitApiKeys: async (): Promise<UpbitApiKeysResponse> => {
+        return apiClient.get<UpbitApiKeysResponse>('/users/me/upbit-keys');
     },
 
     updateEmail: async (request: EmailRequest): Promise<UserResponse> => {

@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
 // Request Types
-export const UpbitKeyRequest = z.object({
-    accessKey: z.string(),
-    secretKey: z.string(),
-});
-
-export type UpbitKeyRequest = z.infer<typeof UpbitKeyRequest>;
 
 // Response Types
 export const UpbitAccount = z.object({

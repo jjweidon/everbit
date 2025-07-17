@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { UserResponse } from '@/api/types';
+import { useEffect, useState } from 'react';
+import { UserResponse, UpbitApiKeysResponse } from '@/api/types';
+import { userApi } from '@/api/services';
 import { LAYOUT, UI } from '../constants';
 
 interface UpbitKeySectionProps {
@@ -11,6 +12,21 @@ export function UpbitKeySection({ user, onUpdate }: UpbitKeySectionProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [accessKey, setAccessKey] = useState('');
     const [secretKey, setSecretKey] = useState('');
+
+    useEffect(() => {
+        if (isEditing && user) {
+            const fetchKeys = async () => {
+                try {
+                    const keys: UpbitApiKeysResponse = await userApi.getUpbitApiKeys();
+                    setAccessKey(keys.accessKey);
+                    setSecretKey(keys.secretKey);
+                } catch (error) {
+                    console.error('API 키를 불러오는데 실패했습니다:', error);
+                }
+            };
+            fetchKeys();
+        }
+    }, [isEditing, user]);
 
     const handleSubmit = async () => {
         if (!accessKey || !secretKey) return;

@@ -2,8 +2,8 @@
 
 import MainHeader from '@/components/MainHeader';
 import { useEffect, useState } from 'react';
-import { userApi, upbitApi, supportApi } from '@/api/services';
-import { UserResponse, EmailRequest, UpbitKeyRequest, InquiryRequest } from '@/api/types';
+import { userApi, supportApi } from '@/api/services';
+import { UserResponse, EmailRequest, UpbitApiKeysRequest, InquiryRequest } from '@/api/types';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { LAYOUT } from './constants';
@@ -42,8 +42,8 @@ export default function MyPage() {
 
     const handleUpbitKeysUpdate = async (accessKey: string, secretKey: string) => {
         try {
-            const request: UpbitKeyRequest = { accessKey, secretKey };
-            const updatedUser = await upbitApi.registerUpbitApiKeys(request);
+            const request: UpbitApiKeysRequest = { accessKey, secretKey };
+            const updatedUser = await userApi.registerUpbitApiKeys(request);
             setUser(updatedUser);
         } catch (error) {
             console.error('업비트 API 키 수정 실패:', error);
