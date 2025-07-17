@@ -8,7 +8,7 @@ export default function MyPage() {
 
     return (
         <div className="min-h-screen bg-navy-800">
-            <MainHeader title="My Page" botStatus={botStatus} />
+            <MainHeader title="everbit" botStatus={botStatus} />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* 마이페이지 컨텐츠 */}
             </div>

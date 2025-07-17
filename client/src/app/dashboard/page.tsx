@@ -73,7 +73,7 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-navy-900 dark:to-navy-800">
-            <MainHeader title="Dashboard" botStatus={botStatus} />
+            <MainHeader title="everbit" botStatus={botStatus} />
             <Navigation selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
             <div className="max-w-7xl mx-auto px-4 sm:px-16 lg:px-24 py-8">{renderContent()}</div>
         </div>

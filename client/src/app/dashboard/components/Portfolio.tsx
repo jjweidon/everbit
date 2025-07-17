@@ -11,7 +11,7 @@ export default function Portfolio({ portfolioData }: PortfolioProps) {
             {/* 모바일 뷰 */}
             <div className="grid grid-cols-1 gap-4 sm:hidden">
                 {portfolioData.coins.map((coin, index) => (
-                    <div key={index} className="bg-navy-50/50 dark:bg-navy-800 rounded-xl p-4">
+                    <div key={index} className="bg-navy-50/50 dark:bg-navy-800 rounded-md p-4">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-lg font-medium text-navy-900 dark:text-white font-kimm">
                                 {coin.symbol}

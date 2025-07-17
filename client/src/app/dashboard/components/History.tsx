@@ -9,10 +9,10 @@ interface HistoryProps {
 export default function History({ tradeHistoryData }: HistoryProps) {
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-2xl shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                 <div className="flex flex-row justify-between items-center mb-6">
                     <h3 className="text-lg font-medium text-navy-900 dark:text-white">거래 내역</h3>
-                    <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white rounded-lg transition-colors duration-200 shadow-lg shadow-navy-500/30">
+                    <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white rounded-md transition-colors duration-200 shadow-lg shadow-navy-500/30">
                         <FaFileExport />
                         <span>CSV 내보내기</span>
                     </button>
@@ -21,7 +21,7 @@ export default function History({ tradeHistoryData }: HistoryProps) {
                 {/* 모바일 뷰 */}
                 <div className="grid grid-cols-1 gap-4 sm:hidden">
                     {tradeHistoryData.trades.map((trade, index) => (
-                        <div key={index} className="bg-navy-50/50 dark:bg-navy-800 rounded-xl p-4">
+                        <div key={index} className="bg-navy-50/50 dark:bg-navy-800 rounded-md p-4">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
                                     <span className="text-base font-medium text-navy-900 dark:text-white font-kimm block">

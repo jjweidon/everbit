@@ -1,5 +1,6 @@
 import { BotSettingsData, BacktestData } from '../types';
 import { useState } from 'react';
+import { FaChartLine, FaChartArea, FaCrosshairs, FaBitcoin } from 'react-icons/fa';
 
 interface SettingsProps {
     botSettingsData: Readonly<BotSettingsData>;
@@ -107,7 +108,7 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
                 <div className="flex justify-center">
                     <button
                         onClick={handleSave}
-                        className="mt-6 w-2/3 md:w-1/2 lg:w-1/3 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white text-sm rounded-lg transition-all duration-200 shadow-lg shadow-navy-500/30"
+                        className="mt-6 w-2/3 md:w-1/2 lg:w-1/3 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white text-sm rounded-md transition-all duration-200 shadow-lg shadow-navy-500/30"
                     >
                         저장
                     </button>
@@ -120,31 +121,49 @@ export default function Settings({ botSettingsData, backtestData }: SettingsProp
                     백테스팅 결과
                 </h3>
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-700/50 rounded-lg backdrop-blur-sm">
-                        <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">CAGR</p>
-                        <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
-                            {backtestData.results.cagr}%
-                        </p>
+                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-800/90 rounded-md backdrop-blur-sm">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">CAGR <span className="text-[0.6rem]">(연평균 성장률)</span></p>
+                                <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
+                                    {backtestData.results.cagr}%
+                                </p>
+                            </div>
+                            <FaChartLine className="text-lg sm:text-xl text-navy-600 dark:text-navy-300" />
+                        </div>
                     </div>
-                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-700/50 rounded-lg backdrop-blur-sm">
-                        <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">MDD</p>
-                        <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
-                            {backtestData.results.mdd}%
-                        </p>
+                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-800/90 rounded-md backdrop-blur-sm">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">MDD <span className="text-[0.6rem]">(최대 낙폭)</span></p>
+                                <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
+                                    {backtestData.results.mdd}%
+                                </p>
+                            </div>
+                            <FaChartArea className="text-lg sm:text-xl text-navy-600 dark:text-navy-300" />
+                        </div>
                     </div>
-                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-700/50 rounded-lg backdrop-blur-sm">
-                        <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">승률</p>
-                        <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
-                            {backtestData.results.winRate}%
-                        </p>
+                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-800/90 rounded-md backdrop-blur-sm">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">승률</p>
+                                <p className="text-base sm:text-xl font-bold text-green-500">
+                                    {backtestData.results.winRate}%
+                                </p>
+                            </div>
+                            <FaCrosshairs className="text-lg sm:text-xl text-navy-600 dark:text-navy-300" />
+                        </div>
                     </div>
-                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-700/50 rounded-lg backdrop-blur-sm">
-                        <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">
-                            수익 팩터
-                        </p>
-                        <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
-                            {backtestData.results.profitFactor}
-                        </p>
+                    <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-800/90 rounded-md backdrop-blur-sm">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-xs sm:text-sm text-navy-600 dark:text-navy-300">수익 팩터</p>
+                                <p className="text-base sm:text-xl font-bold text-navy-900 dark:text-white">
+                                    {backtestData.results.profitFactor}
+                                </p>
+                            </div>
+                            <FaBitcoin className="text-lg sm:text-xl text-navy-600 dark:text-navy-300" />
+                        </div>
                     </div>
                 </div>
             </div>
