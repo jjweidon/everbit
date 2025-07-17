@@ -19,10 +19,13 @@ public class AccountService {
                 .orElseThrow(() -> AccountException.noAccount(user));
     }
 
-    public void checkAccountExists(User user) {
-        if (accountRepository.findByUser(user).isPresent()) {
-            throw AccountException.alreadyExists(user);
-        }
+    public Account findOrCreateAccount(User user) {
+        return accountRepository.findByUser(user)
+                .orElseGet(() -> Account.init(user));
+    }
+
+    public boolean isAccountExists(User user) {
+        return accountRepository.findByUser(user).isPresent();
     }
 
     public void saveAccount(Account account) {

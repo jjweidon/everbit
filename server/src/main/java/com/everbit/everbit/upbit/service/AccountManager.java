@@ -16,14 +16,13 @@ public class AccountManager {
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
 
-    public UserResponse createAccount(String username, UpbitKeyRequest request) {
+    public UserResponse registerAccount(String username, UpbitKeyRequest request) {
         User user = userService.findUserByUsername(username);
-        accountService.checkAccountExists(user);
-        
         String encryptedAccessKey = encryptionUtil.encrypt(request.accessKey());
         String encryptedSecretKey = encryptionUtil.encrypt(request.secretKey());
-        
-        Account account = Account.of(user, encryptedAccessKey, encryptedSecretKey);
+
+        Account account = accountService.findOrCreateAccount(user);
+        account.updateKeys(encryptedAccessKey, encryptedSecretKey);
         accountService.saveAccount(account);
         
         user.connectUpbit();

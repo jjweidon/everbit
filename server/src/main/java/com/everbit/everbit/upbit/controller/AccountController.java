@@ -25,15 +25,15 @@ public class AccountController {
     private final UpbitClient upbitClient;
     private final AccountManager accountManager;
 
-    // 업비트 API 키 저장
+    // 업비트 API 키 등록
     @PostMapping
     public ApiResponse<Response> saveUpbitApiKeys(
             @RequestBody UpbitKeyRequest request,
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
-        log.info("POST 업비트 API 키 저장: {}", username);
-        UserResponse response = accountManager.createAccount(username, request);
-        return ApiResponse.success(response, "업비트 API 키 저장 성공");
+        log.info("POST 업비트 API 키 등록: {}", username);
+        UserResponse response = accountManager.registerAccount(username, request);
+        return ApiResponse.success(response, "업비트 API 키 등록 성공");
     }
 
     // 계좌 정보 조회

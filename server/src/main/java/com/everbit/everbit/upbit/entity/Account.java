@@ -28,11 +28,14 @@ public class Account extends BaseTime {
     @Setter
     private String upbitSecretKey;
 
-    public static Account of(User user, String accessKey, String secretKey) {
+    public static Account init(User user) {
         return Account.builder()
                 .user(user)
-                .upbitAccessKey(accessKey)
-                .upbitSecretKey(secretKey)
                 .build();
+    }
+
+    public void updateKeys(String accessKey, String secretKey) {
+        this.upbitAccessKey = accessKey;
+        this.upbitSecretKey = secretKey;
     }
 }
