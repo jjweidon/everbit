@@ -5,6 +5,7 @@ const UserResponse = z.object({
     username: z.string(),
     nickname: z.string(),
     image: z.string(),
+    createdAt: z.string(),
     isUpbitConnected: z.boolean(),
 });
 

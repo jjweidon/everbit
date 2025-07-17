@@ -11,6 +11,7 @@ public record UserResponse(
     String username,
     String nickname,
     String image,
+    String createdAt,
     Boolean isUpbitConnected
 ) implements Response {
     public static UserResponse from(User user) {
@@ -19,6 +20,7 @@ public record UserResponse(
             user.getUsername(),
             user.getNickname(),
             user.getImage(),
+            user.getCreatedAt().toString(),
             user.isUpbitConnected()
         );
     }
