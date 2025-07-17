@@ -23,10 +23,10 @@ class ApiClient {
         });
     }
 
-    async put<T>(url: string, data?: any, options: ApiOptions = {}): Promise<T> {
+    async patch<T>(url: string, data?: any, options: ApiOptions = {}): Promise<T> {
         return this.request<T>({
             url,
-            method: 'PUT',
+            method: 'PATCH',
             data,
             ...options,
         });
@@ -56,4 +56,4 @@ class ApiClient {
     }
 }
 
-export const apiClient = new ApiClient();
+export const apiClient = new ApiClient(); 

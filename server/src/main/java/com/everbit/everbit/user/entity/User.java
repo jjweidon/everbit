@@ -24,6 +24,8 @@ public class User extends BaseTime {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private String email;
+
     private String nickname;
 
     private String image;
@@ -33,5 +35,9 @@ public class User extends BaseTime {
 
     public void connectUpbit() {
         this.isUpbitConnected = true;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 }

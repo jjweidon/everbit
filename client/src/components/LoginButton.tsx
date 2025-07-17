@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import KakaoIcon from '@/components/icons/KakaoIcon';
 import NaverIcon from '@/components/icons/NaverIcon';
-import { loginApi } from '@/api/loginApi';
+import { authApi } from '@/api/services';
 
 interface LoginButtonProps {
     provider: 'kakao' | 'naver';
@@ -28,7 +28,7 @@ export default function LoginButton({ provider, className = '' }: LoginButtonPro
             // 로그인 상태 로깅
             console.log(`${provider} 로그인 시작`);
 
-            loginApi.kakaoLogin();
+            authApi.kakaoLogin();
         } catch (error) {
             console.error(`${provider} 로그인 오류:`, error);
         }

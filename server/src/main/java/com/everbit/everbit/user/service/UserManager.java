@@ -18,4 +18,11 @@ public class UserManager {
         User user = userService.findUserByUsername(username);
         return UserResponse.from(user);
     }
+
+    @Transactional
+    public void updateEmail(String username, String email) {
+        User user = userService.findUserByUsername(username);
+        user.updateEmail(email);
+        userService.saveUser(user);
+    }
 }

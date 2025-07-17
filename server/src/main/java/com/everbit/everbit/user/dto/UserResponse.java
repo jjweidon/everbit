@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 public record UserResponse(
     String userId,
     String username,
+    String email,
     String nickname,
     String image,
     String createdAt,
@@ -19,6 +20,7 @@ public record UserResponse(
         return new UserResponse(
             user.getId(),
             user.getUsername(),
+            user.getEmail(),
             user.getNickname(),
             user.getImage(),
             user.getCreatedAt().toString(),

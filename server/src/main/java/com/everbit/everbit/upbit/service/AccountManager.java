@@ -16,7 +16,7 @@ public class AccountManager {
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
 
-    public UserResponse registerAccount(String username, UpbitKeyRequest request) {
+    public UserResponse registerUpbitApiKeys(String username, UpbitKeyRequest request) {
         User user = userService.findUserByUsername(username);
         String encryptedAccessKey = encryptionUtil.encrypt(request.accessKey());
         String encryptedSecretKey = encryptionUtil.encrypt(request.secretKey());

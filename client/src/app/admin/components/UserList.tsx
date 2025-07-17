@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserResponse } from '@/api/dto/UserResponse';
+import { UserResponse } from '@/api/types';
 
 export default function UserList() {
   const [users, setUsers] = useState<UserResponse[]>([]);

@@ -27,12 +27,12 @@ public class AccountController {
 
     // 업비트 API 키 등록
     @PostMapping
-    public ApiResponse<Response> saveUpbitApiKeys(
+    public ApiResponse<Response> registerUpbitApiKeys(
             @RequestBody UpbitKeyRequest request,
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("POST 업비트 API 키 등록: {}", username);
-        UserResponse response = accountManager.registerAccount(username, request);
+        UserResponse response = accountManager.registerUpbitApiKeys(username, request);
         return ApiResponse.success(response, "업비트 API 키 등록 성공");
     }
 

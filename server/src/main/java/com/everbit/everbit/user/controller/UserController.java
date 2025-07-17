@@ -3,6 +3,7 @@ package com.everbit.everbit.user.controller;
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
+import com.everbit.everbit.user.dto.EmailRequest;
 import com.everbit.everbit.user.dto.UserResponse;
 import com.everbit.everbit.user.service.UserManager;
 
@@ -23,5 +24,12 @@ public class UserController {
         String username = oAuth2User.getName();
         UserResponse response = userManager.getUserResponse(username);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
+    }
+
+    @PatchMapping("/me/email")
+    public ApiResponse<Response> updateEmail(@AuthenticationPrincipal CustomOAuth2User oAuth2User, @RequestBody EmailRequest request) {
+        String username = oAuth2User.getName();
+        userManager.updateEmail(username, request.email());
+        return ApiResponse.success(null, "이메일 업데이트 성공");
     }
 } 

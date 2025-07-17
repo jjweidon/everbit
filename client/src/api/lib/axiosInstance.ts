@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from '../config';
 import { objectToCamel, objectToSnake } from 'ts-case-convert';
 import { useAuthStore } from '@/store/authStore';
 
@@ -69,4 +69,4 @@ axiosInstance.interceptors.response.use(
     }
 );
 
-export default axiosInstance;
+export default axiosInstance; 
