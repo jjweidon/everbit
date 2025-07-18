@@ -5,10 +5,12 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
 import com.everbit.everbit.global.util.EncryptionUtil;
 import com.everbit.everbit.upbit.exception.UpbitException;
+import com.everbit.everbit.upbit.dto.AccountResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +21,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -30,18 +33,18 @@ public class UpbitClient {
     private final EncryptionUtil encryptionUtil;
     private final RestTemplate restTemplate;
 
-    public String getAccounts(String username) {
+    public List<AccountResponse> getAccounts(String username) {
         try {
             User user = userService.findUserByUsername(username);
             URI uri = buildUrl("/v1/accounts");
             HttpHeaders headers = createHeaders("", user);
             
             log.debug("Making request to Upbit API: {}", uri);
-            ResponseEntity<String> response = restTemplate.exchange(
+            ResponseEntity<List<AccountResponse>> response = restTemplate.exchange(
                 uri,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                String.class
+                new ParameterizedTypeReference<List<AccountResponse>>() {}
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
