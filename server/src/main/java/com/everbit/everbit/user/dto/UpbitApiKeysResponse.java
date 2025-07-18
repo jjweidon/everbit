@@ -1,7 +1,6 @@
 package com.everbit.everbit.user.dto;
 
 import com.everbit.everbit.global.dto.Response;
-import com.everbit.everbit.user.entity.User;
 
 import lombok.Builder;
 
@@ -10,10 +9,10 @@ public record UpbitApiKeysResponse(
     String accessKey,
     String secretKey
 ) implements Response {
-    public static UpbitApiKeysResponse from(User user) {
+    public static UpbitApiKeysResponse of(String accessKey, String secretKey) {
         return UpbitApiKeysResponse.builder()
-            .accessKey(user.getUpbitAccessKey())
-            .secretKey(user.getUpbitSecretKey())
+            .accessKey(accessKey)
+            .secretKey(secretKey)
             .build();
     }
 }

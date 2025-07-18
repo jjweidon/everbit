@@ -36,7 +36,9 @@ public class UserManager {
     @Transactional(readOnly = true)
     public UpbitApiKeysResponse getUpbitApiKeys(String username) {
         User user = userService.findUserByUsername(username);
-        return UpbitApiKeysResponse.from(user);
+        String decryptedAccessKey = encryptionUtil.decrypt(user.getUpbitAccessKey());
+        String decryptedSecretKey = encryptionUtil.decrypt(user.getUpbitSecretKey());
+        return UpbitApiKeysResponse.of(decryptedAccessKey, decryptedSecretKey);
     }
 
     @Transactional
