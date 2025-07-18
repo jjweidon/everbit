@@ -3,8 +3,11 @@ import { API_BASE_URL } from '../config';
 import { objectToCamel, objectToSnake } from 'ts-case-convert';
 import { useAuthStore } from '@/store/authStore';
 
+// HTTP를 HTTPS로 강제 변환
+const secureBaseUrl = API_BASE_URL?.replace(/^http:/, 'https:');
+
 const axiosInstance = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: secureBaseUrl,
     timeout: 5000,
     withCredentials: true,
 });

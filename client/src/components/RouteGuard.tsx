@@ -19,10 +19,17 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
     // 관리자 전용 경로 목록
     const adminPaths = ['/admin'];
 
+    // 경로가 publicPaths 중 하나와 일치하거나, 끝에 슬래시만 추가된 경우 true 반환
+    const isPublicPath = (path: string): boolean => {
+        return publicPaths.some(publicPath => 
+            path === publicPath || path === `${publicPath}/`
+        );
+    };
+
     useEffect(() => {
         const checkAuth = async () => {
             // 공개 경로인 경우 인증 체크 건너뛰기
-            if (publicPaths.includes(pathname)) {
+            if (isPublicPath(pathname)) {
                 console.log('RouteGuard: 공개 경로, 인증 체크 건너뛰기', { pathname });
                 setIsAuthorized(true);
                 return;
@@ -72,8 +79,7 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
                 setIsAuthorized(true);
             } catch (error) {
                 console.error('RouteGuard: 인증 체크 실패:', error);
-                // 공개 경로가 아닌 경우에만 로그인 페이지로 리다이렉트
-                if (!publicPaths.includes(pathname)) {
+                if (!isPublicPath(pathname)) {
                     router.replace('/login');
                 }
             }
