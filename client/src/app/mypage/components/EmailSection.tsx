@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { UserResponse } from '@/api/types';
 import { LAYOUT, UI } from '../constants';
 
@@ -11,8 +11,14 @@ export function EmailSection({ user, onUpdate }: EmailSectionProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [newEmail, setNewEmail] = useState('');
 
+    const isValidEmail = useMemo(() => {
+        if (!newEmail) return true;
+        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+        return emailRegex.test(newEmail);
+    }, [newEmail]);
+
     const handleSubmit = async () => {
-        if (!newEmail) return;
+        if (!newEmail || !isValidEmail) return;
         await onUpdate(newEmail);
         setIsEditing(false);
         setNewEmail('');
@@ -22,30 +28,35 @@ export function EmailSection({ user, onUpdate }: EmailSectionProps) {
         <div className={LAYOUT.SECTION_SPACING}>
             <h3 className="text-lg font-semibold text-white mb-2">이메일</h3>
             {isEditing ? (
-                <div className="flex gap-2">
-                    <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        className={`flex-1 ${UI.INPUT.BASE}`}
-                        placeholder="새 이메일 주소"
-                    />
-                    <button
-                        onClick={() => {
-                            setIsEditing(false);
-                            setNewEmail('');
-                        }}
-                        className={UI.BUTTON.CANCEL}
-                    >
-                        취소
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className={UI.BUTTON.PRIMARY}
-                        disabled={!newEmail}
-                    >
-                        저장
-                    </button>
+                <div className="space-y-2">
+                    <div className="flex gap-2">
+                        <input
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            className={`flex-1 ${UI.INPUT.BASE} ${!isValidEmail && newEmail ? 'border-red-500' : ''}`}
+                            placeholder="새 이메일 주소"
+                        />
+                        <button
+                            onClick={() => {
+                                setIsEditing(false);
+                                setNewEmail('');
+                            }}
+                            className={UI.BUTTON.CANCEL}
+                        >
+                            취소
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            className={UI.BUTTON.PRIMARY}
+                            disabled={!newEmail || !isValidEmail}
+                        >
+                            저장
+                        </button>
+                    </div>
+                    {!isValidEmail && newEmail && (
+                        <p className="text-red-500 text-sm">올바른 이메일 형식이 아닙니다.</p>
+                    )}
                 </div>
             ) : (
                 <div className="flex justify-between items-center">
