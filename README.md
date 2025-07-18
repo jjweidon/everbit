@@ -39,6 +39,9 @@ docker compose -f docker-compose.dev.yaml up -d --build --force-recreate
 ```sh
 docker compose -f docker-compose.yaml down
 ```
+```sh
+docker compose -f docker-compose.dev.yaml down
+```
 
 ### 로그
 ```sh

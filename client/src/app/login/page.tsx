@@ -1,35 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FaChartLine, FaRobot, FaHistory } from 'react-icons/fa';
 import LoginButton from '@/components/LoginButton';
-import { useAuthStore } from '@/store/authStore';
 
 export default function Login() {
     const router = useRouter();
-    const { isAuthenticated, fetchUser } = useAuthStore();
-
-    useEffect(() => {
-        // 로그인 상태 확인
-        const checkLoginStatus = async () => {
-            try {
-                // 인증 상태 확인 (API 요청)
-                await fetchUser();
-
-                // 이미 로그인된 경우 대시보드로 리디렉션
-                if (isAuthenticated) {
-                    console.log('이미 로그인된 사용자, 대시보드로 이동');
-                    router.push('/dashboard');
-                }
-            } catch (error) {
-                console.error('로그인 상태 확인 중 오류:', error);
-            }
-        };
-
-        checkLoginStatus();
-    }, [isAuthenticated, router, fetchUser]);
 
     return (
         <div className="min-h-screen bg-navy-500 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">

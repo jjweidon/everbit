@@ -1,9 +1,9 @@
-import { API_BASE_URL } from '../config';
+import { SECURE_API_BASE_URL } from '../config';
 
 export const authApi = {
     kakaoLogin: (): void => {
         try {
-            window.location.href = `${API_BASE_URL}/login/kakao`;
+            window.location.href = `${SECURE_API_BASE_URL}/login/kakao`;
         } catch (error) {
             console.error('카카오 로그인 에러:', error);
             throw error;
@@ -12,7 +12,7 @@ export const authApi = {
 
     naverLogin: (): void => {
         try {
-            window.location.href = `${API_BASE_URL}/login/naver`;
+            window.location.href = `${SECURE_API_BASE_URL}/login/naver`;
         } catch (error) {
             console.error('네이버 로그인 에러:', error);
             throw error;
