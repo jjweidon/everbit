@@ -10,7 +10,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_HOST=https://everbit.kr
+      - NEXT_PUBLIC_API_HOST=https://everbit.kr/api
+      - NEXT_PUBLIC_SECURE_API_HOST=https://everbit.kr/api
       - TZ=Asia/Seoul
     depends_on:
       - server
