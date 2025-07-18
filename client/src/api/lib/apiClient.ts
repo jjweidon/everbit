@@ -43,8 +43,8 @@ class ApiClient {
     private async request<T>(config: AxiosRequestConfig): Promise<T> {
         try {
             const response = await axiosInstance(config);
-            if (!response.data.success || !response.data.data) {
-                throw new Error(response.data.message || '서버 응답 실패 or data 없음');
+            if (!response.data.success) {
+                throw new Error(response.data.message || '서버 응답 실패');
             }
             return response.data.data;
         } catch (error: any) {

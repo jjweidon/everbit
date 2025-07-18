@@ -35,7 +35,7 @@ export function EmailSection({ user, onUpdate }: EmailSectionProps) {
                             setIsEditing(false);
                             setNewEmail('');
                         }}
-                        className={UI.BUTTON.SECONDARY}
+                        className={UI.BUTTON.CANCEL}
                     >
                         취소
                     </button>

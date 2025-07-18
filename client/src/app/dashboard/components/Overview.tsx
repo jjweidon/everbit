@@ -17,7 +17,7 @@ export default function Overview({ overviewData, botStatus, setBotStatus }: Over
                         <h3 className="text-xs sm:text-base font-medium text-navy-600 dark:text-navy-300 mb-1 sm:mb-2 truncate">
                             총 자산
                         </h3>
-                        <p className="text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold text-navy-900 dark:text-white font-kimm whitespace-nowrap">
+                        <p className="text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold text-navy-900 dark:text-white whitespace-nowrap">
                             {formatNumber(overviewData.totalAsset)}
                             <span className="text-[8px] xs:text-xs sm:text-sm ml-1">KRW</span>
                         </p>
@@ -27,7 +27,7 @@ export default function Overview({ overviewData, botStatus, setBotStatus }: Over
                             수익률
                         </h3>
                         <p
-                            className={`text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold ${overviewData.profitRate > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'} font-kimm whitespace-nowrap`}
+                            className={`text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold ${overviewData.profitRate > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'} whitespace-nowrap`}
                         >
                             {formatPercent(overviewData.profitRate)}
                         </p>
@@ -37,7 +37,7 @@ export default function Overview({ overviewData, botStatus, setBotStatus }: Over
                             실현 손익
                         </h3>
                         <p
-                            className={`text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold ${overviewData.realizedProfit > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'} font-kimm whitespace-nowrap`}
+                            className={`text-[10px] xs:text-sm sm:text-xl lg:text-2xl xl:text-3xl font-bold ${overviewData.realizedProfit > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'} whitespace-nowrap`}
                         >
                             {formatNumber(overviewData.realizedProfit)}
                             <span className="text-[8px] xs:text-xs sm:text-sm ml-1">KRW</span>

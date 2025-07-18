@@ -42,7 +42,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-navy-900 dark:to-navy-800">
+    <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-darkBg dark:to-darkBg">
       <MainHeader title="everbit" showControls={false} />
       <div className="sticky top-0 z-20 bg-white dark:bg-navy-900 backdrop-blur-xl border-b border-navy-200 dark:border-navy-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

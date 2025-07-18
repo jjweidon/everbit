@@ -9,9 +9,9 @@ export const LAYOUT = {
 // UI Constants
 export const UI = {
     BUTTON: {
-        PRIMARY: 'bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-900 disabled:bg-blue-900 disabled:cursor-not-allowed',
-        SECONDARY: 'bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600',
-        LINK: 'text-blue-400 hover:text-blue-300 text-sm',
+        PRIMARY: 'bg-button text-white px-4 py-2 rounded hover:bg-button/80 disabled:bg-button disabled:cursor-not-allowed',
+        CANCEL: 'bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600',
+        LINK: 'text-highlightText hover:text-highlightText/80 text-sm',
     },
     INPUT: {
         BASE: 'bg-navy-600 text-white rounded px-3 py-2',

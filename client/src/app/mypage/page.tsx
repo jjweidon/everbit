@@ -31,8 +31,9 @@ export default function MyPage() {
     const handleEmailUpdate = async (email: string) => {
         try {
             const request: EmailRequest = { email };
-            const updatedUser = await userApi.updateEmail(request);
-            setUser(updatedUser);
+            await userApi.updateEmail(request);
+            fetchUserData();
+            alert('이메일 수정에 성공했습니다.');
         } catch (error) {
             console.error('이메일 수정 실패:', error);
             alert('이메일 수정에 실패했습니다.');
@@ -43,8 +44,9 @@ export default function MyPage() {
     const handleUpbitKeysUpdate = async (accessKey: string, secretKey: string) => {
         try {
             const request: UpbitApiKeysRequest = { accessKey, secretKey };
-            const updatedUser = await userApi.registerUpbitApiKeys(request);
-            setUser(updatedUser);
+            await userApi.registerUpbitApiKeys(request);
+            fetchUserData();
+            alert('업비트 API 키 수정에 성공했습니다.');
         } catch (error) {
             console.error('업비트 API 키 수정 실패:', error);
             alert('업비트 API 키 수정에 실패했습니다.');
@@ -83,11 +85,11 @@ export default function MyPage() {
     };
 
     return (
-        <div className="min-h-screen bg-navy-800">
+        <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-darkBg dark:to-darkBg">
             <MainHeader title="everbit" botStatus={botStatus} />
             <div className={`${LAYOUT.CONTAINER_MAX_WIDTH} mx-auto ${LAYOUT.SECTION_PADDING} py-8`}>
                 <div className="bg-navy-700 rounded-lg shadow-lg p-6 mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-6 font-kimm">My Page</h2>
+                    <h2 className="text-2xl font-bold text-white mb-6">My Page</h2>
                     
                     <EmailSection user={user} onUpdate={handleEmailUpdate} />
                     <UpbitKeySection user={user} onUpdate={handleUpbitKeysUpdate} />

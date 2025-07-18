@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { UserResponse, UpbitApiKeysResponse } from '@/api/types';
 import { userApi } from '@/api/services';
 import { LAYOUT, UI } from '../constants';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 interface UpbitKeySectionProps {
     user: UserResponse | null;
@@ -12,6 +13,7 @@ export function UpbitKeySection({ user, onUpdate }: UpbitKeySectionProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [accessKey, setAccessKey] = useState('');
     const [secretKey, setSecretKey] = useState('');
+    const [showSecretKey, setShowSecretKey] = useState(false);
 
     useEffect(() => {
         if (isEditing && user) {
@@ -53,13 +55,26 @@ export function UpbitKeySection({ user, onUpdate }: UpbitKeySectionProps) {
                             className={`w-full ${UI.INPUT.BASE} mb-2`}
                             placeholder="Access Key"
                         />
-                        <input
-                            type="password"
-                            value={secretKey}
-                            onChange={(e) => setSecretKey(e.target.value)}
-                            className={`w-full ${UI.INPUT.BASE}`}
-                            placeholder="Secret Key"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showSecretKey ? "text" : "password"}
+                                value={secretKey}
+                                onChange={(e) => setSecretKey(e.target.value)}
+                                className={`w-full ${UI.INPUT.BASE} pr-10`}
+                                placeholder="Secret Key"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowSecretKey(!showSecretKey)}
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                            >
+                                {showSecretKey ? (
+                                    <FaEyeSlash className="h-5 w-5" />
+                                ) : (
+                                    <FaEye className="h-5 w-5" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -68,7 +83,7 @@ export function UpbitKeySection({ user, onUpdate }: UpbitKeySectionProps) {
                                 setAccessKey('');
                                 setSecretKey('');
                             }}
-                            className={UI.BUTTON.SECONDARY}
+                            className={UI.BUTTON.CANCEL}
                         >
                             취소
                         </button>
