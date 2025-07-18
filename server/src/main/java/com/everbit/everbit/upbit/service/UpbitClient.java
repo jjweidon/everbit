@@ -3,21 +3,20 @@ package com.everbit.everbit.upbit.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
+import com.everbit.everbit.global.util.EncryptionUtil;
+import com.everbit.everbit.upbit.exception.UpbitException;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -26,94 +25,81 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UpbitClient {
-
     private final UpbitConfig upbitConfig;
     private final UserService userService;
-
-    private URI buildUrl(String path) {
-        String baseUrl = upbitConfig.getBaseUrl();
-        return URI.create(baseUrl + path);
-    }
+    private final EncryptionUtil encryptionUtil;
+    private final RestTemplate restTemplate;
 
     public String getAccounts(String username) {
         try {
-            URI uri = buildUrl("/v1/accounts");
-            URL url = uri.toURL();
             User user = userService.findUserByUsername(username);
-            String token = createAuthHeaders("", user);
-
-            log.info("Request URL: {}", url);
-            log.info("Request Headers: Bearer {}", token);
-
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            conn.setRequestProperty("Authorization", "Bearer " + token);
-
-            log.info("Starting Upbit API request");
+            URI uri = buildUrl("/v1/accounts");
+            HttpHeaders headers = createHeaders("", user);
             
-            int responseCode = conn.getResponseCode();
-            log.info("Response Code: {}", responseCode);
+            log.debug("Making request to Upbit API: {}", uri);
+            ResponseEntity<String> response = restTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class
+            );
 
-            BufferedReader in;
-            if (responseCode >= 200 && responseCode < 300) {
-                in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
             } else {
-                in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                log.error("Failed to get accounts. Status: {}", response.getStatusCode());
+                throw new UpbitException("Failed to get accounts: " + response.getStatusCode());
             }
-
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-
-            String responseBody = response.toString();
-            if (responseCode >= 400) {
-                log.error("Failed to get accounts: {}", responseBody);
-                throw new RuntimeException("Failed to get accounts: " + responseBody);
-            }
-
-            return responseBody;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to get accounts", e);
-            throw new RuntimeException("Failed to get accounts", e);
+            throw new UpbitException("Failed to get accounts", e);
         }
     }
 
-    private String createAuthHeaders(String queryString, User user) {
+    private URI buildUrl(String path) {
+        return UriComponentsBuilder
+            .fromUriString(upbitConfig.getBaseUrl())
+            .path(path)
+            .build()
+            .toUri();
+    }
+
+    private HttpHeaders createHeaders(String queryString, User user) {
         try {
-            String accessKey = user.getUpbitAccessKey();
-            String secretKey = user.getUpbitSecretKey();
+            String accessKey = encryptionUtil.decrypt(user.getUpbitAccessKey());
+            String secretKey = encryptionUtil.decrypt(user.getUpbitSecretKey());
+            String token = createAuthToken(accessKey, secretKey, queryString);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(token);
+            return headers;
+        } catch (Exception e) {
+            throw new UpbitException("Failed to create auth headers", e);
+        }
+    }
+
+    private String createAuthToken(String accessKey, String secretKey, String queryString) {
+        try {
             String nonce = UUID.randomUUID().toString();
-
-            log.info("Access Key: {}", accessKey);
-            log.info("Nonce: {}", nonce);
-
             Algorithm algorithm = Algorithm.HMAC256(secretKey);
-            String jwtToken;
 
             if (queryString != null && !queryString.isEmpty()) {
                 String queryHash = makeQueryHash(queryString);
-                jwtToken = JWT.create()
-                        .withClaim("access_key", accessKey)
-                        .withClaim("nonce", nonce)
-                        .withClaim("query_hash", queryHash)
-                        .withClaim("query_hash_alg", "SHA512")
-                        .sign(algorithm);
+                return JWT.create()
+                    .withClaim("access_key", accessKey)
+                    .withClaim("nonce", nonce)
+                    .withClaim("query_hash", queryHash)
+                    .withClaim("query_hash_alg", "SHA512")
+                    .sign(algorithm);
             } else {
-                jwtToken = JWT.create()
-                        .withClaim("access_key", accessKey)
-                        .withClaim("nonce", nonce)
-                        .sign(algorithm);
+                return JWT.create()
+                    .withClaim("access_key", accessKey)
+                    .withClaim("nonce", nonce)
+                    .sign(algorithm);
             }
-
-            log.info("Generated JWT Token: {}", jwtToken);
-            return jwtToken;
         } catch (Exception e) {
-            log.error("Failed to create auth headers", e);
-            throw new RuntimeException("Failed to create auth headers", e);
+            throw new UpbitException("Failed to create auth token", e);
         }
     }
 
