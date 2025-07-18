@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, SECURE_API_BASE_URL } from '../config';
 import { objectToCamel, objectToSnake } from 'ts-case-convert';
 import { useAuthStore } from '@/store/authStore';
 

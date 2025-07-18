@@ -1,8 +1,8 @@
-import { apiClient } from '../lib/apiClient';
+import { secureApiClient } from '../lib/secureApiClient';
 import { UpbitAccount } from '../types';
 
 export const upbitApi = {
     getAccounts: async (): Promise<UpbitAccount[]> => {
-        return apiClient.get<UpbitAccount[]>('/accounts/me');
+        return secureApiClient.get<UpbitAccount[]>('/accounts/me');
     },
 } as const; 

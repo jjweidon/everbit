@@ -11,5 +11,4 @@ export const UpbitAccount = z.object({
     avgBuyPriceModified: z.boolean(),
     unitCurrency: z.string(),
 });
-
 export type UpbitAccount = z.infer<typeof UpbitAccount>; 
