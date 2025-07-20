@@ -4,6 +4,7 @@ import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.upbit.dto.AccountResponse;
 import com.everbit.everbit.upbit.dto.OrderChanceResponse;
+import com.everbit.everbit.upbit.dto.OrderResponse;
 import com.everbit.everbit.upbit.service.UpbitClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ public class UpbitController {
     private final UpbitClient upbitClient;
 
     // 계좌 정보 조회
-    @GetMapping("/accounts/me")
+    @GetMapping("/accounts")
     public ApiResponse<List<AccountResponse>> getAccounts(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
@@ -43,5 +44,17 @@ public class UpbitController {
         log.info("GET 주문 가능 정보 조회 - market: {}", market);
         OrderChanceResponse response = upbitClient.getOrderChance(username, market);
         return ApiResponse.success(response, "주문 가능 정보 조회 성공");
+    }
+
+    // 개별 주문 조회
+    @GetMapping("/order")
+    public ApiResponse<OrderResponse> getOrder(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @RequestParam(required = false) String uuid,
+            @RequestParam(required = false) String identifier) {
+        String username = oAuth2User.getName();
+        log.info("GET 개별 주문 조회 - uuid: {}, identifier: {}", uuid, identifier);
+        OrderResponse response = upbitClient.getOrder(username, uuid, identifier);
+        return ApiResponse.success(response, "주문 조회 성공");
     }
 } 
