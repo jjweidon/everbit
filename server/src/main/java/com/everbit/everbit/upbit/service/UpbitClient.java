@@ -65,7 +65,7 @@ public class UpbitClient {
         try {
             User user = userService.findUserByUsername(username);
             String queryString = String.format("market=%s", market);
-            URI uri = buildUrl("/v1/orders/chance?" + queryString);
+            URI uri = buildUrl("/v1/orders/chance", queryString);
             HttpHeaders headers = createHeaders(queryString, user);
             
             log.info("Making request to Upbit API - Full URL: {}", uri.toString());
@@ -134,11 +134,17 @@ public class UpbitClient {
     }
 
     private URI buildUrl(String path) {
-        return UriComponentsBuilder
+        return buildUrl(path, null);
+    }
+
+    private URI buildUrl(String path, String queryString) {
+        UriComponentsBuilder builder = UriComponentsBuilder
             .fromUriString(upbitConfig.getBaseUrl())
-            .path(path)
-            .build()
-            .toUri();
+            .path(path);
+        if (queryString != null && !queryString.isEmpty()) {
+            builder.query(queryString);
+        }
+        return builder.build().toUri();
     }
 
     private HttpHeaders createHeaders(String queryString, User user) {
