@@ -1,11 +1,11 @@
+import { useState } from 'react';
 import { formatNumber, formatPercent } from '../utils/format';
 import { PortfolioData } from '../types';
+import { MOCK_DATA } from '../constants';
 
-interface PortfolioProps {
-    portfolioData: Readonly<PortfolioData>;
-}
+export default function Portfolio() {
+    const [portfolioData] = useState<PortfolioData>(MOCK_DATA.portfolio);
 
-export default function Portfolio({ portfolioData }: PortfolioProps) {
     return (
         <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
             {/* 모바일 뷰 */}

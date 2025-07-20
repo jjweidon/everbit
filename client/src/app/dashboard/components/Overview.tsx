@@ -1,13 +1,12 @@
+import { useState } from 'react';
 import { formatNumber, formatPercent } from '../utils/format';
 import { OverviewData } from '../types';
+import { MOCK_DATA } from '../constants';
 
-interface OverviewProps {
-    overviewData: Readonly<OverviewData>;
-    botStatus: boolean;
-    setBotStatus: (status: boolean) => void;
-}
+export default function Overview() {
+    const [overviewData] = useState<OverviewData>(MOCK_DATA.overview);
+    const [botStatus, setBotStatus] = useState(false);
 
-export default function Overview({ overviewData, botStatus, setBotStatus }: OverviewProps) {
     return (
         <div className="flex flex-col sm:gap-6">
             <div className="flex gap-4 sm:gap-6">

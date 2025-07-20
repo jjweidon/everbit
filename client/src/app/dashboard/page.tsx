@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Overview, Portfolio, History, Settings, Navigation } from './components';
 import { DashboardTab } from './types';
-import { MOCK_DATA } from './constants';
 import MainHeader from '@/components/MainHeader';
 
 export default function Dashboard() {
@@ -48,24 +47,13 @@ export default function Dashboard() {
     const renderContent = () => {
         switch (selectedTab) {
             case 'overview':
-                return (
-                    <Overview
-                        overviewData={MOCK_DATA.overview}
-                        botStatus={botStatus}
-                        setBotStatus={setBotStatus}
-                    />
-                );
+                return <Overview />;
             case 'portfolio':
-                return <Portfolio portfolioData={MOCK_DATA.portfolio} />;
+                return <Portfolio />;
             case 'history':
-                return <History tradeHistoryData={MOCK_DATA.tradeHistory} />;
+                return <History />;
             case 'settings':
-                return (
-                    <Settings
-                        botSettingsData={MOCK_DATA.botSettings}
-                        backtestData={MOCK_DATA.backtest}
-                    />
-                );
+                return <Settings />;
             default:
                 return null;
         }

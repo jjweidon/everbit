@@ -1,125 +1,103 @@
-import { BotSettingsData, BacktestData } from '../types';
 import { useState } from 'react';
+import { BotSettingsData, BacktestData } from '../types';
 import { FaChartLine, FaChartArea, FaCrosshairs, FaBitcoin } from 'react-icons/fa';
+import { MOCK_DATA } from '../constants';
 
-interface SettingsProps {
-    botSettingsData: Readonly<BotSettingsData>;
-    backtestData: Readonly<BacktestData>;
-}
-
-export default function Settings({ botSettingsData, backtestData }: SettingsProps) {
-    const [settings, setSettings] = useState(botSettingsData.currentSettings);
-
-    const handleAlgorithmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSettings((prev) => ({
-            ...prev,
-            algorithm: e.target.value,
-        }));
-    };
-
-    const handleParamChange =
-        (param: keyof typeof settings.params) => (e: React.ChangeEvent<HTMLInputElement>) => {
-            setSettings((prev) => ({
-                ...prev,
-                params: {
-                    ...prev.params,
-                    [param]: Number(e.target.value),
-                },
-            }));
-        };
-
-    const handleSave = () => {
-        // TODO: API 연동 시 저장 로직 구현
-        console.log('Settings saved:', settings);
-    };
+export default function Settings() {
+    const [botSettingsData] = useState<BotSettingsData>(MOCK_DATA.botSettings);
+    const [backtestData] = useState<BacktestData>(MOCK_DATA.backtest);
+    const [selectedAlgorithm, setSelectedAlgorithm] = useState(botSettingsData.currentSettings.algorithm);
+    const [period, setPeriod] = useState(botSettingsData.currentSettings.params.period);
+    const [tradeRatio, setTradeRatio] = useState(botSettingsData.currentSettings.params.tradeRatio);
+    const [stopLoss, setStopLoss] = useState(botSettingsData.currentSettings.params.stopLoss);
+    const [takeProfit, setTakeProfit] = useState(botSettingsData.currentSettings.params.takeProfit);
 
     return (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-6">
+            {/* 알고리즘 선택 */}
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
-                <h3 className="text-base sm:text-lg font-medium text-navy-900 dark:text-white mb-4">
-                    Bot 설정
-                </h3>
-
-                {/* Algorithm Selection */}
-                <div className="mb-4 sm:mb-6">
-                    <label className="block text-xs sm:text-sm font-medium text-navy-700 dark:text-navy-300 mb-1.5 sm:mb-2">
-                        알고리즘 선택
-                    </label>
-                    <select
-                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-                        value={settings.algorithm}
-                        onChange={handleAlgorithmChange}
-                    >
-                        {botSettingsData.algorithms.map((algo) => (
-                            <option key={algo.id} value={algo.id}>
-                                {algo.name}
-                            </option>
-                        ))}
-                    </select>
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">알고리즘 선택</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {botSettingsData.algorithms.map((algorithm) => (
+                        <button
+                            key={algorithm.id}
+                            onClick={() => setSelectedAlgorithm(algorithm.id)}
+                            className={`p-4 rounded-lg text-left transition-all duration-200 ${
+                                selectedAlgorithm === algorithm.id
+                                    ? 'bg-navy-100 dark:bg-navy-700 border-2 border-navy-500'
+                                    : 'bg-navy-50/50 dark:bg-navy-800/50 border-2 border-transparent hover:border-navy-300'
+                            }`}
+                        >
+                            <h4 className="text-base font-medium text-navy-900 dark:text-white mb-2">
+                                {algorithm.name}
+                            </h4>
+                            <p className="text-sm text-navy-600 dark:text-navy-300">
+                                {algorithm.description}
+                            </p>
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                {/* Parameters */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {/* 파라미터 설정 */}
+            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">파라미터 설정</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs sm:text-sm font-medium text-navy-700 dark:text-navy-300 mb-1.5 sm:mb-2">
-                            기간 (일)
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            기간
                         </label>
                         <input
                             type="number"
-                            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-                            value={settings.params.period}
-                            onChange={handleParamChange('period')}
+                            value={period}
+                            onChange={(e) => setPeriod(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 dark:bg-navy-800 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs sm:text-sm font-medium text-navy-700 dark:text-navy-300 mb-1.5 sm:mb-2">
-                            매매 비율 (%)
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            투자 비율 (%)
                         </label>
                         <input
                             type="number"
-                            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-                            value={settings.params.tradeRatio}
-                            onChange={handleParamChange('tradeRatio')}
+                            value={tradeRatio}
+                            onChange={(e) => setTradeRatio(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 dark:bg-navy-800 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs sm:text-sm font-medium text-navy-700 dark:text-navy-300 mb-1.5 sm:mb-2">
-                            손절 비율 (%)
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            손절 (%)
                         </label>
                         <input
                             type="number"
-                            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-                            value={settings.params.stopLoss}
-                            onChange={handleParamChange('stopLoss')}
+                            value={stopLoss}
+                            onChange={(e) => setStopLoss(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 dark:bg-navy-800 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs sm:text-sm font-medium text-navy-700 dark:text-navy-300 mb-1.5 sm:mb-2">
-                            익절 비율 (%)
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            익절 (%)
                         </label>
                         <input
                             type="number"
-                            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-navy-800 border border-navy-300 dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-navy-400 text-navy-900 dark:text-white transition-shadow duration-200"
-                            value={settings.params.takeProfit}
-                            onChange={handleParamChange('takeProfit')}
+                            value={takeProfit}
+                            onChange={(e) => setTakeProfit(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 dark:bg-navy-800 dark:text-white"
                         />
                     </div>
                 </div>
-                <div className="flex justify-center">
-                    <button
-                        onClick={handleSave}
-                        className="mt-6 w-2/3 md:w-1/2 lg:w-1/3 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white text-sm rounded-md transition-all duration-200 shadow-lg shadow-navy-500/30"
-                    >
-                        저장
+                <div className="mt-6">
+                    <button className="w-full sm:w-auto px-6 py-3 bg-navy-500 hover:bg-navy-600 text-white rounded-lg transition-colors duration-200 shadow-lg shadow-navy-500/30">
+                        설정 저장
                     </button>
                 </div>
             </div>
 
-            {/* Backtesting Results */}
+            {/* 백테스트 결과 */}
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
-                <h3 className="text-base sm:text-lg font-medium text-navy-900 dark:text-white mb-3 sm:mb-4">
-                    백테스팅 결과
-                </h3>
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">백테스트 결과</h3>
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     <div className="p-2.5 sm:p-4 bg-white/50 dark:bg-navy-800/90 rounded-md backdrop-blur-sm">
                         <div className="flex justify-between items-center">
