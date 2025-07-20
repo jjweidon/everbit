@@ -6,6 +6,7 @@ import com.everbit.everbit.global.config.UpbitConfig;
 import com.everbit.everbit.global.util.EncryptionUtil;
 import com.everbit.everbit.upbit.exception.UpbitException;
 import com.everbit.everbit.upbit.dto.AccountResponse;
+import com.everbit.everbit.upbit.dto.OrderChanceResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,33 @@ public class UpbitClient {
         } catch (Exception e) {
             log.error("Failed to get accounts", e);
             throw new UpbitException("Failed to get accounts", e);
+        }
+    }
+
+    public OrderChanceResponse getOrderChance(String username, String market) {
+        try {
+            User user = userService.findUserByUsername(username);
+            String queryString = String.format("market=%s", market);
+            URI uri = buildUrl("/v1/orders/chance?" + queryString);
+            HttpHeaders headers = createHeaders(queryString, user);
+            
+            log.debug("Making request to Upbit API for order chance: {}", uri);
+            ResponseEntity<OrderChanceResponse> response = restTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                OrderChanceResponse.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            } else {
+                log.error("Failed to get order chance. Status: {}", response.getStatusCode());
+                throw new UpbitException("Failed to get order chance: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("Failed to get order chance", e);
+            throw new UpbitException("Failed to get order chance", e);
         }
     }
 
