@@ -8,6 +8,7 @@ import com.everbit.everbit.upbit.exception.UpbitException;
 import com.everbit.everbit.upbit.dto.AccountResponse;
 import com.everbit.everbit.upbit.dto.OrderChanceResponse;
 import com.everbit.everbit.upbit.dto.OrderResponse;
+import com.everbit.everbit.upbit.dto.OrderItemResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -23,120 +24,198 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UpbitClient {
+    private static final String V1_ACCOUNTS = "/v1/accounts";
+    private static final String V1_ORDERS_CHANCE = "/v1/orders/chance";
+    private static final String V1_ORDER = "/v1/order";
+    private static final String V1_ORDERS_OPEN = "/v1/orders/open";
+    private static final String V1_ORDERS_CLOSED = "/v1/orders/closed";
+
     private final UpbitConfig upbitConfig;
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
     private final RestTemplate restTemplate;
 
+    // Account API
+
+    /**
+     * 사용자의 계좌 정보를 조회합니다.
+     *
+     * @param username 사용자 이름
+     * @return 계좌 정보 목록
+     * @throws UpbitException API 호출 실패 시
+     */
     public List<AccountResponse> getAccounts(String username) {
-        try {
-            User user = userService.findUserByUsername(username);
-            URI uri = buildUrl("/v1/accounts");
-            HttpHeaders headers = createHeaders("", user);
-            
-            log.debug("Making request to Upbit API: {}", uri);
-            ResponseEntity<List<AccountResponse>> response = restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                new ParameterizedTypeReference<List<AccountResponse>>() {}
-            );
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
-            } else {
-                log.error("Failed to get accounts. Status: {}", response.getStatusCode());
-                throw new UpbitException("Failed to get accounts: " + response.getStatusCode());
-            }
-        } catch (Exception e) {
-            log.error("Failed to get accounts", e);
-            throw new UpbitException("Failed to get accounts", e);
-        }
+        return executeGet(
+            username,
+            V1_ACCOUNTS,
+            Collections.emptyMap(),
+            new ParameterizedTypeReference<List<AccountResponse>>() {},
+            "Failed to get accounts"
+        );
     }
 
+    // Order API
+
+    /**
+     * 마켓별 주문 가능 정보를 조회합니다.
+     *
+     * @param username 사용자 이름
+     * @param market 마켓 ID (예: KRW-BTC)
+     * @return 주문 가능 정보
+     * @throws UpbitException API 호출 실패 시
+     */
     public OrderChanceResponse getOrderChance(String username, String market) {
-        try {
-            User user = userService.findUserByUsername(username);
-            String queryString = String.format("market=%s", market);
-            URI uri = buildUrl("/v1/orders/chance", queryString);
-            HttpHeaders headers = createHeaders(queryString, user);
-            
-            ResponseEntity<OrderChanceResponse> response = restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                OrderChanceResponse.class
-            );
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
-            } else {
-                throw new UpbitException("Failed to get order chance: " + response.getStatusCode());
-            }
-        } catch (Exception e) {
-            throw new UpbitException("Failed to get order chance", e);
-        }
+        Map<String, String> params = Collections.singletonMap("market", market);
+        return executeGet(
+            username,
+            V1_ORDERS_CHANCE,
+            params,
+            OrderChanceResponse.class,
+            "Failed to get order chance"
+        );
     }
 
+    /**
+     * 개별 주문을 조회합니다.
+     * uuid 또는 identifier 중 하나는 반드시 제공되어야 합니다.
+     *
+     * @param username 사용자 이름
+     * @param uuid 주문 UUID
+     * @param identifier 조회용 사용자 지정 값
+     * @return 주문 정보
+     * @throws UpbitException API 호출 실패 시 또는 필수 파라미터 누락 시
+     */
     public OrderResponse getOrder(String username, String uuid, String identifier) {
         if (uuid == null && identifier == null) {
             throw new UpbitException("Either uuid or identifier must be provided");
         }
 
+        Map<String, String> params = new HashMap<>();
+        if (uuid != null) params.put("uuid", uuid);
+        if (identifier != null) params.put("identifier", identifier);
+
+        return executeGet(
+            username,
+            V1_ORDER,
+            params,
+            OrderResponse.class,
+            "Failed to get order details"
+        );
+    }
+
+    /**
+     * 미체결 주문 목록을 조회합니다.
+     *
+     * @param username 사용자 이름
+     * @param market 마켓 ID (선택적)
+     * @param states 주문 상태 목록 (선택적, 예: wait, watch)
+     * @return 미체결 주문 목록
+     * @throws UpbitException API 호출 실패 시
+     */
+    public List<OrderItemResponse> getOpenOrders(String username, String market, List<String> states) {
+        return executeOrderList(username, V1_ORDERS_OPEN, market, states, "Failed to get open orders");
+    }
+
+    /**
+     * 체결된 주문 목록을 조회합니다.
+     *
+     * @param username 사용자 이름
+     * @param market 마켓 ID (선택적)
+     * @param states 주문 상태 목록 (선택적, 예: done, cancel)
+     * @return 체결된 주문 목록
+     * @throws UpbitException API 호출 실패 시
+     */
+    public List<OrderItemResponse> getClosedOrders(String username, String market, List<String> states) {
+        return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "Failed to get closed orders");
+    }
+
+    // Private helper methods
+    private <T> T executeGet(String username, String path, Map<String, String> params, Class<T> responseType, String errorMessage) {
         try {
-            User user = userService.findUserByUsername(username);
-            StringBuilder queryStringBuilder = new StringBuilder();
-            
-            if (uuid != null) {
-                queryStringBuilder.append("uuid=").append(uuid);
-            }
-            if (identifier != null) {
-                if (queryStringBuilder.length() > 0) {
-                    queryStringBuilder.append("&");
-                }
-                queryStringBuilder.append("identifier=").append(identifier);
-            }
-            
-            String queryString = queryStringBuilder.toString();
-            URI uri = buildUrl("/v1/order?" + queryString);
-            HttpHeaders headers = createHeaders(queryString, user);
-            
-            ResponseEntity<OrderResponse> response = restTemplate.exchange(
+            String queryString = buildQueryString(params);
+            URI uri = buildUrl(path, queryString);
+            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+
+            ResponseEntity<T> response = restTemplate.exchange(
                 uri,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                OrderResponse.class
+                responseType
             );
 
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
-            } else {
-                throw new UpbitException("Failed to get order details: " + response.getStatusCode());
-            }
+            return handleResponse(response, errorMessage);
         } catch (Exception e) {
-            throw new UpbitException("Failed to get order details", e);
+            throw new UpbitException(errorMessage, e);
         }
     }
 
-    private URI buildUrl(String path) {
-        return buildUrl(path, null);
+    private <T> T executeGet(String username, String path, Map<String, String> params, 
+                           ParameterizedTypeReference<T> responseType, String errorMessage) {
+        try {
+            String queryString = buildQueryString(params);
+            URI uri = buildUrl(path, queryString);
+            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+
+            ResponseEntity<T> response = restTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                responseType
+            );
+
+            return handleResponse(response, errorMessage);
+        } catch (Exception e) {
+            throw new UpbitException(errorMessage, e);
+        }
+    }
+
+    private List<OrderItemResponse> executeOrderList(String username, String path, String market, List<String> states, String errorMessage) {
+        Map<String, String> params = new HashMap<>();
+        if (market != null && !market.isEmpty()) {
+            params.put("market", market);
+        }
+        if (states != null && !states.isEmpty()) {
+            states.forEach(state -> params.put("states[]", state));
+        }
+
+        return executeGet(
+            username,
+            path,
+            params,
+            new ParameterizedTypeReference<List<OrderItemResponse>>() {},
+            errorMessage
+        );
+    }
+
+    private String buildQueryString(Map<String, String> params) {
+        if (params.isEmpty()) return "";
+        
+        return params.entrySet().stream()
+            .map(entry -> entry.getKey() + "=" + entry.getValue())
+            .collect(Collectors.joining("&"));
     }
 
     private URI buildUrl(String path, String queryString) {
         UriComponentsBuilder builder = UriComponentsBuilder
             .fromUriString(upbitConfig.getBaseUrl())
             .path(path);
+            
         if (queryString != null && !queryString.isEmpty()) {
             builder.query(queryString);
         }
+        
         return builder.build().toUri();
+    }
+
+    private User getUserByUsername(String username) {
+        return userService.findUserByUsername(username);
     }
 
     private HttpHeaders createHeaders(String queryString, User user) {
@@ -182,5 +261,12 @@ public class UpbitClient {
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("utf8"));
         return String.format("%0128x", new BigInteger(1, md.digest()));
+    }
+
+    private <T> T handleResponse(ResponseEntity<T> response, String errorMessage) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return response.getBody();
+        }
+        throw new UpbitException(errorMessage + ": " + response.getStatusCode());
     }
 } 

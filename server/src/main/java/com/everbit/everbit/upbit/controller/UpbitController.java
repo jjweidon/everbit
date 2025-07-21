@@ -5,6 +5,7 @@ import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.upbit.dto.AccountResponse;
 import com.everbit.everbit.upbit.dto.OrderChanceResponse;
 import com.everbit.everbit.upbit.dto.OrderResponse;
+import com.everbit.everbit.upbit.dto.OrderItemResponse;
 import com.everbit.everbit.upbit.service.UpbitClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,5 +57,29 @@ public class UpbitController {
         log.info("GET 개별 주문 조회 - uuid: {}, identifier: {}", uuid, identifier);
         OrderResponse response = upbitClient.getOrder(username, uuid, identifier);
         return ApiResponse.success(response, "주문 조회 성공");
+    }
+
+    // 미체결 주문 조회
+    @GetMapping("/orders/open")
+    public ApiResponse<List<OrderItemResponse>> getOpenOrders(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @RequestParam(required = false) String market,
+            @RequestParam(name = "states[]", required = false) List<String> states) {
+        String username = oAuth2User.getName();
+        log.info("GET 미체결 주문 조회 - market: {}, states: {}", market, states);
+        List<OrderItemResponse> response = upbitClient.getOpenOrders(username, market, states);
+        return ApiResponse.success(response, "미체결 주문 조회 성공");
+    }
+
+    // 체결된 주문 조회
+    @GetMapping("/orders/closed")
+    public ApiResponse<List<OrderItemResponse>> getClosedOrders(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @RequestParam(required = false) String market,
+            @RequestParam(name = "states[]", required = false) List<String> states) {
+        String username = oAuth2User.getName();
+        log.info("GET 체결된 주문 조회 - market: {}, states: {}", market, states);
+        List<OrderItemResponse> response = upbitClient.getClosedOrders(username, market, states);
+        return ApiResponse.success(response, "체결된 주문 조회 성공");
     }
 } 
