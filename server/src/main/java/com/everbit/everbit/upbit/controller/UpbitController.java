@@ -89,4 +89,16 @@ public class UpbitController {
         OrderItemResponse response = upbitClient.createOrder(username, request);
         return ApiResponse.success(response, "주문 생성 성공");
     }
+
+    // 주문 취소 후 재주문
+    @PostMapping("/orders/cancel_and_new")
+    public ApiResponse<ReplaceOrderResponse> replaceOrder(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @Valid @RequestBody ReplaceOrderRequest request) {
+        String username = oAuth2User.getName();
+        log.info("POST 주문 취소 후 재주문 - prevOrderUuid: {}, newOrdType: {}", 
+                request.prevOrderUuid(), request.newOrdType());
+        ReplaceOrderResponse response = upbitClient.replaceOrder(username, request);
+        return ApiResponse.success(response, "주문 취소 후 재주문 성공");
+    }
 } 

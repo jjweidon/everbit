@@ -34,6 +34,7 @@ public class UpbitClient {
     private static final String V1_ORDERS = "/v1/orders";
     private static final String V1_ORDERS_OPEN = "/v1/orders/open";
     private static final String V1_ORDERS_CLOSED = "/v1/orders/closed";
+    private static final String V1_ORDERS_CANCEL_AND_NEW = "/v1/orders/cancel_and_new";
 
     private final UpbitConfig upbitConfig;
     private final UserService userService;
@@ -172,6 +173,61 @@ public class UpbitClient {
             return handleResponse(response, "Failed to create order");
         } catch (Exception e) {
             throw new UpbitException("Failed to create order", e);
+        }
+    }
+
+    /**
+     * 기존 주문을 취소하고 새로운 주문을 생성합니다.
+     *
+     * @param username 사용자 이름
+     * @param request 취소 및 신규 주문 요청 정보
+     * @return 취소된 주문 정보와 새로운 주문 UUID
+     * @throws UpbitException API 호출 실패 시
+     */
+    public ReplaceOrderResponse replaceOrder(String username, ReplaceOrderRequest request) {
+        try {
+            User user = getUserByUsername(username);
+            
+            // Convert request to query string for JWT token
+            Map<String, String> params = new HashMap<>();
+            if (request.prevOrderUuid() != null) {
+                params.put("prev_order_uuid", request.prevOrderUuid());
+            }
+            if (request.prevOrderIdentifier() != null) {
+                params.put("prev_order_identifier", request.prevOrderIdentifier());
+            }
+            params.put("new_ord_type", request.newOrdType());
+            if (request.newVolume() != null) {
+                params.put("new_volume", request.newVolume());
+            }
+            if (request.newPrice() != null) {
+                params.put("new_price", request.newPrice());
+            }
+            if (request.newSmpType() != null) {
+                params.put("new_smp_type", request.newSmpType());
+            }
+            if (request.newIdentifier() != null) {
+                params.put("new_identifier", request.newIdentifier());
+            }
+            if (request.newTimeInForce() != null) {
+                params.put("new_time_in_force", request.newTimeInForce());
+            }
+            
+            String queryString = buildQueryString(params);
+            URI uri = buildUrl(V1_ORDERS_CANCEL_AND_NEW, "");
+            HttpHeaders headers = createHeaders(queryString, user);
+
+            HttpEntity<ReplaceOrderRequest> entity = new HttpEntity<>(request, headers);
+            ResponseEntity<ReplaceOrderResponse> response = restTemplate.exchange(
+                uri,
+                HttpMethod.POST,
+                entity,
+                ReplaceOrderResponse.class
+            );
+
+            return handleResponse(response, "Failed to replace order");
+        } catch (Exception e) {
+            throw new UpbitException("Failed to replace order", e);
         }
     }
 
