@@ -1,41 +1,44 @@
 package com.everbit.everbit.global.exception;
 
 import com.everbit.everbit.global.dto.ApiResponse;
-import com.everbit.everbit.user.exception.UserException;
-
-import org.apache.kafka.common.errors.AuthorizationException;
-import org.springframework.security.core.AuthenticationException;
+import com.everbit.everbit.upbit.exception.UpbitException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpStatusCodeException;
 
-@ControllerAdvice
+@Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // UserNotFoundException 처리
-    @ExceptionHandler(UserException.class)
-    public ApiResponse<Object> handleUserNotFoundException(UserException ex) {
-        return ApiResponse.of(CustomHttpStatus.NOT_FOUND);
+    @ExceptionHandler(UpbitException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleUpbitException(UpbitException e) {
+        log.error("UpbitException occurred", e);
+        return ApiResponse.error(e.getMessage());
     }
 
-    // IllegalStateException 처리
-    @ExceptionHandler(IllegalStateException.class)
-    public ApiResponse<Object> handleIllegalStateException(IllegalStateException ex) {
-        return ApiResponse.of(CustomHttpStatus.BAD_REQUEST);
+    @ExceptionHandler(HttpStatusCodeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleHttpStatusCodeException(HttpStatusCodeException e) {
+        log.error("HttpStatusCodeException occurred - Status: {}, Response: {}", 
+            e.getStatusCode(), e.getResponseBodyAsString());
+        return ApiResponse.error("업비트 API 호출 실패: " + e.getResponseBodyAsString());
     }
 
-    // 기타 모든 예외 처리 (500 서버 에러)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("IllegalArgumentException occurred", e);
+        return ApiResponse.error(e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ApiResponse<Object> handleException(Exception ex) {
-        return ApiResponse.of(CustomHttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    public ApiResponse<Object> handleAuthenticationException(AuthenticationException ex) {
-        return ApiResponse.of(CustomHttpStatus.UNAUTHENTICATED);
-    }
-
-    @ExceptionHandler(AuthorizationException.class)
-    public ApiResponse<Object> handleAuthorizationException(AuthorizationException ex) {
-        return ApiResponse.of(CustomHttpStatus.FORBIDDEN);
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResponse<Void> handleException(Exception e) {
+        log.error("Unexpected error occurred", e);
+        return ApiResponse.error("서버 내부 오류가 발생했습니다: " + e.getMessage());
     }
 }
