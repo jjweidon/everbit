@@ -21,10 +21,12 @@ public record OrderResponse(
     String paidFee,
     String locked,
     String executedVolume,
+    String executedFunds,
     Integer tradesCount,
     String preventedVolume,
     String preventedLocked,
-    List<Trade> trades
+    List<Trade> trades,  // trades는 개별 주문 조회에서만 사용됨
+    String newOrderUuid  // cancel_and_new API 응답에서만 사용됨
 ) {
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public record Trade(

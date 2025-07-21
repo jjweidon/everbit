@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -119,7 +118,7 @@ public class UpbitClient {
      * @return 미체결 주문 목록
      * @throws UpbitException API 호출 실패 시
      */
-    public List<OrderItemResponse> getOpenOrders(String username, String market, List<String> states) {
+    public List<OrderResponse> getOpenOrders(String username, String market, List<String> states) {
         return executeOrderList(username, V1_ORDERS_OPEN, market, states, "Failed to get open orders");
     }
 
@@ -132,7 +131,7 @@ public class UpbitClient {
      * @return 체결된 주문 목록
      * @throws UpbitException API 호출 실패 시
      */
-    public List<OrderItemResponse> getClosedOrders(String username, String market, List<String> states) {
+    public List<OrderResponse> getClosedOrders(String username, String market, List<String> states) {
         return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "Failed to get closed orders");
     }
 
@@ -144,7 +143,7 @@ public class UpbitClient {
      * @return 생성된 주문 정보
      * @throws UpbitException API 호출 실패 시
      */
-    public OrderItemResponse createOrder(String username, OrderRequest request) {
+    public OrderResponse createOrder(String username, OrderRequest request) {
         try {
             User user = getUserByUsername(username);
             
@@ -159,19 +158,18 @@ public class UpbitClient {
             if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
             if (request.smpType() != null) params.put("smp_type", request.smpType());
             
-            // For POST requests, the query hash should be generated from the request body
             String bodyString = buildQueryString(params);
-            URI uri = buildUrl(V1_ORDERS, "");  // Empty query string for POST request
-            HttpHeaders headers = createHeaders(bodyString, user);  // Pass body string instead of query string
+            URI uri = buildUrl(V1_ORDERS, "");
+            HttpHeaders headers = createHeaders(bodyString, user);
 
             log.info("Creating order - Request body: {}", bodyString);
             
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);  // Send params as body
-            ResponseEntity<OrderItemResponse> response = restTemplate.exchange(
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+            ResponseEntity<OrderResponse> response = restTemplate.exchange(
                 uri,
                 HttpMethod.POST,
                 entity,
-                OrderItemResponse.class
+                OrderResponse.class
             );
 
             return handleResponse(response, "Failed to create order");
@@ -276,7 +274,7 @@ public class UpbitClient {
         }
     }
 
-    private List<OrderItemResponse> executeOrderList(String username, String path, String market, List<String> states, String errorMessage) {
+    private List<OrderResponse> executeOrderList(String username, String path, String market, List<String> states, String errorMessage) {
         Map<String, String> params = new HashMap<>();
         if (market != null && !market.isEmpty()) {
             params.put("market", market);
@@ -289,7 +287,7 @@ public class UpbitClient {
             username,
             path,
             params,
-            new ParameterizedTypeReference<List<OrderItemResponse>>() {},
+            new ParameterizedTypeReference<List<OrderResponse>>() {},
             errorMessage
         );
     }

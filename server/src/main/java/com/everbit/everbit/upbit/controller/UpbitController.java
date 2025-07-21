@@ -56,37 +56,37 @@ public class UpbitController {
 
     // 미체결 주문 조회
     @GetMapping("/orders/open")
-    public ApiResponse<List<OrderItemResponse>> getOpenOrders(
+    public ApiResponse<List<OrderResponse>> getOpenOrders(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
             @RequestParam(required = false) String market,
             @RequestParam(name = "states[]", required = false) List<String> states) {
         String username = oAuth2User.getName();
         log.info("GET 미체결 주문 조회 - market: {}, states: {}", market, states);
-        List<OrderItemResponse> response = upbitClient.getOpenOrders(username, market, states);
+        List<OrderResponse> response = upbitClient.getOpenOrders(username, market, states);
         return ApiResponse.success(response, "미체결 주문 조회 성공");
     }
 
     // 체결된 주문 조회
     @GetMapping("/orders/closed")
-    public ApiResponse<List<OrderItemResponse>> getClosedOrders(
+    public ApiResponse<List<OrderResponse>> getClosedOrders(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
             @RequestParam(required = false) String market,
             @RequestParam(name = "states[]", required = false) List<String> states) {
         String username = oAuth2User.getName();
         log.info("GET 체결된 주문 조회 - market: {}, states: {}", market, states);
-        List<OrderItemResponse> response = upbitClient.getClosedOrders(username, market, states);
+        List<OrderResponse> response = upbitClient.getClosedOrders(username, market, states);
         return ApiResponse.success(response, "체결된 주문 조회 성공");
     }
 
     // 주문 생성
     @PostMapping("/orders")
-    public ApiResponse<OrderItemResponse> createOrder(
+    public ApiResponse<OrderResponse> createOrder(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
             @Valid @RequestBody OrderRequest request) {
         String username = oAuth2User.getName();
         log.info("POST 주문 생성 - market: {}, side: {}, type: {}", 
                 request.market(), request.side(), request.ordType());
-        OrderItemResponse response = upbitClient.createOrder(username, request);
+        OrderResponse response = upbitClient.createOrder(username, request);
         return ApiResponse.success(response, "주문 생성 성공");
     }
 
