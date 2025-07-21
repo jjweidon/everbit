@@ -68,9 +68,6 @@ public class UpbitClient {
             URI uri = buildUrl("/v1/orders/chance", queryString);
             HttpHeaders headers = createHeaders(queryString, user);
             
-            log.info("Making request to Upbit API - Full URL: {}", uri.toString());
-            log.info("Request headers: {}", headers);
-            
             ResponseEntity<OrderChanceResponse> response = restTemplate.exchange(
                 uri,
                 HttpMethod.GET,
@@ -81,11 +78,9 @@ public class UpbitClient {
             if (response.getStatusCode().is2xxSuccessful()) {
                 return response.getBody();
             } else {
-                log.error("Failed to get order chance. Status: {}", response.getStatusCode());
                 throw new UpbitException("Failed to get order chance: " + response.getStatusCode());
             }
         } catch (Exception e) {
-            log.error("Failed to get order chance. Full URL: {}", buildUrl("/v1/orders/chance").toString(), e);
             throw new UpbitException("Failed to get order chance", e);
         }
     }
@@ -113,7 +108,6 @@ public class UpbitClient {
             URI uri = buildUrl("/v1/order?" + queryString);
             HttpHeaders headers = createHeaders(queryString, user);
             
-            log.debug("Making request to Upbit API for order details: {}", uri);
             ResponseEntity<OrderResponse> response = restTemplate.exchange(
                 uri,
                 HttpMethod.GET,
@@ -124,11 +118,9 @@ public class UpbitClient {
             if (response.getStatusCode().is2xxSuccessful()) {
                 return response.getBody();
             } else {
-                log.error("Failed to get order details. Status: {}", response.getStatusCode());
                 throw new UpbitException("Failed to get order details: " + response.getStatusCode());
             }
         } catch (Exception e) {
-            log.error("Failed to get order details", e);
             throw new UpbitException("Failed to get order details", e);
         }
     }
