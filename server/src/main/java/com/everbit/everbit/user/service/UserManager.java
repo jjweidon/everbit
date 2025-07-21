@@ -47,4 +47,11 @@ public class UserManager {
         user.updateEmail(email);
         userService.saveUser(user);
     }
+
+    @Transactional
+    public void toggleBotActive(String username) {
+        User user = userService.findUserByUsername(username);
+        user.toggleBotActive();
+        userService.saveUser(user);
+    }
 }

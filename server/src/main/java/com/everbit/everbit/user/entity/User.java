@@ -35,6 +35,9 @@ public class User extends BaseTime {
 
     private String upbitSecretKey;
 
+    @Builder.Default
+    private Boolean isBotActive = false;
+
     public static User init(OAuth2Response oAuth2Response) {
         String username = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
         return User.builder()
@@ -52,5 +55,9 @@ public class User extends BaseTime {
     public void updateKeys(String accessKey, String secretKey) {
         this.upbitAccessKey = accessKey;
         this.upbitSecretKey = secretKey;
+    }
+
+    public void toggleBotActive() {
+        this.isBotActive = !this.isBotActive;
     }
 }

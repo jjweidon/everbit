@@ -56,4 +56,12 @@ public class UserController {
         userManager.updateEmail(username, request.email());
         return ApiResponse.success(null, "이메일 업데이트 성공");
     }
+
+    // 봇 활성화 토글
+    @PatchMapping("/me/bot-active")
+    public ApiResponse<Response> toggleBotActive(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+        String username = oAuth2User.getName();
+        userManager.toggleBotActive(username);
+        return ApiResponse.success(null, "봇 활성화 토글 성공");
+    }
 } 
