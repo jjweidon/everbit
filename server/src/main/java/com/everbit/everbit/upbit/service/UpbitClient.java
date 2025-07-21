@@ -23,6 +23,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.web.client.HttpStatusCodeException;
 
 @Slf4j
 @Service
@@ -165,14 +170,34 @@ public class UpbitClient {
             log.info("Creating order - Request body: {}", bodyString);
             
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
-            ResponseEntity<OrderResponse> response = restTemplate.exchange(
-                uri,
-                HttpMethod.POST,
-                entity,
-                OrderResponse.class
-            );
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    String.class  // 먼저 String으로 응답 받기
+                );
 
-            return handleResponse(response, "Failed to create order");
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    log.debug("Order API response: {}", response.getBody());
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper()
+                            .registerModule(new JavaTimeModule())
+                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        
+                        return objectMapper.readValue(response.getBody(), OrderResponse.class);
+                    } catch (Exception e) {
+                        log.error("Failed to parse order response: {}", response.getBody(), e);
+                        throw new UpbitException("Failed to parse order response: " + e.getMessage());
+                    }
+                } else {
+                    throw new UpbitException("Failed to create order: " + response.getStatusCode());
+                }
+            } catch (HttpStatusCodeException e) {
+                log.error("Order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                throw new UpbitException("Order API error: " + e.getResponseBodyAsString());
+            }
         } catch (Exception e) {
             log.error("Failed to create order", e);
             throw new UpbitException("Failed to create order: " + e.getMessage(), e);
