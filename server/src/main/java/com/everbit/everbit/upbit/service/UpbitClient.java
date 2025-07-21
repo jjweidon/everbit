@@ -159,30 +159,22 @@ public class UpbitClient {
             if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
             if (request.smpType() != null) params.put("smp_type", request.smpType());
             
-            String queryString = buildQueryString(params);
-            URI uri = buildUrl(V1_ORDERS, "");
-            HttpHeaders headers = createHeaders(queryString, user);
+            // For POST requests, the query hash should be generated from the request body
+            String bodyString = buildQueryString(params);
+            URI uri = buildUrl(V1_ORDERS, "");  // Empty query string for POST request
+            HttpHeaders headers = createHeaders(bodyString, user);  // Pass body string instead of query string
 
-            log.info("Creating order - Request: {}, Query String: {}", request, queryString);
+            log.info("Creating order - Request body: {}", bodyString);
             
-            HttpEntity<OrderRequest> entity = new HttpEntity<>(request, headers);
-            try {
-                ResponseEntity<OrderItemResponse> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.POST,
-                    entity,
-                    OrderItemResponse.class
-                );
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);  // Send params as body
+            ResponseEntity<OrderItemResponse> response = restTemplate.exchange(
+                uri,
+                HttpMethod.POST,
+                entity,
+                OrderItemResponse.class
+            );
 
-                OrderItemResponse result = handleResponse(response, "Failed to create order");
-                log.info("Order created successfully - UUID: {}", result.uuid());
-                return result;
-            } catch (Exception e) {
-                log.error("Failed to create order - Error: {}, Request: {}, Response: {}", 
-                    e.getMessage(), request, e instanceof HttpStatusCodeException ? 
-                    ((HttpStatusCodeException) e).getResponseBodyAsString() : "No response body");
-                throw e;
-            }
+            return handleResponse(response, "Failed to create order");
         } catch (Exception e) {
             log.error("Failed to create order", e);
             throw new UpbitException("Failed to create order: " + e.getMessage(), e);
