@@ -5,10 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
 import com.everbit.everbit.global.util.EncryptionUtil;
 import com.everbit.everbit.upbit.exception.UpbitException;
-import com.everbit.everbit.upbit.dto.AccountResponse;
-import com.everbit.everbit.upbit.dto.OrderChanceResponse;
-import com.everbit.everbit.upbit.dto.OrderResponse;
-import com.everbit.everbit.upbit.dto.OrderItemResponse;
+import com.everbit.everbit.upbit.dto.*;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +31,7 @@ public class UpbitClient {
     private static final String V1_ACCOUNTS = "/v1/accounts";
     private static final String V1_ORDERS_CHANCE = "/v1/orders/chance";
     private static final String V1_ORDER = "/v1/order";
+    private static final String V1_ORDERS = "/v1/orders";
     private static final String V1_ORDERS_OPEN = "/v1/orders/open";
     private static final String V1_ORDERS_CLOSED = "/v1/orders/closed";
 
@@ -134,6 +132,47 @@ public class UpbitClient {
      */
     public List<OrderItemResponse> getClosedOrders(String username, String market, List<String> states) {
         return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "Failed to get closed orders");
+    }
+
+    /**
+     * 새로운 주문을 생성합니다.
+     *
+     * @param username 사용자 이름
+     * @param request 주문 요청 정보
+     * @return 생성된 주문 정보
+     * @throws UpbitException API 호출 실패 시
+     */
+    public OrderItemResponse createOrder(String username, OrderRequest request) {
+        try {
+            User user = getUserByUsername(username);
+            
+            // Convert request to query string for JWT token
+            Map<String, String> params = new HashMap<>();
+            params.put("market", request.market());
+            params.put("side", request.side());
+            if (request.volume() != null) params.put("volume", request.volume());
+            if (request.price() != null) params.put("price", request.price());
+            params.put("ord_type", request.ordType());
+            if (request.identifier() != null) params.put("identifier", request.identifier());
+            if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
+            if (request.smpType() != null) params.put("smp_type", request.smpType());
+            
+            String queryString = buildQueryString(params);
+            URI uri = buildUrl(V1_ORDERS, "");  // Empty query string for POST request
+            HttpHeaders headers = createHeaders(queryString, user);
+
+            HttpEntity<OrderRequest> entity = new HttpEntity<>(request, headers);
+            ResponseEntity<OrderItemResponse> response = restTemplate.exchange(
+                uri,
+                HttpMethod.POST,
+                entity,
+                OrderItemResponse.class
+            );
+
+            return handleResponse(response, "Failed to create order");
+        } catch (Exception e) {
+            throw new UpbitException("Failed to create order", e);
+        }
     }
 
     // Private helper methods

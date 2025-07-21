@@ -2,21 +2,16 @@ package com.everbit.everbit.upbit.controller;
 
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
-import com.everbit.everbit.upbit.dto.AccountResponse;
-import com.everbit.everbit.upbit.dto.OrderChanceResponse;
-import com.everbit.everbit.upbit.dto.OrderResponse;
-import com.everbit.everbit.upbit.dto.OrderItemResponse;
+import com.everbit.everbit.upbit.dto.*;
 import com.everbit.everbit.upbit.service.UpbitClient;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -81,5 +76,17 @@ public class UpbitController {
         log.info("GET 체결된 주문 조회 - market: {}, states: {}", market, states);
         List<OrderItemResponse> response = upbitClient.getClosedOrders(username, market, states);
         return ApiResponse.success(response, "체결된 주문 조회 성공");
+    }
+
+    // 주문 생성
+    @PostMapping("/orders")
+    public ApiResponse<OrderItemResponse> createOrder(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @Valid @RequestBody OrderRequest request) {
+        String username = oAuth2User.getName();
+        log.info("POST 주문 생성 - market: {}, side: {}, type: {}", 
+                request.market(), request.side(), request.ordType());
+        OrderItemResponse response = upbitClient.createOrder(username, request);
+        return ApiResponse.success(response, "주문 생성 성공");
     }
 } 
