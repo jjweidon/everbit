@@ -282,6 +282,71 @@ public class UpbitClient {
         }
     }
 
+    /**
+     * 주문을 취소합니다.
+     * uuid 또는 identifier 중 하나는 반드시 제공되어야 합니다.
+     *
+     * @param username 사용자 이름
+     * @param uuid 주문 UUID
+     * @param identifier 조회용 사용자 지정 값
+     * @return 취소된 주문 정보
+     * @throws UpbitException API 호출 실패 시 또는 필수 파라미터 누락 시
+     */
+    public OrderResponse cancelOrder(String username, String uuid, String identifier) {
+        if (uuid == null && identifier == null) {
+            throw new UpbitException("Either uuid or identifier must be provided");
+        }
+
+        try {
+            User user = getUserByUsername(username);
+            
+            // Build query parameters
+            Map<String, String> params = new HashMap<>();
+            if (uuid != null) params.put("uuid", uuid);
+            if (identifier != null) params.put("identifier", identifier);
+            
+            String queryString = buildQueryString(params);
+            URI uri = buildUrl(V1_ORDER, queryString);
+            HttpHeaders headers = createHeaders(queryString, user);
+
+            log.info("Canceling order - Query params: {}", queryString);
+            
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.DELETE,
+                    new HttpEntity<>(headers),
+                    String.class
+                );
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    log.debug("Cancel order API response: {}", response.getBody());
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper()
+                            .registerModule(new JavaTimeModule())
+                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        
+                        OrderResponse result = objectMapper.readValue(response.getBody(), OrderResponse.class);
+                        log.info("Order canceled successfully - UUID: {}", result.uuid());
+                        return result;
+                    } catch (Exception e) {
+                        log.error("Failed to parse cancel order response: {}", response.getBody(), e);
+                        throw new UpbitException("Failed to parse cancel order response: " + e.getMessage());
+                    }
+                } else {
+                    throw new UpbitException("Failed to cancel order: " + response.getStatusCode());
+                }
+            } catch (HttpStatusCodeException e) {
+                log.error("Cancel order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                throw new UpbitException("Cancel order API error: " + e.getResponseBodyAsString());
+            }
+        } catch (Exception e) {
+            log.error("Failed to cancel order", e);
+            throw new UpbitException("Failed to cancel order: " + e.getMessage(), e);
+        }
+    }
+
     // Private helper methods
     private <T> T executeGet(String username, String path, Map<String, String> params, Class<T> responseType, String errorMessage) {
         try {

@@ -101,4 +101,16 @@ public class UpbitController {
         ReplaceOrderResponse response = upbitClient.replaceOrder(username, request);
         return ApiResponse.success(response, "주문 취소 후 재주문 성공");
     }
+
+    // 주문 취소
+    @DeleteMapping("/order")
+    public ApiResponse<OrderResponse> cancelOrder(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @RequestParam(required = false) String uuid,
+            @RequestParam(required = false) String identifier) {
+        String username = oAuth2User.getName();
+        log.info("DELETE 주문 취소 - uuid: {}, identifier: {}", uuid, identifier);
+        OrderResponse response = upbitClient.cancelOrder(username, uuid, identifier);
+        return ApiResponse.success(response, "주문 취소 성공");
+    }
 } 
