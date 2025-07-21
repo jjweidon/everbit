@@ -241,21 +241,44 @@ public class UpbitClient {
                 params.put("new_time_in_force", request.newTimeInForce());
             }
             
-            String queryString = buildQueryString(params);
+            String bodyString = buildQueryString(params);
             URI uri = buildUrl(V1_ORDERS_CANCEL_AND_NEW, "");
-            HttpHeaders headers = createHeaders(queryString, user);
+            HttpHeaders headers = createHeaders(bodyString, user);
 
-            HttpEntity<ReplaceOrderRequest> entity = new HttpEntity<>(request, headers);
-            ResponseEntity<ReplaceOrderResponse> response = restTemplate.exchange(
-                uri,
-                HttpMethod.POST,
-                entity,
-                ReplaceOrderResponse.class
-            );
+            log.info("Replacing order - Request body: {}", bodyString);
+            
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    String.class  // 먼저 String으로 응답 받기
+                );
 
-            return handleResponse(response, "Failed to replace order");
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    log.debug("Replace order API response: {}", response.getBody());
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper()
+                            .registerModule(new JavaTimeModule())
+                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        
+                        return objectMapper.readValue(response.getBody(), ReplaceOrderResponse.class);
+                    } catch (Exception e) {
+                        log.error("Failed to parse replace order response: {}", response.getBody(), e);
+                        throw new UpbitException("Failed to parse replace order response: " + e.getMessage());
+                    }
+                } else {
+                    throw new UpbitException("Failed to replace order: " + response.getStatusCode());
+                }
+            } catch (HttpStatusCodeException e) {
+                log.error("Replace order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                throw new UpbitException("Replace order API error: " + e.getResponseBodyAsString());
+            }
         } catch (Exception e) {
-            throw new UpbitException("Failed to replace order", e);
+            log.error("Failed to replace order", e);
+            throw new UpbitException("Failed to replace order: " + e.getMessage(), e);
         }
     }
 
