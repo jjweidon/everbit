@@ -2,7 +2,7 @@ package com.everbit.everbit.upbit.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -13,7 +13,7 @@ public record OrderResponse(
     String price,
     String state,
     String market,
-    LocalDateTime createdAt,
+    OffsetDateTime createdAt,
     String volume,
     String remainingVolume,
     String reservedFee,
