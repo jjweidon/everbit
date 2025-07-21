@@ -45,15 +45,34 @@ public class UpbitClient {
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
 
-    public UpbitClient(UpbitConfig upbitConfig, UserService userService, 
-                      EncryptionUtil encryptionUtil, RestTemplate restTemplate) {
-        this.upbitConfig = upbitConfig;
-        this.userService = userService;
-        this.encryptionUtil = encryptionUtil;
-        this.restTemplate = restTemplate;
-        this.objectMapper = new ObjectMapper()
+    private <T> T parseResponse(ResponseEntity<String> response, Class<T> responseType, String operation) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            try {
+                return createObjectMapper().readValue(response.getBody(), responseType);
+            } catch (Exception e) {
+                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
+                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
+            }
+        }
+        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
+    }
+
+    private <T> T parseResponse(ResponseEntity<String> response, ParameterizedTypeReference<T> responseType, String operation) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            try {
+                return createObjectMapper().readValue(response.getBody(), 
+                    createObjectMapper().getTypeFactory().constructType(responseType.getType()));
+            } catch (Exception e) {
+                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
+                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
+            }
+        }
+        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
+    }
+
+    private ObjectMapper createObjectMapper() {
+        return new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -257,31 +276,6 @@ public class UpbitClient {
             log.error("Failed to execute {}", operation, e);
             throw new UpbitException("Failed to execute " + operation + ": " + e.getMessage());
         }
-    }
-
-    private <T> T parseResponse(ResponseEntity<String> response, Class<T> responseType, String operation) {
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            try {
-                return objectMapper.readValue(response.getBody(), responseType);
-            } catch (Exception e) {
-                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
-                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
-            }
-        }
-        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
-    }
-
-    private <T> T parseResponse(ResponseEntity<String> response, ParameterizedTypeReference<T> responseType, String operation) {
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            try {
-                return objectMapper.readValue(response.getBody(), 
-                    objectMapper.getTypeFactory().constructType(responseType.getType()));
-            } catch (Exception e) {
-                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
-                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
-            }
-        }
-        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
     }
 
     private List<OrderResponse> executeOrderList(String username, String path, String market, List<String> states, String operation) {
