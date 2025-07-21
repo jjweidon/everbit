@@ -8,11 +8,16 @@ import com.everbit.everbit.upbit.exception.UpbitException;
 import com.everbit.everbit.upbit.dto.*;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -23,11 +28,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.web.client.HttpStatusCodeException;
 
 @Slf4j
 @Service
@@ -45,36 +45,32 @@ public class UpbitClient {
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    public UpbitClient(UpbitConfig upbitConfig, UserService userService, 
+                      EncryptionUtil encryptionUtil, RestTemplate restTemplate) {
+        this.upbitConfig = upbitConfig;
+        this.userService = userService;
+        this.encryptionUtil = encryptionUtil;
+        this.restTemplate = restTemplate;
+        this.objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     // Account API
-
-    /**
-     * 사용자의 계좌 정보를 조회합니다.
-     *
-     * @param username 사용자 이름
-     * @return 계좌 정보 목록
-     * @throws UpbitException API 호출 실패 시
-     */
     public List<AccountResponse> getAccounts(String username) {
         return executeGet(
             username,
             V1_ACCOUNTS,
             Collections.emptyMap(),
             new ParameterizedTypeReference<List<AccountResponse>>() {},
-            "Failed to get accounts"
+            "accounts"
         );
     }
 
     // Order API
-
-    /**
-     * 마켓별 주문 가능 정보를 조회합니다.
-     *
-     * @param username 사용자 이름
-     * @param market 마켓 ID (예: KRW-BTC)
-     * @return 주문 가능 정보
-     * @throws UpbitException API 호출 실패 시
-     */
     public OrderChanceResponse getOrderChance(String username, String market) {
         Map<String, String> params = Collections.singletonMap("market", market);
         return executeGet(
@@ -82,20 +78,10 @@ public class UpbitClient {
             V1_ORDERS_CHANCE,
             params,
             OrderChanceResponse.class,
-            "Failed to get order chance"
+            "order chance"
         );
     }
 
-    /**
-     * 개별 주문을 조회합니다.
-     * uuid 또는 identifier 중 하나는 반드시 제공되어야 합니다.
-     *
-     * @param username 사용자 이름
-     * @param uuid 주문 UUID
-     * @param identifier 조회용 사용자 지정 값
-     * @return 주문 정보
-     * @throws UpbitException API 호출 실패 시 또는 필수 파라미터 누락 시
-     */
     public OrderResponse getOrder(String username, String uuid, String identifier) {
         if (uuid == null && identifier == null) {
             throw new UpbitException("Either uuid or identifier must be provided");
@@ -110,284 +96,195 @@ public class UpbitClient {
             V1_ORDER,
             params,
             OrderResponse.class,
-            "Failed to get order details"
+            "order details"
         );
     }
 
-    /**
-     * 미체결 주문 목록을 조회합니다.
-     *
-     * @param username 사용자 이름
-     * @param market 마켓 ID (선택적)
-     * @param states 주문 상태 목록 (선택적, 예: wait, watch)
-     * @return 미체결 주문 목록
-     * @throws UpbitException API 호출 실패 시
-     */
     public List<OrderResponse> getOpenOrders(String username, String market, List<String> states) {
-        return executeOrderList(username, V1_ORDERS_OPEN, market, states, "Failed to get open orders");
+        return executeOrderList(username, V1_ORDERS_OPEN, market, states, "open orders");
     }
 
-    /**
-     * 체결된 주문 목록을 조회합니다.
-     *
-     * @param username 사용자 이름
-     * @param market 마켓 ID (선택적)
-     * @param states 주문 상태 목록 (선택적, 예: done, cancel)
-     * @return 체결된 주문 목록
-     * @throws UpbitException API 호출 실패 시
-     */
     public List<OrderResponse> getClosedOrders(String username, String market, List<String> states) {
-        return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "Failed to get closed orders");
+        return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "closed orders");
     }
 
-    /**
-     * 새로운 주문을 생성합니다.
-     *
-     * @param username 사용자 이름
-     * @param request 주문 요청 정보
-     * @return 생성된 주문 정보
-     * @throws UpbitException API 호출 실패 시
-     */
     public OrderResponse createOrder(String username, OrderRequest request) {
-        try {
-            User user = getUserByUsername(username);
-            
-            // Convert request to query string for JWT token
-            Map<String, String> params = new HashMap<>();
-            params.put("market", request.market());
-            params.put("side", request.side());
-            if (request.volume() != null) params.put("volume", request.volume());
-            if (request.price() != null) params.put("price", request.price());
-            params.put("ord_type", request.ordType());
-            if (request.identifier() != null) params.put("identifier", request.identifier());
-            if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
-            if (request.smpType() != null) params.put("smp_type", request.smpType());
-            
-            String bodyString = buildQueryString(params);
-            URI uri = buildUrl(V1_ORDERS, "");
-            HttpHeaders headers = createHeaders(bodyString, user);
+        Map<String, String> params = new HashMap<>();
+        params.put("market", request.market());
+        params.put("side", request.side());
+        if (request.volume() != null) params.put("volume", request.volume());
+        if (request.price() != null) params.put("price", request.price());
+        params.put("ord_type", request.ordType());
+        if (request.identifier() != null) params.put("identifier", request.identifier());
+        if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
+        if (request.smpType() != null) params.put("smp_type", request.smpType());
 
-            log.info("Creating order - Request body: {}", bodyString);
-            
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.POST,
-                    entity,
-                    String.class  // 먼저 String으로 응답 받기
-                );
-
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    log.debug("Order API response: {}", response.getBody());
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper()
-                            .registerModule(new JavaTimeModule())
-                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                        
-                        return objectMapper.readValue(response.getBody(), OrderResponse.class);
-                    } catch (Exception e) {
-                        log.error("Failed to parse order response: {}", response.getBody(), e);
-                        throw new UpbitException("Failed to parse order response: " + e.getMessage());
-                    }
-                } else {
-                    throw new UpbitException("Failed to create order: " + response.getStatusCode());
-                }
-            } catch (HttpStatusCodeException e) {
-                log.error("Order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-                throw new UpbitException("Order API error: " + e.getResponseBodyAsString());
-            }
-        } catch (Exception e) {
-            log.error("Failed to create order", e);
-            throw new UpbitException("Failed to create order: " + e.getMessage(), e);
-        }
+        return executePost(
+            username,
+            V1_ORDERS,
+            params,
+            OrderResponse.class,
+            "order creation"
+        );
     }
 
-    /**
-     * 기존 주문을 취소하고 새로운 주문을 생성합니다.
-     *
-     * @param username 사용자 이름
-     * @param request 취소 및 신규 주문 요청 정보
-     * @return 취소된 주문 정보와 새로운 주문 UUID
-     * @throws UpbitException API 호출 실패 시
-     */
     public ReplaceOrderResponse replaceOrder(String username, ReplaceOrderRequest request) {
-        try {
-            User user = getUserByUsername(username);
-            
-            // Convert request to query string for JWT token
-            Map<String, String> params = new HashMap<>();
-            if (request.prevOrderUuid() != null) {
-                params.put("prev_order_uuid", request.prevOrderUuid());
-            }
-            if (request.prevOrderIdentifier() != null) {
-                params.put("prev_order_identifier", request.prevOrderIdentifier());
-            }
-            params.put("new_ord_type", request.newOrdType());
-            if (request.newVolume() != null) {
-                params.put("new_volume", request.newVolume());
-            }
-            if (request.newPrice() != null) {
-                params.put("new_price", request.newPrice());
-            }
-            if (request.newSmpType() != null) {
-                params.put("new_smp_type", request.newSmpType());
-            }
-            if (request.newIdentifier() != null) {
-                params.put("new_identifier", request.newIdentifier());
-            }
-            if (request.newTimeInForce() != null) {
-                params.put("new_time_in_force", request.newTimeInForce());
-            }
-            
-            String bodyString = buildQueryString(params);
-            URI uri = buildUrl(V1_ORDERS_CANCEL_AND_NEW, "");
-            HttpHeaders headers = createHeaders(bodyString, user);
-
-            log.info("Replacing order - Request body: {}", bodyString);
-            
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.POST,
-                    entity,
-                    String.class  // 먼저 String으로 응답 받기
-                );
-
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    log.debug("Replace order API response: {}", response.getBody());
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper()
-                            .registerModule(new JavaTimeModule())
-                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                        
-                        return objectMapper.readValue(response.getBody(), ReplaceOrderResponse.class);
-                    } catch (Exception e) {
-                        log.error("Failed to parse replace order response: {}", response.getBody(), e);
-                        throw new UpbitException("Failed to parse replace order response: " + e.getMessage());
-                    }
-                } else {
-                    throw new UpbitException("Failed to replace order: " + response.getStatusCode());
-                }
-            } catch (HttpStatusCodeException e) {
-                log.error("Replace order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-                throw new UpbitException("Replace order API error: " + e.getResponseBodyAsString());
-            }
-        } catch (Exception e) {
-            log.error("Failed to replace order", e);
-            throw new UpbitException("Failed to replace order: " + e.getMessage(), e);
+        Map<String, String> params = new HashMap<>();
+        if (request.prevOrderUuid() != null) {
+            params.put("prev_order_uuid", request.prevOrderUuid());
         }
+        if (request.prevOrderIdentifier() != null) {
+            params.put("prev_order_identifier", request.prevOrderIdentifier());
+        }
+        params.put("new_ord_type", request.newOrdType());
+        if (request.newVolume() != null) {
+            params.put("new_volume", request.newVolume());
+        }
+        if (request.newPrice() != null) {
+            params.put("new_price", request.newPrice());
+        }
+        if (request.newSmpType() != null) {
+            params.put("new_smp_type", request.newSmpType());
+        }
+        if (request.newIdentifier() != null) {
+            params.put("new_identifier", request.newIdentifier());
+        }
+        if (request.newTimeInForce() != null) {
+            params.put("new_time_in_force", request.newTimeInForce());
+        }
+
+        return executePost(
+            username,
+            V1_ORDERS_CANCEL_AND_NEW,
+            params,
+            ReplaceOrderResponse.class,
+            "order replacement"
+        );
     }
 
-    /**
-     * 주문을 취소합니다.
-     * uuid 또는 identifier 중 하나는 반드시 제공되어야 합니다.
-     *
-     * @param username 사용자 이름
-     * @param uuid 주문 UUID
-     * @param identifier 조회용 사용자 지정 값
-     * @return 취소된 주문 정보
-     * @throws UpbitException API 호출 실패 시 또는 필수 파라미터 누락 시
-     */
     public OrderResponse cancelOrder(String username, String uuid, String identifier) {
         if (uuid == null && identifier == null) {
             throw new UpbitException("Either uuid or identifier must be provided");
         }
 
-        try {
-            User user = getUserByUsername(username);
-            
-            // Build query parameters
-            Map<String, String> params = new HashMap<>();
-            if (uuid != null) params.put("uuid", uuid);
-            if (identifier != null) params.put("identifier", identifier);
-            
-            String queryString = buildQueryString(params);
-            URI uri = buildUrl(V1_ORDER, queryString);
-            HttpHeaders headers = createHeaders(queryString, user);
+        Map<String, String> params = new HashMap<>();
+        if (uuid != null) params.put("uuid", uuid);
+        if (identifier != null) params.put("identifier", identifier);
 
-            log.info("Canceling order - Query params: {}", queryString);
-            
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.DELETE,
-                    new HttpEntity<>(headers),
-                    String.class
-                );
-
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    log.debug("Cancel order API response: {}", response.getBody());
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper()
-                            .registerModule(new JavaTimeModule())
-                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                        
-                        OrderResponse result = objectMapper.readValue(response.getBody(), OrderResponse.class);
-                        log.info("Order canceled successfully - UUID: {}", result.uuid());
-                        return result;
-                    } catch (Exception e) {
-                        log.error("Failed to parse cancel order response: {}", response.getBody(), e);
-                        throw new UpbitException("Failed to parse cancel order response: " + e.getMessage());
-                    }
-                } else {
-                    throw new UpbitException("Failed to cancel order: " + response.getStatusCode());
-                }
-            } catch (HttpStatusCodeException e) {
-                log.error("Cancel order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-                throw new UpbitException("Cancel order API error: " + e.getResponseBodyAsString());
-            }
-        } catch (Exception e) {
-            log.error("Failed to cancel order", e);
-            throw new UpbitException("Failed to cancel order: " + e.getMessage(), e);
-        }
+        return executeDelete(
+            username,
+            V1_ORDER,
+            params,
+            OrderResponse.class,
+            "order cancellation"
+        );
     }
 
     // Private helper methods
-    private <T> T executeGet(String username, String path, Map<String, String> params, Class<T> responseType, String errorMessage) {
-        try {
-            String queryString = buildQueryString(params);
-            URI uri = buildUrl(path, queryString);
-            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
-
-            ResponseEntity<T> response = restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                responseType
-            );
-
-            return handleResponse(response, errorMessage);
-        } catch (Exception e) {
-            throw new UpbitException(errorMessage, e);
-        }
+    private <T> T executeGet(String username, String path, Map<String, String> params, 
+                           Class<T> responseType, String operation) {
+        return executeRequest(username, path, params, HttpMethod.GET, responseType, operation);
     }
 
     private <T> T executeGet(String username, String path, Map<String, String> params, 
-                           ParameterizedTypeReference<T> responseType, String errorMessage) {
+                           ParameterizedTypeReference<T> responseType, String operation) {
+        return executeRequest(username, path, params, HttpMethod.GET, responseType, operation);
+    }
+
+    private <T> T executePost(String username, String path, Map<String, String> params, 
+                            Class<T> responseType, String operation) {
+        return executeRequest(username, path, params, HttpMethod.POST, responseType, operation);
+    }
+
+    private <T> T executeDelete(String username, String path, Map<String, String> params, 
+                              Class<T> responseType, String operation) {
+        return executeRequest(username, path, params, HttpMethod.DELETE, responseType, operation);
+    }
+
+    private <T> T executeRequest(String username, String path, Map<String, String> params, 
+                               HttpMethod method, Class<T> responseType, String operation) {
         try {
             String queryString = buildQueryString(params);
-            URI uri = buildUrl(path, queryString);
+            URI uri = method == HttpMethod.GET ? buildUrl(path, queryString) : buildUrl(path, "");
             HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+            HttpEntity<?> entity = method == HttpMethod.POST ? 
+                new HttpEntity<>(params, headers) : new HttpEntity<>(headers);
 
-            ResponseEntity<T> response = restTemplate.exchange(
+            log.info("Executing {} request - {}: {}", method, operation, 
+                method == HttpMethod.GET ? uri : "params=" + queryString);
+
+            ResponseEntity<String> response = restTemplate.exchange(
                 uri,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                responseType
+                method,
+                entity,
+                String.class
             );
 
-            return handleResponse(response, errorMessage);
+            return parseResponse(response, responseType, operation);
+        } catch (HttpStatusCodeException e) {
+            log.error("{} API error: {} - {}", operation, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new UpbitException(operation + " API error: " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            throw new UpbitException(errorMessage, e);
+            log.error("Failed to execute {}", operation, e);
+            throw new UpbitException("Failed to execute " + operation + ": " + e.getMessage());
         }
     }
 
-    private List<OrderResponse> executeOrderList(String username, String path, String market, List<String> states, String errorMessage) {
+    private <T> T executeRequest(String username, String path, Map<String, String> params, 
+                               HttpMethod method, ParameterizedTypeReference<T> responseType, String operation) {
+        try {
+            String queryString = buildQueryString(params);
+            URI uri = method == HttpMethod.GET ? buildUrl(path, queryString) : buildUrl(path, "");
+            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+            HttpEntity<?> entity = method == HttpMethod.POST ? 
+                new HttpEntity<>(params, headers) : new HttpEntity<>(headers);
+
+            log.info("Executing {} request - {}: {}", method, operation, 
+                method == HttpMethod.GET ? uri : "params=" + queryString);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                uri,
+                method,
+                entity,
+                String.class
+            );
+
+            return parseResponse(response, responseType, operation);
+        } catch (HttpStatusCodeException e) {
+            log.error("{} API error: {} - {}", operation, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new UpbitException(operation + " API error: " + e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Failed to execute {}", operation, e);
+            throw new UpbitException("Failed to execute " + operation + ": " + e.getMessage());
+        }
+    }
+
+    private <T> T parseResponse(ResponseEntity<String> response, Class<T> responseType, String operation) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            try {
+                return objectMapper.readValue(response.getBody(), responseType);
+            } catch (Exception e) {
+                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
+                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
+            }
+        }
+        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
+    }
+
+    private <T> T parseResponse(ResponseEntity<String> response, ParameterizedTypeReference<T> responseType, String operation) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            try {
+                return objectMapper.readValue(response.getBody(), 
+                    objectMapper.getTypeFactory().constructType(responseType.getType()));
+            } catch (Exception e) {
+                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
+                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
+            }
+        }
+        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
+    }
+
+    private List<OrderResponse> executeOrderList(String username, String path, String market, List<String> states, String operation) {
         Map<String, String> params = new HashMap<>();
         if (market != null && !market.isEmpty()) {
             params.put("market", market);
@@ -401,7 +298,7 @@ public class UpbitClient {
             path,
             params,
             new ParameterizedTypeReference<List<OrderResponse>>() {},
-            errorMessage
+            operation
         );
     }
 
@@ -409,6 +306,7 @@ public class UpbitClient {
         if (params.isEmpty()) return "";
         
         return params.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
             .map(entry -> entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining("&"));
     }
@@ -473,11 +371,4 @@ public class UpbitClient {
         md.update(queryString.getBytes("utf8"));
         return String.format("%0128x", new BigInteger(1, md.digest()));
     }
-
-    private <T> T handleResponse(ResponseEntity<T> response, String errorMessage) {
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            return response.getBody();
-        }
-        throw new UpbitException(errorMessage + ": " + response.getStatusCode());
-    }
-} 
+}
