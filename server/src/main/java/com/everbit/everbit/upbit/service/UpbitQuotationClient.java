@@ -51,13 +51,18 @@ public class UpbitQuotationClient {
         throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
     }
 
-    public List<TickerResponse> getAllTickers() {
+    public List<TickerResponse> getAllTickers(List<String> quoteCurrencies) {
         try {
-            URI uri = UriComponentsBuilder
+            UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(upbitConfig.getBaseUrl())
-                .path(V1_TICKER_ALL)
-                .build()
-                .toUri();
+                .path(V1_TICKER_ALL);
+
+            if (quoteCurrencies != null && !quoteCurrencies.isEmpty()) {
+                String quoteCurrenciesParam = quoteCurrencies.stream().collect(Collectors.joining(","));
+                builder.queryParam("quote_currencies", quoteCurrenciesParam);
+            }
+
+            URI uri = builder.build().toUri();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

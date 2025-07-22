@@ -21,18 +21,21 @@ import java.util.List;
 public class UpbitQuotationController {
     private final UpbitQuotationClient upbitClient;
 
-    @GetMapping("/ticker/all")
-    public ApiResponse<List<TickerResponse>> getAllTickers() {
-        log.info("GET 전체 마켓 현재가 정보 조회");
-        List<TickerResponse> response = upbitClient.getAllTickers();
-        return ApiResponse.success(response, "전체 마켓 현재가 정보 조회 성공");
-    }
-
+    // 종목 단위 현재가 정보 조회
     @GetMapping("/ticker")
     public ApiResponse<List<TickerResponse>> getTickers(
             @RequestParam(name = "markets") List<String> markets) {
         log.info("GET 종목 단위 현재가 정보 조회 - markets: {}", markets);
         List<TickerResponse> response = upbitClient.getTickers(markets);
         return ApiResponse.success(response, "종목 단위 현재가 정보 조회 성공");
+    }
+
+    // 마켓 단위 현재가 정보 조회
+    @GetMapping("/ticker/all")
+    public ApiResponse<List<TickerResponse>> getAllTickers(
+            @RequestParam(name = "quote_currencies", required = false) List<String> quoteCurrencies) {
+        log.info("GET 마켓 단위 현재가 정보 조회 - quote_currencies: {}", quoteCurrencies);
+        List<TickerResponse> response = upbitClient.getAllTickers(quoteCurrencies);
+        return ApiResponse.success(response, "마켓 단위 현재가 정보 조회 성공");
     }
 }
