@@ -66,6 +66,9 @@ dependencies {
 	
 	// Auth0 JWT
 	implementation 'com.auth0:java-jwt:4.4.0'
+
+	// TA4J
+	implementation 'org.ta4j:ta4j-core:0.15'
 }
 
 tasks.named('test') {
