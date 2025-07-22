@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
@@ -24,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TradingSignalService {
     private final UpbitQuotationClient upbitQuotationClient;
+    private static final ZoneId UTC = ZoneId.of("UTC");
     
     public BarSeries createBarSeries(String market) {
         // 최근 200개의 1분봉 데이터 조회
@@ -35,8 +37,10 @@ public class TradingSignalService {
         // 캔들 데이터를 BarSeries에 추가 (시간 순서대로)
         for (int i = candles.size() - 1; i >= 0; i--) {
             MinuteCandleResponse candle = candles.get(i);
+            ZonedDateTime zonedDateTime = candle.candleDateTimeUtc().atZone(UTC);
+            
             series.addBar(
-                ZonedDateTime.parse(candle.candleDateTimeUtc().toString()),
+                zonedDateTime,
                 candle.openingPrice(),
                 candle.highPrice(),
                 candle.lowPrice(),
