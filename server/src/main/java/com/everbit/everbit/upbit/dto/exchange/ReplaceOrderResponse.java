@@ -1,12 +1,11 @@
-package com.everbit.everbit.upbit.dto;
+package com.everbit.everbit.upbit.dto.exchange;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record OrderResponse(
+public record ReplaceOrderResponse(
     String uuid,
     String side,
     String ordType,
@@ -21,20 +20,8 @@ public record OrderResponse(
     String paidFee,
     String locked,
     String executedVolume,
-    String executedFunds,
     Integer tradesCount,
     String preventedVolume,
     String preventedLocked,
-    List<Trade> trades,  // trades는 개별 주문 조회에서만 사용됨
-    String newOrderUuid  // cancel_and_new API 응답에서만 사용됨
-) {
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public record Trade(
-        String market,
-        String uuid,
-        String price,
-        String volume,
-        String funds,
-        String side
-    ) {}
-} 
+    String newOrderUuid
+) {} 

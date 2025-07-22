@@ -5,7 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.everbit.everbit.global.config.UpbitConfig;
 import com.everbit.everbit.global.util.EncryptionUtil;
 import com.everbit.everbit.upbit.exception.UpbitException;
-import com.everbit.everbit.upbit.dto.*;
+import com.everbit.everbit.upbit.dto.exchange.*;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UpbitClient {
+public class UpbitExchangeClient {
     private static final String V1_ACCOUNTS = "/v1/accounts";
     private static final String V1_ORDERS_CHANCE = "/v1/orders/chance";
     private static final String V1_ORDER = "/v1/order";

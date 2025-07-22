@@ -1,4 +1,4 @@
-package com.everbit.everbit.upbit.dto;
+package com.everbit.everbit.upbit.dto.exchange;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

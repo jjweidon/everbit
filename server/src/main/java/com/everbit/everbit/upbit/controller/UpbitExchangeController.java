@@ -2,8 +2,8 @@ package com.everbit.everbit.upbit.controller;
 
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
-import com.everbit.everbit.upbit.dto.*;
-import com.everbit.everbit.upbit.service.UpbitClient;
+import com.everbit.everbit.upbit.dto.exchange.*;
+import com.everbit.everbit.upbit.service.UpbitExchangeClient;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/upbit")
-public class UpbitController {
+public class UpbitExchangeController {
 
-    private final UpbitClient upbitClient;
+    private final UpbitExchangeClient upbitClient;
 
     // 계좌 정보 조회
     @GetMapping("/accounts")
