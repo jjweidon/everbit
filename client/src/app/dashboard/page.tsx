@@ -8,7 +8,6 @@ import MainHeader from '@/components/MainHeader';
 export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [botStatus, setBotStatus] = useState(false);
     const [selectedTab, setSelectedTab] = useState<DashboardTab>('overview');
 
     useEffect(() => {
@@ -61,7 +60,7 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-darkBg dark:to-darkBg">
-            <MainHeader title="everbit" botStatus={botStatus} />
+            <MainHeader title="everbit" />
             <Navigation selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
             <div className="max-w-7xl mx-auto px-4 sm:px-16 lg:px-24 py-8">{renderContent()}</div>
         </div>

@@ -53,6 +53,7 @@ public class UserController {
     @PatchMapping("/me/email")
     public ApiResponse<Response> updateEmail(@AuthenticationPrincipal CustomOAuth2User oAuth2User, @RequestBody EmailRequest request) {
         String username = oAuth2User.getName();
+        log.info("PATCH 이메일 업데이트: {}", username);
         userManager.updateEmail(username, request.email());
         return ApiResponse.success(null, "이메일 업데이트 성공");
     }
@@ -61,7 +62,8 @@ public class UserController {
     @PatchMapping("/me/bot-active")
     public ApiResponse<Response> toggleBotActive(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
-        userManager.toggleBotActive(username);
-        return ApiResponse.success(null, "봇 활성화 토글 성공");
+        log.info("PATCH 봇 활성화 토글: {}", username);
+        UserResponse response = userManager.toggleBotActive(username);
+        return ApiResponse.success(response, "봇 활성화 토글 성공");
     }
 } 

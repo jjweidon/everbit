@@ -49,9 +49,10 @@ public class UserManager {
     }
 
     @Transactional
-    public void toggleBotActive(String username) {
+    public UserResponse toggleBotActive(String username) {
         User user = userService.findUserByUsername(username);
         user.toggleBotActive();
         userService.saveUser(user);
+        return UserResponse.from(user);
     }
 }

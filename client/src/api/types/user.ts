@@ -10,6 +10,7 @@ export const User = z.object({
     createdAt: z.string(),
     isUpbitConnected: z.boolean(),
     role: z.string(),
+    isBotActive: z.boolean(),
 });
 export type UserResponse = z.infer<typeof User>;
 

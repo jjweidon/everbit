@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { userApi } from '@/api/services';
 import { UserResponse } from '@/api/types';
+import { HttpClientFactory } from '@/api/lib/HttpClientFactory';
 
 interface AuthState {
     user: UserResponse | null;
@@ -13,11 +14,8 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
-            user: null,
-            isAuthenticated: false,
-
-            logout: () => {
+        (set) => {
+            const logout = () => {
                 // 상태 초기화
                 set((state) => ({
                     ...state,
@@ -36,42 +34,47 @@ export const useAuthStore = create<AuthState>()(
                             .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
                     });
                 }
-            },
+            };
 
-            fetchUser: async () => {
-                try {
-                    console.log('사용자 정보 로드 시도...');
+            // 로그아웃 핸들러 등록
+            HttpClientFactory.setLogoutHandler(logout);
 
-                    const userData = await userApi.getCurrentUser();
+            return {
+                user: null,
+                isAuthenticated: false,
+                logout,
 
-                    if (!userData || !userData.userId) {
-                        console.error('유효하지 않은 사용자 데이터:', userData);
-                        throw new Error('유효하지 않은 사용자 데이터');
+                fetchUser: async () => {
+                    try {
+                        console.log('사용자 정보 로드 시도...');
+
+                        const userData = await userApi.getCurrentUser();
+
+                        if (!userData || !userData.userId) {
+                            console.error('유효하지 않은 사용자 데이터:', userData);
+                            throw new Error('유효하지 않은 사용자 데이터');
+                        }
+
+                        console.log('사용자 정보 로드 성공:', userData);
+                        set((state) => ({
+                            ...state,
+                            user: userData,
+                            isAuthenticated: true,
+                        }));
+                    } catch (err) {
+                        console.error('fetchUser 실패:', err);
+                        set((state) => ({
+                            ...state,
+                            user: null,
+                            isAuthenticated: false,
+                        }));
+                        throw err;
                     }
-
-                    console.log('사용자 정보 로드 성공:', userData);
-                    set((state) => ({
-                        ...state,
-                        user: userData,
-                        isAuthenticated: true,
-                    }));
-                } catch (err) {
-                    console.error('fetchUser 실패:', err);
-                    set((state) => ({
-                        ...state,
-                        user: null,
-                        isAuthenticated: false,
-                    }));
-                    throw err;
-                }
-            },
-        }),
+                },
+            };
+        },
         {
-            name: 'everbit-auth',
-            partialize: (state) => ({
-                user: state.user,
-                isAuthenticated: state.isAuthenticated,
-            }),
+            name: 'auth-storage',
         }
     )
 );

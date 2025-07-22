@@ -14,7 +14,8 @@ public record UserResponse(
     String image,
     String createdAt,
     Boolean isUpbitConnected,
-    String role
+    String role,
+    Boolean isBotActive
 ) implements Response {
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -25,7 +26,8 @@ public record UserResponse(
             user.getImage(),
             user.getCreatedAt().toString(),
             user.getUpbitAccessKey() != null && user.getUpbitSecretKey() != null,
-            user.getRole().name()
+            user.getRole().name(),
+            user.getIsBotActive()
         );
     }
 }

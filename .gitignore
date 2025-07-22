@@ -7,17 +7,17 @@
 .env.production.local
 docker-compose.dev.yaml
 
-# Python
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.env/
-.python-version
+# # Python
+# .venv/
+# __pycache__/
+# *.pyc
+# *.pyo
+# *.pyd
+# .Python
+# env/
+# venv/
+# .env/
+# .python-version
 
 # IntelliJ
 .idea/

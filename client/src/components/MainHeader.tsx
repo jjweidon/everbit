@@ -5,13 +5,11 @@ import Link from 'next/link';
 
 interface MainHeaderProps {
     title: string;
-    botStatus?: boolean;
     showControls?: boolean;
 }
 
 export default function MainHeader({
     title,
-    botStatus = false,
     showControls = true,
 }: MainHeaderProps) {
     return (
@@ -38,7 +36,7 @@ export default function MainHeader({
                             >
                                 <FaRegQuestionCircle className="h-4 w-4 text-white/90" />
                             </Link>
-                            <BotStatusIndicator isRunning={botStatus} />
+                            <BotStatusIndicator />
                             <Link
                                 href="/mypage"
                                 className="cursor-pointer hover:bg-navy-500/50 rounded-lg p-1.5 transition-colors duration-200"

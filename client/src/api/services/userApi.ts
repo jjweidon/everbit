@@ -21,4 +21,8 @@ export const userApi = {
     deleteUser: async (): Promise<void> => {
         return apiClient.delete('/users/me');
     },
+
+    toggleBotActive: async (): Promise<UserResponse> => {
+        return apiClient.patch<UserResponse>('/users/me/bot-active');
+    },
 } as const; 

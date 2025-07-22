@@ -1,10 +1,14 @@
 import { AxiosInstance } from 'axios';
 import { objectToCamel, objectToSnake } from 'ts-case-convert';
-import { useAuthStore } from '@/store/authStore';
 import { ApiErrorInfo } from './types';
 
+export type LogoutHandler = () => void;
+
 export class ApiInterceptor {
-    constructor(private readonly isSecure: boolean = false) {}
+    constructor(
+        private readonly isSecure: boolean = false,
+        private readonly onUnauthorized?: LogoutHandler
+    ) {}
 
     setupInterceptors(instance: AxiosInstance): void {
         this.setupRequestInterceptor(instance);
@@ -72,10 +76,9 @@ export class ApiInterceptor {
         console.error(prefix, errorInfo);
 
         // 401 Unauthorized 처리
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && this.onUnauthorized) {
             console.log('인증 오류: 로그아웃 처리');
-            const logout = useAuthStore.getState().logout;
-            logout();
+            this.onUnauthorized();
         }
     }
 } 

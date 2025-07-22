@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { formatNumber, formatPercent } from '../utils/format';
 import { OverviewData } from '../types';
 import { MOCK_DATA } from '../constants';
+import BotStatusIndicator from './BotStatusIndicator';
 
 export default function Overview() {
     const [overviewData] = useState<OverviewData>(MOCK_DATA.overview);
-    const [botStatus, setBotStatus] = useState(false);
 
     return (
         <div className="flex flex-col sm:gap-6">
@@ -49,29 +49,10 @@ export default function Overview() {
                     {/* Bot Status */}
                     <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-3 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                            <div className="flex items-center gap-3">
-                                <h3 className="text-base sm:text-lg font-medium text-navy-900 dark:text-white truncate">
-                                    Bot 상태
-                                </h3>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <span
-                                        className={`inline-block w-2 h-2 sm:w-3 sm:h-3 rounded-full ${botStatus ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}
-                                    ></span>
-                                    <span className="text-sm text-navy-600 dark:text-navy-300">
-                                        {botStatus ? '실행 중' : '중지됨'}
-                                    </span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setBotStatus(!botStatus)}
-                                className={`w-full sm:w-auto px-4 py-2 rounded-lg text-white text-sm transition-all duration-200 shrink-0 ${
-                                    botStatus
-                                        ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30'
-                                        : 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30'
-                                }`}
-                            >
-                                {botStatus ? '중지' : '시작'}
-                            </button>
+                            <h3 className="text-base sm:text-lg font-medium text-navy-900 dark:text-white truncate">
+                                Bot 상태
+                            </h3>
+                            <BotStatusIndicator />
                         </div>
                     </div>
 

@@ -1,10 +1,15 @@
 import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL, SECURE_API_BASE_URL } from '../config';
-import { ApiInterceptor } from './ApiInterceptor';
+import { ApiInterceptor, LogoutHandler } from './ApiInterceptor';
 
 export class HttpClientFactory {
     private static defaultInstance: AxiosInstance;
     private static secureInstance: AxiosInstance;
+    private static logoutHandler?: LogoutHandler;
+
+    static setLogoutHandler(handler: LogoutHandler) {
+        this.logoutHandler = handler;
+    }
 
     static getDefaultInstance(): AxiosInstance {
         if (!this.defaultInstance) {
@@ -29,7 +34,7 @@ export class HttpClientFactory {
             withCredentials: true,
         });
 
-        const interceptor = new ApiInterceptor(isSecure);
+        const interceptor = new ApiInterceptor(isSecure, this.logoutHandler);
         interceptor.setupInterceptors(instance);
         return instance;
     }

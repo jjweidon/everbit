@@ -10,7 +10,6 @@ import { LAYOUT } from './constants';
 import { EmailSection, UpbitKeySection, InquirySection, AccountManagementSection } from './components';
 
 export default function MyPage() {
-    const [botStatus, setBotStatus] = useState(false);
     const [user, setUser] = useState<UserResponse | null>(null);
     const router = useRouter();
     const { logout } = useAuthStore();
@@ -86,7 +85,7 @@ export default function MyPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white dark:from-darkBg dark:to-darkBg">
-            <MainHeader title="everbit" botStatus={botStatus} />
+            <MainHeader title="everbit" />
             <div className={`${LAYOUT.CONTAINER_MAX_WIDTH} mx-auto ${LAYOUT.SECTION_PADDING} py-8`}>
                 <div className="bg-navy-700 rounded-lg shadow-lg p-6 mb-8">
                     <h2 className="text-2xl font-bold text-white mb-6">My Page</h2>
