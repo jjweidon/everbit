@@ -1,12 +1,16 @@
 import { useEffect } from 'react';
 import { useBotStore } from '@/store/botStore';
+import { useAuthStore } from '@/store/authStore';
 
 export default function BotStatusIndicator() {
-    const { isActive, isLoading, fetchBotStatus, toggleBot } = useBotStore();
+    const { isActive, fetchBotStatus, toggleBot } = useBotStore();
+    const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        fetchBotStatus();
-    }, [fetchBotStatus]);
+        if (user) {
+            fetchBotStatus();
+        }
+    }, [user, fetchBotStatus]);
 
     return (
         <div 

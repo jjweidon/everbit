@@ -1,47 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Overview, Portfolio, History, Settings, Navigation } from './components';
 import { DashboardTab } from './types';
 import MainHeader from '@/components/MainHeader';
 
 export default function Dashboard() {
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
     const [selectedTab, setSelectedTab] = useState<DashboardTab>('overview');
-
-    useEffect(() => {
-        const initializeDashboard = async () => {
-            try {
-                // 실제 데이터 로딩 로직 구현 필요
-                setIsLoading(false);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
-                setIsLoading(false);
-            }
-        };
-
-        initializeDashboard();
-    }, []);
-
-    if (isLoading || error) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-navy-500 to-navy-700">
-                {error && (
-                    <div className="flex items-center justify-center h-screen">
-                        <div className="text-white bg-red-600 px-6 py-4 rounded-lg">
-                            <p>{error}</p>
-                        </div>
-                    </div>
-                )}
-                {isLoading && (
-                    <div className="flex items-center justify-center h-screen">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-                    </div>
-                )}
-            </div>
-        );
-    }
 
     const renderContent = () => {
         switch (selectedTab) {

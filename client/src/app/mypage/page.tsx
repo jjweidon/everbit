@@ -1,37 +1,22 @@
 'use client';
 
 import MainHeader from '@/components/MainHeader';
-import { useEffect, useState } from 'react';
 import { userApi, supportApi } from '@/api/services';
-import { UserResponse, EmailRequest, UpbitApiKeysRequest, InquiryRequest } from '@/api/types';
+import { EmailRequest, UpbitApiKeysRequest, InquiryRequest } from '@/api/types';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { LAYOUT } from './constants';
 import { EmailSection, UpbitKeySection, InquirySection, AccountManagementSection } from './components';
 
 export default function MyPage() {
-    const [user, setUser] = useState<UserResponse | null>(null);
     const router = useRouter();
-    const { logout } = useAuthStore();
-
-    useEffect(() => {
-        fetchUserData();
-    }, []);
-
-    const fetchUserData = async () => {
-        try {
-            const userData = await userApi.getCurrentUser();
-            setUser(userData);
-        } catch (error) {
-            console.error('사용자 정보 조회 실패:', error);
-        }
-    };
+    const { user, logout } = useAuthStore();
 
     const handleEmailUpdate = async (email: string) => {
         try {
             const request: EmailRequest = { email };
             await userApi.updateEmail(request);
-            fetchUserData();
+            await useAuthStore.getState().fetchUser();
             alert('이메일 수정에 성공했습니다.');
         } catch (error) {
             console.error('이메일 수정 실패:', error);
@@ -44,7 +29,7 @@ export default function MyPage() {
         try {
             const request: UpbitApiKeysRequest = { accessKey, secretKey };
             await userApi.registerUpbitApiKeys(request);
-            fetchUserData();
+            await useAuthStore.getState().fetchUser();
             alert('업비트 API 키 수정에 성공했습니다.');
         } catch (error) {
             console.error('업비트 API 키 수정 실패:', error);

@@ -9,6 +9,7 @@ export default function UserList() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    console.log("UserList fetchUsers");
     fetchUsers();
   }, []);
 

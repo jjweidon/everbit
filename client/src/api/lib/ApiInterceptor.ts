@@ -18,9 +18,6 @@ export class ApiInterceptor {
     private setupRequestInterceptor(instance: AxiosInstance): void {
         instance.interceptors.request.use(
             (config) => {
-                const prefix = this.isSecure ? '[보안 API]' : '[API]';
-                console.log(`${prefix} ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-
                 // 필요 시 공통 헤더
                 config.headers['Content-Type'] = 'application/json';
 
@@ -38,9 +35,6 @@ export class ApiInterceptor {
     private setupResponseInterceptor(instance: AxiosInstance): void {
         instance.interceptors.response.use(
             (response) => {
-                // 응답 데이터 디버깅 로그
-                const prefix = this.isSecure ? '보안 API' : 'API';
-                console.log(`${prefix} 응답 데이터:`, response.data);
                 response.data = objectToCamel(response.data);
                 return response;
             },
@@ -72,12 +66,8 @@ export class ApiInterceptor {
     }
 
     private handleError(errorInfo: ApiErrorInfo, error: any): void {
-        const prefix = this.isSecure ? '[보안 API 오류]' : '[API 오류]';
-        console.error(prefix, errorInfo);
-
         // 401 Unauthorized 처리
         if (error.response?.status === 401 && this.onUnauthorized) {
-            console.log('인증 오류: 로그아웃 처리');
             this.onUnauthorized();
         }
     }

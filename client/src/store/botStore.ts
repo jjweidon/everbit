@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { userApi } from '@/api/services';
+import { useAuthStore } from './authStore';
 
 interface BotState {
     isActive: boolean;
     isLoading: boolean;
-    fetchBotStatus: () => Promise<void>;
+    fetchBotStatus: () => void;
     toggleBot: () => Promise<void>;
 }
 
@@ -12,12 +13,10 @@ export const useBotStore = create<BotState>((set, get) => ({
     isActive: false,
     isLoading: false,
 
-    fetchBotStatus: async () => {
-        try {
-            const user = await userApi.getCurrentUser();
+    fetchBotStatus: () => {
+        const user = useAuthStore.getState().user;
+        if (user) {
             set({ isActive: user.isBotActive || false });
-        } catch (error) {
-            console.error('봇 상태 로드 실패:', error);
         }
     },
 
@@ -30,7 +29,7 @@ export const useBotStore = create<BotState>((set, get) => ({
             await userApi.toggleBotActive();
             set(state => ({ isActive: !state.isActive }));
         } catch (error) {
-            console.error('봇 상태 변경 실패:', error);
+            throw error;
         } finally {
             set({ isLoading: false });
         }

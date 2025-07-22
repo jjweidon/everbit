@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
@@ -20,11 +20,11 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
     const adminPaths = ['/admin'];
 
     // 경로가 publicPaths 중 하나와 일치하거나, 끝에 슬래시만 추가된 경우 true 반환
-    const isPublicPath = (path: string): boolean => {
+    const isPublicPath = useCallback((path: string): boolean => {
         return publicPaths.some(publicPath => 
             path === publicPath || path === `${publicPath}/`
         );
-    };
+    }, []);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -36,19 +36,11 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
             }
 
             try {
-                console.log('RouteGuard: 인증 체크 시작', { pathname });
-
                 // 항상 최신 사용자 정보를 가져와서 확인
                 await fetchUser();
 
                 // fetchUser 후 최신 상태 확인
                 const currentAuthState = useAuthStore.getState();
-                console.log('RouteGuard: 현재 인증 상태', {
-                    isAuthenticated: currentAuthState.isAuthenticated,
-                    isUpbitConnected: currentAuthState.user?.isUpbitConnected,
-                    role: currentAuthState.user?.role,
-                    pathname,
-                });
 
                 // 인증되지 않은 경우 루트 페이지로 리다이렉트
                 if (!currentAuthState.isAuthenticated) {
@@ -75,10 +67,8 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
                     return;
                 }
 
-                console.log('RouteGuard: 인증 및 업비트 연동 체크 완료');
                 setIsAuthorized(true);
             } catch (error) {
-                console.error('RouteGuard: 인증 체크 실패:', error);
                 if (!isPublicPath(pathname)) {
                     router.replace('/login');
                 }
@@ -87,7 +77,7 @@ const RouteGuard = ({ children }: RouteGuardProps) => {
 
         setIsAuthorized(false);
         checkAuth();
-    }, [pathname, fetchUser, router]);
+    }, [pathname, router, isPublicPath]); // fetchUser 제거
 
     // 권한 체크가 완료되고 authorized된 경우에만 children을 렌더링
     return isAuthorized ? <>{children}</> : null;
