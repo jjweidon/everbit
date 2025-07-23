@@ -55,13 +55,52 @@ public class UpbitQuotationClient {
                 return createObjectMapper().readValue(response.getBody(), 
                     createObjectMapper().getTypeFactory().constructType(responseType.getType()));
             } catch (Exception e) {
-                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
-                throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
+                log.error("{} 응답 파싱 실패: {}", operation, response.getBody(), e);
+                throw new UpbitException(operation + " 응답 파싱 실패: " + e.getMessage());
             }
         }
-        throw new UpbitException("Failed to execute " + operation + ": " + response.getStatusCode());
+        throw new UpbitException(operation + " 실행 실패: " + response.getStatusCode());
     }
 
+    // 종목 단위 현재가 정보 조회
+    public List<TickerResponse> getTickers(List<String> markets) {
+        if (markets == null || markets.isEmpty()) {
+            throw new UpbitException("마켓 코드는 필수 입력값입니다");
+        }
+
+        try {
+            String marketsParam = markets.stream().collect(Collectors.joining(","));
+            
+            URI uri = UriComponentsBuilder
+                .fromUriString(upbitConfig.getBaseUrl())
+                .path(V1_TICKER)
+                .queryParam("markets", marketsParam)
+                .build()
+                .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("accept", "application/json");
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            log.info("특정 마켓 ticker 조회 요청 실행: {}", marketsParam);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                entity,
+                String.class
+            );
+
+            return parseResponse(response, new ParameterizedTypeReference<List<TickerResponse>>() {}, "특정 마켓 ticker 조회");
+        } catch (Exception e) {
+            log.error("ticker 조회 실패", e);
+            throw new UpbitException("ticker 조회 실패: " + e.getMessage());
+        }
+    }
+
+    // 마켓 단위 현재가 정보 조회
     public List<TickerResponse> getAllTickers(List<String> quoteCurrencies) {
         try {
             UriComponentsBuilder builder = UriComponentsBuilder
@@ -81,7 +120,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get all tickers: {}", uri);
+            log.info("전체 ticker 조회 요청 실행: {}", uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -90,47 +129,10 @@ public class UpbitQuotationClient {
                 String.class
             );
 
-            return parseResponse(response, new ParameterizedTypeReference<List<TickerResponse>>() {}, "get all tickers");
+            return parseResponse(response, new ParameterizedTypeReference<List<TickerResponse>>() {}, "전체 ticker 조회");
         } catch (Exception e) {
-            log.error("Failed to get all tickers", e);
-            throw new UpbitException("Failed to get all tickers: " + e.getMessage());
-        }
-    }
-
-    public List<TickerResponse> getTickers(List<String> markets) {
-        if (markets == null || markets.isEmpty()) {
-            throw new UpbitException("Markets parameter is required");
-        }
-
-        try {
-            String marketsParam = markets.stream().collect(Collectors.joining(","));
-            
-            URI uri = UriComponentsBuilder
-                .fromUriString(upbitConfig.getBaseUrl())
-                .path(V1_TICKER)
-                .queryParam("markets", marketsParam)
-                .build()
-                .toUri();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("accept", "application/json");
-
-            HttpEntity<?> entity = new HttpEntity<>(headers);
-
-            log.info("Executing GET request - get tickers for markets: {}", marketsParam);
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                entity,
-                String.class
-            );
-
-            return parseResponse(response, new ParameterizedTypeReference<List<TickerResponse>>() {}, "get tickers");
-        } catch (Exception e) {
-            log.error("Failed to get tickers", e);
-            throw new UpbitException("Failed to get tickers: " + e.getMessage());
+            log.error("전체 ticker 조회 실패", e);
+            throw new UpbitException("전체 ticker 조회 실패: " + e.getMessage());
         }
     }
 
@@ -165,7 +167,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get second candles: {}", uri);
+            log.info("초단위 캔들 조회 요청 실행: {}", uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -176,22 +178,22 @@ public class UpbitQuotationClient {
 
             return parseResponse(response, new ParameterizedTypeReference<List<SecondCandleResponse>>() {}, "get second candles");
         } catch (Exception e) {
-            log.error("Failed to get second candles", e);
+            log.error("초단위 캔들 조회 실패", e);
             throw new UpbitException("Failed to get second candles: " + e.getMessage());
         }
     }
 
     public List<MinuteCandleResponse> getMinuteCandles(int unit, String market, OffsetDateTime to, Integer count) {
         if (!List.of(1, 3, 5, 10, 15, 30, 60, 240).contains(unit)) {
-            throw new UpbitException("Invalid unit value. Allowed values are: 1, 3, 5, 10, 15, 30, 60, 240");
+            throw new UpbitException("잘못된 단위값입니다. 허용된 값: 1, 3, 5, 10, 15, 30, 60, 240");
         }
 
         if (market == null || market.isEmpty()) {
-            throw new UpbitException("Market parameter is required");
+            throw new UpbitException("마켓 코드는 필수 입력값입니다");
         }
 
         if (count != null && (count < 1 || count > 200)) {
-            throw new UpbitException("Count must be between 1 and 200");
+            throw new UpbitException("조회 개수는 1-200 사이여야 합니다");
         }
 
         try {
@@ -216,7 +218,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get minute candles: {}", uri);
+            log.info("{}분봉 캔들 조회 요청 실행: {}", unit, uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -225,10 +227,10 @@ public class UpbitQuotationClient {
                 String.class
             );
 
-            return parseResponse(response, new ParameterizedTypeReference<List<MinuteCandleResponse>>() {}, "get minute candles");
+            return parseResponse(response, new ParameterizedTypeReference<List<MinuteCandleResponse>>() {}, unit + "분봉 캔들 조회");
         } catch (Exception e) {
-            log.error("Failed to get minute candles", e);
-            throw new UpbitException("Failed to get minute candles: " + e.getMessage());
+            log.error("{}분봉 캔들 조회 실패", unit, e);
+            throw new UpbitException(unit + "분봉 캔들 조회 실패: " + e.getMessage());
         }
     }
 
@@ -267,7 +269,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get day candles: {}", uri);
+            log.info("일봉 캔들 조회 요청 실행: {}", uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -278,7 +280,7 @@ public class UpbitQuotationClient {
 
             return parseResponse(response, new ParameterizedTypeReference<List<DayCandleResponse>>() {}, "get day candles");
         } catch (Exception e) {
-            log.error("Failed to get day candles", e);
+            log.error("일봉 캔들 조회 실패", e);
             throw new UpbitException("Failed to get day candles: " + e.getMessage());
         }
     }
@@ -314,7 +316,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get week candles: {}", uri);
+            log.info("주봉 캔들 조회 요청 실행: {}", uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -325,7 +327,7 @@ public class UpbitQuotationClient {
 
             return parseResponse(response, new ParameterizedTypeReference<List<WeekCandleResponse>>() {}, "get week candles");
         } catch (Exception e) {
-            log.error("Failed to get week candles", e);
+            log.error("주봉 캔들 조회 실패", e);
             throw new UpbitException("Failed to get week candles: " + e.getMessage());
         }
     }
@@ -361,7 +363,7 @@ public class UpbitQuotationClient {
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            log.info("Executing GET request - get month candles: {}", uri);
+            log.info("월봉 캔들 조회 요청 실행: {}", uri);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -372,7 +374,7 @@ public class UpbitQuotationClient {
 
             return parseResponse(response, new ParameterizedTypeReference<List<MonthCandleResponse>>() {}, "get month candles");
         } catch (Exception e) {
-            log.error("Failed to get month candles", e);
+            log.error("월봉 캔들 조회 실패", e);
             throw new UpbitException("Failed to get month candles: " + e.getMessage());
         }
     }

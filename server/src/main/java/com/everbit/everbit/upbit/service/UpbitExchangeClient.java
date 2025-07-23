@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -64,7 +65,7 @@ public class UpbitExchangeClient {
                 return createObjectMapper().readValue(response.getBody(), 
                     createObjectMapper().getTypeFactory().constructType(responseType.getType()));
             } catch (Exception e) {
-                log.error("Failed to parse {} response: {}", operation, response.getBody(), e);
+                log.error("응답 데이터 파싱 실패: {}", response.getBody(), e);
                 throw new UpbitException("Failed to parse " + operation + " response: " + e.getMessage());
             }
         }
@@ -78,7 +79,7 @@ public class UpbitExchangeClient {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    // Account API
+    // 전체 계좌 조회
     public List<AccountResponse> getAccounts(String username) {
         return executeGet(
             username,
@@ -89,7 +90,7 @@ public class UpbitExchangeClient {
         );
     }
 
-    // Order API
+    // 주문 가능 정보 조회
     public OrderChanceResponse getOrderChance(String username, String market) {
         Map<String, String> params = Collections.singletonMap("market", market);
         return executeGet(
@@ -101,6 +102,13 @@ public class UpbitExchangeClient {
         );
     }
 
+    // 주문 가능 금액 조회
+    public BigDecimal getAvailableBalance(String username, String market) {
+        OrderChanceResponse orderChance = getOrderChance(username, market);
+        return new BigDecimal(orderChance.askAccount().balance());
+    }
+
+    // 개별 주문 조회
     public OrderResponse getOrder(String username, String uuid, String identifier) {
         if (uuid == null && identifier == null) {
             throw new UpbitException("Either uuid or identifier must be provided");
@@ -119,14 +127,17 @@ public class UpbitExchangeClient {
         );
     }
 
+    // 미체결 주문 조회
     public List<OrderResponse> getOpenOrders(String username, String market, List<String> states) {
         return executeOrderList(username, V1_ORDERS_OPEN, market, states, "open orders");
     }
 
+    // 체결 주문 조회
     public List<OrderResponse> getClosedOrders(String username, String market, List<String> states) {
         return executeOrderList(username, V1_ORDERS_CLOSED, market, states, "closed orders");
     }
 
+    // 주문 생성
     public OrderResponse createOrder(String username, OrderRequest request) {
         Map<String, String> params = new HashMap<>();
         params.put("market", request.market());
@@ -147,6 +158,7 @@ public class UpbitExchangeClient {
         );
     }
 
+    // 주문 취소 후 재주문
     public ReplaceOrderResponse replaceOrder(String username, ReplaceOrderRequest request) {
         Map<String, String> params = new HashMap<>();
         if (request.prevOrderUuid() != null) {
@@ -181,6 +193,7 @@ public class UpbitExchangeClient {
         );
     }
 
+    // 주문 취소
     public OrderResponse cancelOrder(String username, String uuid, String identifier) {
         if (uuid == null && identifier == null) {
             throw new UpbitException("Either uuid or identifier must be provided");
@@ -229,8 +242,8 @@ public class UpbitExchangeClient {
             HttpEntity<?> entity = method == HttpMethod.POST ? 
                 new HttpEntity<>(params, headers) : new HttpEntity<>(headers);
 
-            log.info("Executing {} request - {}: {}", method, operation, 
-                method == HttpMethod.GET ? uri : "params=" + queryString);
+            log.info("{} API 요청 실행 - {}: {}", method, operation, 
+                method == HttpMethod.GET ? uri : "요청 데이터=" + queryString);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -241,10 +254,10 @@ public class UpbitExchangeClient {
 
             return parseResponse(response, responseType, operation);
         } catch (HttpStatusCodeException e) {
-            log.error("{} API error: {} - {}", operation, e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("{} API 오류 발생: {} - {}", operation, e.getStatusCode(), e.getResponseBodyAsString());
             throw new UpbitException(operation + " API error: " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            log.error("Failed to execute {}", operation, e);
+            log.error("{} 실행 실패", operation, e);
             throw new UpbitException("Failed to execute " + operation + ": " + e.getMessage());
         }
     }

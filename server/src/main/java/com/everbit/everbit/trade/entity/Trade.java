@@ -3,6 +3,7 @@ package com.everbit.everbit.trade.entity;
 import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.entity.enums.TradeType;
+import com.everbit.everbit.trade.entity.enums.SignalType;
 import com.everbit.everbit.user.entity.User;
 import de.huxhorn.sulky.ulid.ULID;
 
@@ -53,6 +54,7 @@ public class Trade extends BaseTime {
     @Column(nullable = false)
     private TradeStatus status; // 주문 상태
 
-    @Column
-    private String signalInfo; // 매매 시그널 정보 (예: MACD_CROSS, RSI_OVERSOLD 등)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SignalType signalType; // 매매 시그널 정보 (예: MACD_CROSS, RSI_OVERSOLD 등)
 }

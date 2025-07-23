@@ -17,7 +17,7 @@ public record OrderRequest(
     
     @NotNull(message = "side is required")
     String price,
-    
+
     @NotNull(message = "ord_type is required")
     String ordType,
     
@@ -49,5 +49,13 @@ public record OrderRequest(
         public static final String REDUCE = "reduce";         // 수량 감소
         public static final String CANCEL_MAKER = "cancel_maker"; // maker 주문 취소
         public static final String CANCEL_TAKER = "cancel_taker"; // 현재 주문 취소
+    }
+
+    public static OrderRequest createBuyOrder(String market, String amount, String price) {
+        return new OrderRequest(market, "buy", amount, price, "limit", null, null, null);
+    }
+
+    public static OrderRequest createSellOrder(String market, String amount, String price) {
+        return new OrderRequest(market, "sell", amount, price, "limit", null, null, null);
     }
 } 

@@ -21,14 +21,14 @@ public class UpbitExchangeController {
 
     private final UpbitExchangeClient upbitClient;
 
-    // 계좌 정보 조회
+    // 전체 계좌 조회
     @GetMapping("/accounts")
     public ApiResponse<List<AccountResponse>> getAccounts(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
-        log.info("GET 계좌 정보 조회");
+        log.info("GET 전체 계좌 조회");
         List<AccountResponse> response = upbitClient.getAccounts(username);
-        return ApiResponse.success(response, "계좌 정보 조회 성공");
+        return ApiResponse.success(response, "전체 계좌 조회 성공");
     }
 
     // 주문 가능 정보 조회

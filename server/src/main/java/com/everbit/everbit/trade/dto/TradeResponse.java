@@ -24,7 +24,7 @@ public record TradeResponse(
     BigDecimal amount,
     BigDecimal totalPrice,
     TradeStatus status,
-    String signalInfo
+    String signalType
 ) {
     public static TradeResponse from(Trade trade) {
         return TradeResponse.builder()
@@ -36,7 +36,7 @@ public record TradeResponse(
             .amount(trade.getAmount())
             .totalPrice(trade.getTotalPrice())
             .status(trade.getStatus())
-            .signalInfo(trade.getSignalInfo())
+            .signalType(trade.getSignalType().getDescription())
             .build();
     }
 
