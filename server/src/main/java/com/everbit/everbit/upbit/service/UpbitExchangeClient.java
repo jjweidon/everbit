@@ -368,11 +368,16 @@ public class UpbitExchangeClient {
 
     private String buildQueryString(Map<String, String> params) {
         if (params.isEmpty()) return "";
-        
-        return params.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
+
+        // 파라미터 정렬 및 null이 아닌 값만 포함
+        String queryString = params.entrySet().stream()
+            .filter(e -> e.getValue() != null)  // null 값 제외
+            .sorted(Map.Entry.comparingByKey())  // 알파벳 순 정렬
             .map(entry -> entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining("&"));
+
+        log.debug("정렬된 파라미터: {}", queryString);
+        return queryString;
     }
 
     private URI buildUrl(String path, String queryString) {
