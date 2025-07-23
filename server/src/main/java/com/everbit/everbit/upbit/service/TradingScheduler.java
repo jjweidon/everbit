@@ -33,7 +33,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     private static final String[] MARKETS = {"KRW-BTC"}; // 거래할 마켓 목록
-    private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.10"); // 잔고의 10%만 주문
+    private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     
     @Scheduled(fixedRate = 60000) // 1분마다 실행
@@ -69,7 +69,7 @@ public class TradingScheduler {
                 List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
                 TickerResponse ticker = tickers.get(0);
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
-                BigDecimal orderBalance = availableBalance.multiply(BUY_AMOUNT_RATIO);
+                BigDecimal orderBalance = availableBalance.multiply(BUY_AMOUNT_RATIO).max(new BigDecimal(orderChance.market().bid().minTotal()));
                 log.info("마켓: {} - 매수 금액: {}", market, orderBalance);
                 BigDecimal orderAmount = orderBalance.divide(currentPrice, 8, RoundingMode.HALF_UP);
 
@@ -77,6 +77,11 @@ public class TradingScheduler {
                 BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal());
                 if (orderBalance.compareTo(minOrderKRW) < 0) {
                     log.info("마켓: {} - 매수 금액({})이 최소 주문 금액({})보다 작아 매수 건너뜀", market, orderBalance, minOrderKRW);
+                    return;
+                }
+
+                if (availableBalance.compareTo(orderBalance) < 0) {
+                    log.info("마켓: {} - 계좌 잔고({})가 매수 금액({})보다 작아 매수 건너뜀", market, availableBalance, orderBalance);
                     return;
                 }
                 
@@ -115,7 +120,7 @@ public class TradingScheduler {
 
                 // 보유 수량의 50%만 매도 (소수점 4자리까지만 사용)
                 BigDecimal sellAmount = availableAmount.multiply(SELL_AMOUNT_RATIO)
-                    .setScale(4, RoundingMode.DOWN); // 소수점 4자리로 제한하고 내림 처리
+                    .setScale(8, RoundingMode.DOWN); // 소수점 8자리로 제한하고 내림 처리
                 log.info("마켓: {} - 매도 수량: {}", market, sellAmount);
 
                 if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
