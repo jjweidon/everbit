@@ -236,14 +236,23 @@ public class UpbitExchangeClient {
     private <T> T executeRequest(String username, String path, Map<String, String> params, 
                                HttpMethod method, Class<T> responseType, String operation) {
         try {
-            String queryString = buildQueryString(params);
-            URI uri = method == HttpMethod.GET ? buildUrl(path, queryString) : buildUrl(path, "");
-            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+            User user = getUserByUsername(username);
+            
+            // POST 요청의 경우 body string으로 JWT 토큰 생성
+            String bodyString = buildQueryString(params);
+            URI uri = method == HttpMethod.GET ? 
+                buildUrl(path, bodyString) : 
+                buildUrl(path, "");  // POST는 query string 사용하지 않음
+                
+            HttpHeaders headers = createHeaders(bodyString, user);  // POST body string으로 JWT 생성
+            
+            // POST 요청은 body에 파라미터 포함
             HttpEntity<?> entity = method == HttpMethod.POST ? 
-                new HttpEntity<>(params, headers) : new HttpEntity<>(headers);
+                new HttpEntity<>(params, headers) : 
+                new HttpEntity<>(headers);
 
             log.info("{} API 요청 실행 - {}: {}", method, operation, 
-                method == HttpMethod.GET ? uri : "요청 데이터=" + queryString);
+                method == HttpMethod.GET ? uri : "요청 데이터=" + bodyString);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -251,6 +260,8 @@ public class UpbitExchangeClient {
                 entity,
                 String.class
             );
+
+            log.info("response: {}", response.getBody());
 
             return parseResponse(response, responseType, operation);
         } catch (HttpStatusCodeException e) {
@@ -280,6 +291,8 @@ public class UpbitExchangeClient {
                 entity,
                 String.class
             );
+
+            log.info("response: {}", response.getBody());
 
             return parseResponse(response, responseType, operation);
         } catch (HttpStatusCodeException e) {
@@ -339,7 +352,7 @@ public class UpbitExchangeClient {
             String accessKey = encryptionUtil.decrypt(user.getUpbitAccessKey());
             String secretKey = encryptionUtil.decrypt(user.getUpbitSecretKey());
             String token = createAuthToken(accessKey, secretKey, queryString);
-            log.info("token: {}", token);
+            log.info("accessKey: {}", accessKey);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
