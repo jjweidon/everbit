@@ -27,9 +27,19 @@ public class TradingSignalService {
     private final UpbitQuotationClient upbitQuotationClient;
     private static final ZoneId UTC = ZoneId.of("UTC");
     
+    // 기술적 지표 계산을 위한 상수 정의
+    private static final int CANDLE_COUNT = 40; // 데이터 포인트 수 증가
+    private static final int SHORT_SMA = 3;  // 단기 이동평균선 기간
+    private static final int LONG_SMA = 10;  // 장기 이동평균선 기간
+    private static final int RSI_PERIOD = 9; // RSI 기간
+    private static final int BB_PERIOD = 10; // 볼린저 밴드 기간
+    private static final int MACD_SHORT = 6; // MACD 단기
+    private static final int MACD_LONG = 13; // MACD 장기
+    private static final int MACD_SIGNAL = 5; // MACD 시그널
+    
     public BarSeries createBarSeries(String market) {
-        // 최근 10개의 10분봉 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(10, market, null, 10);
+        // 최근 40개의 10분봉 데이터 조회
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(10, market, null, CANDLE_COUNT);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
@@ -56,32 +66,32 @@ public class TradingSignalService {
         BarSeries series = createBarSeries(market);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         
-        // 이동평균선
-        SMAIndicator sma5 = new SMAIndicator(closePrice, 5);
-        SMAIndicator sma20 = new SMAIndicator(closePrice, 20);
+        // 이동평균선 (3일, 10일)
+        SMAIndicator smaShort = new SMAIndicator(closePrice, SHORT_SMA);
+        SMAIndicator smaLong = new SMAIndicator(closePrice, LONG_SMA);
         
-        // MACD
-        MACDIndicator macd = new MACDIndicator(closePrice);
-        SMAIndicator signal = new SMAIndicator(macd, 9);
+        // MACD (6, 13, 5)
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // RSI
-        RSIIndicator rsi = new RSIIndicator(closePrice, 14);
+        // RSI (9일)
+        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
         
-        // Bollinger Bands
-        SMAIndicator sma20BB = new SMAIndicator(closePrice, 20);
-        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, 20);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(sma20BB);
+        // Bollinger Bands (10일)
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
         BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
         BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
         
         int lastIndex = series.getEndIndex();
         
         // MA 크로스 시그널
-        boolean goldenCross = sma5.getValue(lastIndex - 1).isLessThan(sma20.getValue(lastIndex - 1)) &&
-                            sma5.getValue(lastIndex).isGreaterThan(sma20.getValue(lastIndex));
+        boolean goldenCross = smaShort.getValue(lastIndex - 1).isLessThan(smaLong.getValue(lastIndex - 1)) &&
+                            smaShort.getValue(lastIndex).isGreaterThan(smaLong.getValue(lastIndex));
                             
-        boolean deadCross = sma5.getValue(lastIndex - 1).isGreaterThan(sma20.getValue(lastIndex - 1)) &&
-                           sma5.getValue(lastIndex).isLessThan(sma20.getValue(lastIndex));
+        boolean deadCross = smaShort.getValue(lastIndex - 1).isGreaterThan(smaLong.getValue(lastIndex - 1)) &&
+                           smaShort.getValue(lastIndex).isLessThan(smaLong.getValue(lastIndex));
         
         // MACD 시그널
         boolean macdBuySignal = macd.getValue(lastIndex - 1).isLessThan(signal.getValue(lastIndex - 1)) &&
@@ -90,9 +100,9 @@ public class TradingSignalService {
         boolean macdSellSignal = macd.getValue(lastIndex - 1).isGreaterThan(signal.getValue(lastIndex - 1)) &&
                                 macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex));
         
-        // RSI 시그널
-        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(30));
-        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(70));
+        // RSI 시그널 (과매수/과매도 기준값 조정)
+        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(35)); // 35로 상향 조정
+        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(65)); // 65로 하향 조정
         
         // Bollinger Bands 시그널
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));

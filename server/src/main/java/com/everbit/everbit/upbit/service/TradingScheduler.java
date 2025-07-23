@@ -33,7 +33,7 @@ public class TradingScheduler {
     private final UserService userService;
     private final TradeService tradeService;
     
-    private static final String[] MARKETS = {"KRW-BTC"}; // 거래할 마켓 목록
+    private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL"}; // 거래할 마켓 목록
     private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     
