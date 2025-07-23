@@ -71,8 +71,12 @@ public class Trade extends BaseTime {
             .price(price)
             .amount(new BigDecimal(orderResponse.volume()))
             .totalPrice(price.multiply(new BigDecimal(orderResponse.volume())))
-            .status(TradeStatus.PENDING)
+            .status(TradeStatus.WAIT)
             .signalType(signalType)
             .build();
+    }
+
+    public void updateStatus(TradeStatus newStatus) {
+        this.status = newStatus;
     }
 }
