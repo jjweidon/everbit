@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum TradeType {
-    BUY("매수"),
-    SELL("매도");
+    BID("매수"),
+    ASK("매도");
 
     private final String description;
 } 
