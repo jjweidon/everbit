@@ -38,7 +38,7 @@ public class TradingScheduler {
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     
     @Transactional
-    @Scheduled(fixedRate = 60000) // 1분마다 실행
+    @Scheduled(fixedRate = 300000) // 5분마다 실행
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         
@@ -66,7 +66,8 @@ public class TradingScheduler {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
-                BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal());
+                BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal())
+                    .multiply(BigDecimal.ONE.add(new BigDecimal(orderChance.bidFee())));
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
                 
                 // 2. 주문 가능 수량 계산 (잔고의 25%만 사용)
