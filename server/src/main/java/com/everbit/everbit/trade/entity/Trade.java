@@ -4,7 +4,10 @@ import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.entity.enums.TradeType;
 import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
+
 import de.huxhorn.sulky.ulid.ULID;
 
 import jakarta.persistence.*;
@@ -28,11 +31,12 @@ public class Trade extends BaseTime {
     private final String id = new ULID().nextULID();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String market; // 거래 마켓 (예: KRW-BTC)
+    private Market market; // 거래 마켓 (예: KRW-BTC)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -57,4 +61,18 @@ public class Trade extends BaseTime {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SignalType signalType; // 매매 시그널 정보 (예: MACD_CROSS, RSI_OVERSOLD 등)
+
+    public static Trade of(User user, String market, OrderResponse orderResponse, BigDecimal price, SignalType signalType) {
+        return Trade.builder()
+            .user(user)
+            .market(Market.fromCode(market))
+            .type(TradeType.valueOf(orderResponse.side().toUpperCase()))
+            .orderId(orderResponse.uuid())
+            .price(price)
+            .amount(new BigDecimal(orderResponse.volume()))
+            .totalPrice(price.multiply(new BigDecimal(orderResponse.volume())))
+            .status(TradeStatus.PENDING)
+            .signalType(signalType)
+            .build();
+    }
 }

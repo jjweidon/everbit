@@ -8,8 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.everbit.everbit.trade.dto.TradeResponse;
 import com.everbit.everbit.trade.entity.Trade;
-import com.everbit.everbit.trade.entity.enums.TradeStatus;
-import com.everbit.everbit.trade.entity.enums.TradeType;
 import com.everbit.everbit.trade.repository.TradeRepository;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
 import com.everbit.everbit.user.entity.User;
@@ -28,18 +26,7 @@ public class TradeService {
 
     @Transactional
     public Trade saveTrade(User user, String market, OrderResponse orderResponse, BigDecimal price, SignalType signalType) {
-        Trade trade = Trade.builder()
-            .user(user)
-            .market(market)
-            .type(TradeType.valueOf(orderResponse.side().toUpperCase()))
-            .orderId(orderResponse.uuid())
-            .price(price)
-            .amount(new BigDecimal(orderResponse.volume()))
-            .totalPrice(price.multiply(new BigDecimal(orderResponse.volume())))
-            .status(TradeStatus.PENDING)
-            .signalType(signalType)
-            .build();
-
+        Trade trade = Trade.of(user, market, orderResponse, price, signalType);
         return tradeRepository.save(trade);
     }
 }

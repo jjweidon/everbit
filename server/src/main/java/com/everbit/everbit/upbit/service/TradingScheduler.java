@@ -3,6 +3,7 @@ package com.everbit.everbit.upbit.service;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.everbit.everbit.upbit.dto.quotation.TickerResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderChanceResponse;
@@ -36,6 +37,7 @@ public class TradingScheduler {
     private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     
+    @Transactional
     @Scheduled(fixedRate = 60000) // 1분마다 실행
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
@@ -53,6 +55,7 @@ public class TradingScheduler {
         }
     }
     
+    @Transactional
     private void processSignal(TradingSignal signal, User user) {
         String market = signal.market();
         

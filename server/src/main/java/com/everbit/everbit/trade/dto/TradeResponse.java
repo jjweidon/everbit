@@ -29,7 +29,7 @@ public record TradeResponse(
     public static TradeResponse from(Trade trade) {
         return TradeResponse.builder()
             .tradeId(trade.getId())
-            .market(trade.getMarket())
+            .market(trade.getMarket().getCode())
             .type(trade.getType())
             .orderId(trade.getOrderId())
             .price(trade.getPrice())

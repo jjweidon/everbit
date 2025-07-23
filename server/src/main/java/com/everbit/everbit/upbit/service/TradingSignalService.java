@@ -28,8 +28,8 @@ public class TradingSignalService {
     private static final ZoneId UTC = ZoneId.of("UTC");
     
     public BarSeries createBarSeries(String market) {
-        // 최근 200개의 1분봉 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(1, market, null, 200);
+        // 최근 10개의 10분봉 데이터 조회
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(10, market, null, 10);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
