@@ -62,7 +62,7 @@ public class TradingScheduler {
             try {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
-                BigDecimal availableBalance = new BigDecimal(orderChance.askAccount().balance());
+                BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
                 
                 // 2. 주문 가능 수량 계산 (잔고의 10%만 사용)
@@ -99,7 +99,8 @@ public class TradingScheduler {
             try {
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
-                BigDecimal availableAmount = new BigDecimal(orderChance.bidAccount().balance());
+                BigDecimal availableAmount = new BigDecimal(orderChance.askAccount().balance());
+                log.info("마켓: {} - 보유 수량: {}", market, availableAmount);
                 
                 if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     log.info("마켓: {} - 보유 수량이 없어 매도 건너뜀", market);
@@ -110,10 +111,17 @@ public class TradingScheduler {
                 List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
                 TickerResponse ticker = tickers.get(0);
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
+                log.info("마켓: {} - 현재 가격: {}", market, currentPrice);
 
-                // 보유 수량의 50%만 매도
+                // 보유 수량의 50%만 매도 (소수점 4자리까지만 사용)
                 BigDecimal sellAmount = availableAmount.multiply(SELL_AMOUNT_RATIO)
-                    .setScale(8, RoundingMode.HALF_DOWN); // 소수점 8자리까지만 사용 (업비트 기준)
+                    .setScale(4, RoundingMode.DOWN); // 소수점 4자리로 제한하고 내림 처리
+                log.info("마켓: {} - 매도 수량: {}", market, sellAmount);
+
+                if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    log.info("마켓: {} - 매도 수량이 0 이하여서 매도 건너뜀", market);
+                    return;
+                }
 
                 OrderRequest orderRequest = OrderRequest.createSellOrder(market, sellAmount.toString(), currentPrice.toString());
                 OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
