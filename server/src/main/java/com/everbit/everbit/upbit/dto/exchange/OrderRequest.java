@@ -1,9 +1,12 @@
 package com.everbit.everbit.upbit.dto.exchange;
 
+import lombok.Builder;
+
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.NotNull;
 
+@Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record OrderRequest(
     @NotNull(message = "market is required")
@@ -52,10 +55,22 @@ public record OrderRequest(
     }
 
     public static OrderRequest createBuyOrder(String market, String amount, String price) {
-        return new OrderRequest(market, "buy", amount, price, "limit", null, null, null);
+        return OrderRequest.builder()
+            .market(market)
+            .side(Side.BID)
+            .volume(amount)
+            .price(price)
+            .ordType(OrdType.LIMIT)
+            .build();
     }
 
     public static OrderRequest createSellOrder(String market, String amount, String price) {
-        return new OrderRequest(market, "sell", amount, price, "limit", null, null, null);
+        return OrderRequest.builder()
+            .market(market)
+            .side(Side.ASK)
+            .volume(amount)
+            .price(price)
+            .ordType(OrdType.LIMIT)
+            .build();
     }
 } 

@@ -142,12 +142,12 @@ public class UpbitExchangeClient {
         Map<String, String> params = new HashMap<>();
         params.put("market", request.market());
         params.put("side", request.side());
-        if (request.volume() != null) params.put("volume", request.volume());
-        if (request.price() != null) params.put("price", request.price());
+        params.put("volume", request.volume());
+        params.put("price", request.price());
         params.put("ord_type", request.ordType());
-        if (request.identifier() != null) params.put("identifier", request.identifier());
-        if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
-        if (request.smpType() != null) params.put("smp_type", request.smpType());
+        params.put("identifier", request.identifier());
+        params.put("time_in_force", request.timeInForce());
+        params.put("smp_type", request.smpType());
 
         return executePost(
             username,
@@ -339,6 +339,7 @@ public class UpbitExchangeClient {
             String accessKey = encryptionUtil.decrypt(user.getUpbitAccessKey());
             String secretKey = encryptionUtil.decrypt(user.getUpbitSecretKey());
             String token = createAuthToken(accessKey, secretKey, queryString);
+            log.info("token: {}", token);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

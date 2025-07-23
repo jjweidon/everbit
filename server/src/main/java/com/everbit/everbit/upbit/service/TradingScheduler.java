@@ -63,18 +63,18 @@ public class TradingScheduler {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
+                BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal());
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
                 
-                // 2. 주문 가능 수량 계산 (잔고의 10%만 사용)
+                // 2. 주문 가능 수량 계산 (잔고의 25%만 사용)
                 List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
                 TickerResponse ticker = tickers.get(0);
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
-                BigDecimal orderBalance = availableBalance.multiply(BUY_AMOUNT_RATIO).max(new BigDecimal(orderChance.market().bid().minTotal()));
+                BigDecimal orderBalance = availableBalance.multiply(BUY_AMOUNT_RATIO).max(minOrderKRW);
                 log.info("마켓: {} - 매수 금액: {}", market, orderBalance);
                 BigDecimal orderAmount = orderBalance.divide(currentPrice, 8, RoundingMode.HALF_UP);
 
                 // 3. 주문 실행
-                BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal());
                 if (orderBalance.compareTo(minOrderKRW) < 0) {
                     log.info("마켓: {} - 매수 금액({})이 최소 주문 금액({})보다 작아 매수 건너뜀", market, orderBalance, minOrderKRW);
                     return;
