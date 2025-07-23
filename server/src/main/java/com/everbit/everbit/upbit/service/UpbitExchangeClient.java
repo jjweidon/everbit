@@ -138,24 +138,79 @@ public class UpbitExchangeClient {
     }
 
     // 주문 생성
-    public OrderResponse createOrder(String username, OrderRequest request) {
-        Map<String, String> params = new HashMap<>();
-        params.put("market", request.market());
-        params.put("side", request.side());
-        params.put("volume", request.volume());
-        params.put("price", request.price());
-        params.put("ord_type", request.ordType());
-        params.put("identifier", request.identifier());
-        params.put("time_in_force", request.timeInForce());
-        params.put("smp_type", request.smpType());
+    // public OrderResponse createOrder(String username, OrderRequest request) {
+    //     Map<String, String> params = new HashMap<>();
+    //     params.put("market", request.market());
+    //     params.put("side", request.side());
+    //     params.put("volume", request.volume());
+    //     params.put("price", request.price());
+    //     params.put("ord_type", request.ordType());
+    //     params.put("identifier", request.identifier());
+    //     params.put("time_in_force", request.timeInForce());
+    //     params.put("smp_type", request.smpType());
 
-        return executePost(
-            username,
-            V1_ORDERS,
-            params,
-            OrderResponse.class,
-            "order creation"
-        );
+    //     return executePost(
+    //         username,
+    //         V1_ORDERS,
+    //         params,
+    //         OrderResponse.class,
+    //         "order creation"
+    //     );
+    // }
+    public OrderResponse createOrder(String username, OrderRequest request) {
+        try {
+            User user = getUserByUsername(username);
+            
+            // Convert request to query string for JWT token
+            Map<String, String> params = new HashMap<>();
+            params.put("market", request.market());
+            params.put("side", request.side());
+            if (request.volume() != null) params.put("volume", request.volume());
+            if (request.price() != null) params.put("price", request.price());
+            params.put("ord_type", request.ordType());
+            if (request.identifier() != null) params.put("identifier", request.identifier());
+            if (request.timeInForce() != null) params.put("time_in_force", request.timeInForce());
+            if (request.smpType() != null) params.put("smp_type", request.smpType());
+            
+            String bodyString = buildQueryString(params);
+            URI uri = buildUrl(V1_ORDERS, "");
+            HttpHeaders headers = createHeaders(bodyString, user);
+
+            log.info("Creating order - Request body: {}", bodyString);
+            
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    String.class  // 먼저 String으로 응답 받기
+                );
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    log.debug("Order API response: {}", response.getBody());
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper()
+                            .registerModule(new JavaTimeModule())
+                            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        
+                        return objectMapper.readValue(response.getBody(), OrderResponse.class);
+                    } catch (Exception e) {
+                        log.error("Failed to parse order response: {}", response.getBody(), e);
+                        throw new UpbitException("Failed to parse order response: " + e.getMessage());
+                    }
+                } else {
+                    throw new UpbitException("Failed to create order: " + response.getStatusCode());
+                }
+            } catch (HttpStatusCodeException e) {
+                log.error("Order API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                throw new UpbitException("Order API error: " + e.getResponseBodyAsString());
+            }
+        } catch (Exception e) {
+            log.error("Failed to create order", e);
+            throw new UpbitException("Failed to create order: " + e.getMessage(), e);
+        }
     }
 
     // 주문 취소 후 재주문
@@ -237,22 +292,24 @@ public class UpbitExchangeClient {
                                HttpMethod method, Class<T> responseType, String operation) {
         try {
             User user = getUserByUsername(username);
-            
-            // POST 요청의 경우 body string으로 JWT 토큰 생성
             String bodyString = buildQueryString(params);
-            URI uri = method == HttpMethod.GET ? 
-                buildUrl(path, bodyString) : 
-                buildUrl(path, "");  // POST는 query string 사용하지 않음
-                
-            HttpHeaders headers = createHeaders(bodyString, user);  // POST body string으로 JWT 생성
-            
-            // POST 요청은 body에 파라미터 포함
-            HttpEntity<?> entity = method == HttpMethod.POST ? 
-                new HttpEntity<>(params, headers) : 
-                new HttpEntity<>(headers);
+            URI uri;
+            HttpEntity<?> entity;
 
-            log.info("{} API 요청 실행 - {}: {}", method, operation, 
-                method == HttpMethod.GET ? uri : "요청 데이터=" + bodyString);
+            if (method == HttpMethod.POST) {
+                // POST: body 사용
+                uri = buildUrl(path, "");
+                HttpHeaders headers = createHeaders(bodyString, user);  // body string으로 JWT 생성
+                entity = new HttpEntity<>(params, headers);
+            } else {
+                // GET, DELETE: query string을 URL에 포함
+                uri = buildUrl(path, bodyString);
+                HttpHeaders headers = createHeaders("", user);  // GET은 빈 문자열로 JWT 생성
+                entity = new HttpEntity<>(headers);
+            }
+
+            log.info("{} API 요청 실행 - URI: {}, 요청 데이터: {}", 
+                method, uri, method == HttpMethod.GET ? "query=" + bodyString : "body=" + bodyString);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
