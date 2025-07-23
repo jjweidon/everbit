@@ -291,25 +291,14 @@ public class UpbitExchangeClient {
     private <T> T executeRequest(String username, String path, Map<String, String> params, 
                                HttpMethod method, Class<T> responseType, String operation) {
         try {
-            User user = getUserByUsername(username);
-            String bodyString = buildQueryString(params);
-            URI uri;
-            HttpEntity<?> entity;
+            String queryString = buildQueryString(params);
+            URI uri = method == HttpMethod.GET ? buildUrl(path, queryString) : buildUrl(path, "");
+            HttpHeaders headers = createHeaders(queryString, getUserByUsername(username));
+            HttpEntity<?> entity = method == HttpMethod.POST ? 
+                new HttpEntity<>(params, headers) : new HttpEntity<>(headers);
 
-            if (method == HttpMethod.POST) {
-                // POST: body 사용
-                uri = buildUrl(path, "");
-                HttpHeaders headers = createHeaders(bodyString, user);  // body string으로 JWT 생성
-                entity = new HttpEntity<>(params, headers);
-            } else {
-                // GET, DELETE: query string을 URL에 포함
-                uri = buildUrl(path, bodyString);
-                HttpHeaders headers = createHeaders("", user);  // GET은 빈 문자열로 JWT 생성
-                entity = new HttpEntity<>(headers);
-            }
-
-            log.info("{} API 요청 실행 - URI: {}, 요청 데이터: {}", 
-                method, uri, method == HttpMethod.GET ? "query=" + bodyString : "body=" + bodyString);
+            log.info("{} API 요청 실행 - {}: {}", method, operation, 
+                method == HttpMethod.GET ? uri : "요청 데이터=" + queryString);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 uri,
@@ -317,8 +306,6 @@ public class UpbitExchangeClient {
                 entity,
                 String.class
             );
-
-            log.info("response: {}", response.getBody());
 
             return parseResponse(response, responseType, operation);
         } catch (HttpStatusCodeException e) {
