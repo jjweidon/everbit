@@ -3,6 +3,7 @@ package com.everbit.everbit.user.entity;
 import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.CandleInterval;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,31 +37,48 @@ public class BotSetting extends BaseTime {
     private List<Market> marketList;
 
     // 매수 설정
+    @Builder.Default
     @Column(nullable = false)
-    private Double buyRatio; // 매수 비율 (0.0 ~ 1.0)
+    private Double buyRatio = 0.25; // 매수 비율 (0.0 ~ 1.0)
 
+    @Builder.Default
     @Column(nullable = false)
-    private Long minBuyAmount; // 최소 주문 금액 (KRW)
+    private Long minBuyAmount = 5000L; // 최소 주문 금액 (KRW)
 
+    @Builder.Default
     @Column(nullable = false)
-    private Long maxBuyAmount; // 최대 주문 금액 (KRW)
+    private Long maxBuyAmount = 1000000L; // 최대 주문 금액 (KRW)
 
     // 매도 설정
+    @Builder.Default
     @Column(nullable = false)
-    private Double sellRatio; // 매도 비율 (0.0 ~ 1.0)
+    private Double sellRatio = 0.5; // 매도 비율 (0.0 ~ 1.0)
 
+    @Builder.Default
     @Column(nullable = false)
-    private Double minSellVolume; // 최소 주문 수량
+    private Double minSellRatio = 0.0; // 최소 매도 비율
 
+    @Builder.Default
     @Column(nullable = false)
-    private Double maxSellVolume; // 최대 주문 수량
+    private Double maxSellRatio = 1.0; // 최대 매도 비율
 
     // 봇 실행 기간
+    @Builder.Default
     @Column(nullable = false)
-    private LocalDateTime startTime; // 봇 시작 시간
+    private LocalDateTime startTime = LocalDateTime.now(); // 봇 시작 시간
 
     @Column
     private LocalDateTime endTime; // 봇 종료 시간 (null인 경우 무기한)
+
+    // 캔들 설정
+    @Builder.Default
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CandleInterval candleInterval = CandleInterval.TEN; // 분봉 단위 (1, 3, 5, 10, 15, 30, 60, 240)
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer candleCoun = 10; // 분석할 캔들 개수
 
     // 봇 활성화 상태
     @Column(nullable = false)
