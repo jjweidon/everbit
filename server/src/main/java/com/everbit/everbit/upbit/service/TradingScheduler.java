@@ -42,6 +42,8 @@ public class TradingScheduler {
     private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     private static final String REDIS_KEY_PREFIX = "trading:last_execution:";
+    private static final String RATE_LIMIT_KEY_PREFIX = "trading:rate_limit:";
+    private static final long RATE_LIMIT_DURATION = 60; // 60초 제한
     
     // Redis key 생성
     private String createRedisKey(String userId, String market, Strategy strategy) {
@@ -63,6 +65,19 @@ public class TradingScheduler {
         redisTemplate.expire(key, strategy.getInterval() * 3L, TimeUnit.SECONDS);
     }
     
+    // 요청 제한 확인
+    private boolean isRateLimited(String market) {
+        String key = RATE_LIMIT_KEY_PREFIX + market;
+        String value = redisTemplate.opsForValue().get(key);
+        return value != null;
+    }
+    
+    // 요청 제한 설정
+    private void setRateLimit(String market) {
+        String key = RATE_LIMIT_KEY_PREFIX + market;
+        redisTemplate.opsForValue().set(key, "1", RATE_LIMIT_DURATION, TimeUnit.SECONDS);
+    }
+    
     @Transactional
     @Scheduled(fixedRate = 60000) // 1분마다 실행
     public void checkTradingSignals() {
@@ -76,7 +91,38 @@ public class TradingScheduler {
                 try {
                     log.debug("사용자: {}, 마켓: {} - 전략 실행 시간 확인", user.getUsername(), market);
                     
+                    // 마켓별로 캔들 데이터를 한 번만 가져오기
+                    TradingSignal signal = null;
+                    boolean shouldProcessMarket = false;
+                    
                     // 각 전략별로 실행 주기 확인
+                    for (Strategy strategy : Strategy.values()) {
+                        long lastExecution = getLastExecutionTime(userId, market, strategy);
+                        long currentTime = now.toEpochMilli();
+                        
+                        // 전략의 실행 주기가 되었는지 확인
+                        if (currentTime - lastExecution >= strategy.getIntervalMillis()) {
+                            shouldProcessMarket = true;
+                            break;
+                        }
+                    }
+                    
+                    // 실행할 전략이 있는 경우에만 캔들 데이터를 가져옴
+                    if (shouldProcessMarket) {
+                        // 요청 제한 확인
+                        if (isRateLimited(market)) {
+                            log.info("사용자: {}, 마켓: {} - 요청 제한으로 인해 건너뜀", user.getUsername(), market);
+                            continue;
+                        }
+                        
+                        log.info("사용자: {}, 마켓: {} - 시그널 계산 실행", user.getUsername(), market);
+                        signal = tradingSignalService.calculateSignals(market);
+                        
+                        // 요청 제한 설정
+                        setRateLimit(market);
+                    }
+                    
+                    // 각 전략별로 처리
                     for (Strategy strategy : Strategy.values()) {
                         long lastExecution = getLastExecutionTime(userId, market, strategy);
                         long currentTime = now.toEpochMilli();
@@ -86,10 +132,8 @@ public class TradingScheduler {
                             log.info("사용자: {}, 마켓: {}, 전략: {} - 시그널 체크 실행", 
                                 user.getUsername(), market, strategy.getName());
                             
-                            TradingSignal signal = tradingSignalService.calculateSignals(market);
-                            
                             // 현재 전략에 맞는 시그널인 경우에만 처리
-                            if (signal.determineStrategy() == strategy) {
+                            if (signal != null && signal.determineStrategy() == strategy) {
                                 processSignal(signal, user);
                             }
                             
