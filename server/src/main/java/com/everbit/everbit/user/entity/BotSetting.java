@@ -2,7 +2,7 @@ package com.everbit.everbit.user.entity;
 
 import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Market;
-import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.entity.enums.CandleInterval;
 
 import jakarta.persistence.*;
@@ -27,8 +27,10 @@ public class BotSetting extends BaseTime {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
+    @Builder.Default
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private SignalType signalType;
+    private Strategy strategy = Strategy.MOMENTUM;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @ElementCollection
@@ -84,4 +86,10 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = false;
+
+    public static BotSetting init(User user) {
+        return BotSetting.builder()
+            .user(user)
+            .build();
+    }
 }
