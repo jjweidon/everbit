@@ -122,13 +122,23 @@ public class TradingScheduler {
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
                 log.info("마켓: {} - 현재 가격: {}", market, currentPrice);
 
-                // 보유 수량의 50%만 매도 (소수점 4자리까지만 사용)
+                // 보유 수량의 50%만 매도 (소수점 8자리까지만 사용)
                 BigDecimal sellAmount = availableAmount.multiply(SELL_AMOUNT_RATIO)
-                    .setScale(8, RoundingMode.DOWN); // 소수점 8자리로 제한하고 내림 처리
+                    .setScale(8, RoundingMode.DOWN);
                 log.info("마켓: {} - 매도 수량: {}", market, sellAmount);
 
                 if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     log.info("마켓: {} - 매도 수량이 0 이하여서 매도 건너뜀", market);
+                    return;
+                }
+
+                // 매도 주문 금액 계산 및 최소 주문 금액 체크
+                BigDecimal orderValue = sellAmount.multiply(currentPrice);
+                BigDecimal minOrderValue = new BigDecimal(orderChance.market().ask().minTotal());
+                
+                if (orderValue.compareTo(minOrderValue) < 0) {
+                    log.info("마켓: {} - 매도 주문 금액({})이 최소 주문 금액({})보다 작아 매도 건너뜀", 
+                        market, orderValue, minOrderValue);
                     return;
                 }
 
