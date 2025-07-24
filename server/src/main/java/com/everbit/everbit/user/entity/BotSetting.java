@@ -30,7 +30,7 @@ public class BotSetting extends BaseTime {
     @Builder.Default
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Strategy strategy = Strategy.MOMENTUM;
+    private Strategy strategy = Strategy.EMA_MOMENTUM;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @ElementCollection

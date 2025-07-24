@@ -1,10 +1,9 @@
 package com.everbit.everbit.trade.dto;
 
 import com.everbit.everbit.trade.entity.Trade;
-import com.everbit.everbit.trade.entity.enums.TradeType;
-import com.everbit.everbit.trade.entity.enums.TradeStatus;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,26 +16,28 @@ import lombok.Builder;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record TradeResponse(
     String tradeId,
-    String market,
-    TradeType type,
     String orderId,
+    String market,
+    String type,
     BigDecimal price,
     BigDecimal amount,
     BigDecimal totalPrice,
-    TradeStatus status,
-    String signalType
+    String status,
+    String strategy,
+    String updatedAt
 ) {
     public static TradeResponse from(Trade trade) {
         return TradeResponse.builder()
             .tradeId(trade.getId())
-            .market(trade.getMarket().getCode())
-            .type(trade.getType())
             .orderId(trade.getOrderId())
+            .market(trade.getMarket().getCode())
+            .type(trade.getType().getValue())
             .price(trade.getPrice())
             .amount(trade.getAmount())
-            .totalPrice(trade.getTotalPrice())
-            .status(trade.getStatus())
-            .signalType(trade.getSignalType().getDescription())
+            .totalPrice(trade.getPrice().multiply(trade.getAmount()))
+            .status(trade.getStatus().getValue())
+            .strategy(trade.getStrategy().name())
+            .updatedAt(trade.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
             .build();
     }
 

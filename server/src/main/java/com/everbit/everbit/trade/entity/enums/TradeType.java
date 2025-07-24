@@ -9,5 +9,5 @@ public enum TradeType {
     BID("매수"),
     ASK("매도");
 
-    private final String description;
+    private final String value;
 } 

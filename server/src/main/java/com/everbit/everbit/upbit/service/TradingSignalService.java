@@ -2,7 +2,7 @@ package com.everbit.everbit.upbit.service;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
-import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
@@ -10,6 +10,7 @@ import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
+import org.ta4j.core.indicators.SMAIndicator;
 
 import com.everbit.everbit.upbit.dto.quotation.MinuteCandleResponse;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
@@ -27,19 +28,30 @@ public class TradingSignalService {
     private final UpbitQuotationClient upbitQuotationClient;
     private static final ZoneId UTC = ZoneId.of("UTC");
     
-    // 기술적 지표 계산을 위한 상수 정의
-    private static final int CANDLE_COUNT = 40; // 데이터 포인트 수 증가
-    private static final int SHORT_SMA = 3;  // 단기 이동평균선 기간
-    private static final int LONG_SMA = 10;  // 장기 이동평균선 기간
-    private static final int RSI_PERIOD = 9; // RSI 기간
-    private static final int BB_PERIOD = 10; // 볼린저 밴드 기간
-    private static final int MACD_SHORT = 6; // MACD 단기
-    private static final int MACD_LONG = 13; // MACD 장기
-    private static final int MACD_SIGNAL = 5; // MACD 시그널
+    // 캔들 설정
+    private static final int CANDLE_MINUTES = 5;  // 5분봉 사용 (더 민감한 반응)
+    private static final int CANDLE_COUNT = 200;  // EMA-200을 위한 최소 데이터 포인트
     
+    // EMA 크로스 + 모멘텀 전략 파라미터
+    private static final int EMA_SHORT = 9;   // 단기 EMA
+    private static final int EMA_MID = 21;    // 중기 EMA
+    private static final int EMA_50 = 50;     // 장기 EMA (골든크로스용)
+    private static final int EMA_200 = 200;   // 초장기 EMA (골든크로스용)
+    
+    // MACD + RSI 전략 파라미터
+    private static final int MACD_SHORT = 12;
+    private static final int MACD_LONG = 26;
+    private static final int MACD_SIGNAL = 9;
+    private static final int RSI_PERIOD = 14;
+    private static final int RSI_OVERSOLD = 30;
+    private static final int RSI_OVERBOUGHT = 70;
+    
+    // 볼린저 밴드 + 모멘텀 전략 파라미터
+    private static final int BB_PERIOD = 20;
+
     public BarSeries createBarSeries(String market) {
-        // 최근 40개의 10분봉 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(10, market, null, CANDLE_COUNT);
+        // 캔들 데이터 조회
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(CANDLE_MINUTES, market, null, CANDLE_COUNT);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
@@ -66,47 +78,59 @@ public class TradingSignalService {
         BarSeries series = createBarSeries(market);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         
-        // 이동평균선 (3일, 10일)
-        SMAIndicator smaShort = new SMAIndicator(closePrice, SHORT_SMA);
-        SMAIndicator smaLong = new SMAIndicator(closePrice, LONG_SMA);
+        // 1. EMA 크로스 + 모멘텀 전략
+        EMAIndicator emaShort = new EMAIndicator(closePrice, EMA_SHORT);
+        EMAIndicator emaMid = new EMAIndicator(closePrice, EMA_MID);
+        EMAIndicator ema50 = new EMAIndicator(closePrice, EMA_50);
+        EMAIndicator ema200 = new EMAIndicator(closePrice, EMA_200);
         
-        // MACD (6, 13, 5)
+        // 2. MACD + RSI 전략
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
-        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
-        
-        // RSI (9일)
+        EMAIndicator signal = new EMAIndicator(macd, MACD_SIGNAL);
         RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
         
-        // Bollinger Bands (10일)
-        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        // 3. 볼린저밴드 전략
+        SMAIndicator bbm = new SMAIndicator(closePrice, BB_PERIOD);
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
-        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
-        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
+        BollingerBandsMiddleIndicator bbMiddle = new BollingerBandsMiddleIndicator(bbm);
+        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbMiddle, sd);
+        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbMiddle, sd);
         
         int lastIndex = series.getEndIndex();
         
-        // MA 크로스 시그널
-        boolean goldenCross = smaShort.getValue(lastIndex - 1).isLessThan(smaLong.getValue(lastIndex - 1)) &&
-                            smaShort.getValue(lastIndex).isGreaterThan(smaLong.getValue(lastIndex));
+        // EMA 크로스 시그널
+        boolean goldenCross = emaShort.getValue(lastIndex).isGreaterThan(emaMid.getValue(lastIndex)) &&
+                            emaShort.getValue(lastIndex - 1).isLessThan(emaMid.getValue(lastIndex - 1));
                             
-        boolean deadCross = smaShort.getValue(lastIndex - 1).isGreaterThan(smaLong.getValue(lastIndex - 1)) &&
-                           smaShort.getValue(lastIndex).isLessThan(smaLong.getValue(lastIndex));
+        boolean deadCross = emaShort.getValue(lastIndex).isLessThan(emaMid.getValue(lastIndex)) &&
+                           emaShort.getValue(lastIndex - 1).isGreaterThan(emaMid.getValue(lastIndex - 1));
+
+        // 50/200 EMA 시그널
+        boolean ema50Above200 = ema50.getValue(lastIndex).isGreaterThan(ema200.getValue(lastIndex));
+        boolean ema50Below200 = ema50.getValue(lastIndex).isLessThan(ema200.getValue(lastIndex));
+        boolean ema50Cross200Up = ema50.getValue(lastIndex).isGreaterThan(ema200.getValue(lastIndex)) &&
+                                 ema50.getValue(lastIndex - 1).isLessThanOrEqual(ema200.getValue(lastIndex - 1));
+        boolean ema50Cross200Down = ema50.getValue(lastIndex).isLessThan(ema200.getValue(lastIndex)) &&
+                                   ema50.getValue(lastIndex - 1).isGreaterThanOrEqual(ema200.getValue(lastIndex - 1));
         
         // MACD 시그널
-        boolean macdBuySignal = macd.getValue(lastIndex - 1).isLessThan(signal.getValue(lastIndex - 1)) &&
-                               macd.getValue(lastIndex).isGreaterThan(signal.getValue(lastIndex));
+        boolean macdBuySignal = macd.getValue(lastIndex).isGreaterThan(signal.getValue(lastIndex)) &&
+                               macd.getValue(lastIndex - 1).isLessThan(signal.getValue(lastIndex - 1));
                                
-        boolean macdSellSignal = macd.getValue(lastIndex - 1).isGreaterThan(signal.getValue(lastIndex - 1)) &&
-                                macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex));
+        boolean macdSellSignal = macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex)) &&
+                                macd.getValue(lastIndex - 1).isGreaterThan(signal.getValue(lastIndex - 1));
         
-        // RSI 시그널 (과매수/과매도 기준값 조정)
-        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(35)); // 35로 상향 조정
-        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(65)); // 65로 하향 조정
+        // RSI 시그널
+        boolean rsiOversold = rsi.getValue(lastIndex).doubleValue() < RSI_OVERSOLD;
+        boolean rsiOverbought = rsi.getValue(lastIndex).doubleValue() > RSI_OVERBOUGHT;
         
-        // Bollinger Bands 시그널
+        // 볼린저밴드 시그널
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
         boolean bbOverBought = closePrice.getValue(lastIndex).isGreaterThan(bbu.getValue(lastIndex));
+        boolean priceAboveBBMiddle = closePrice.getValue(lastIndex).isGreaterThan(bbMiddle.getValue(lastIndex));
+        boolean priceBelowBBMiddle = closePrice.getValue(lastIndex).isLessThan(bbMiddle.getValue(lastIndex));
+        boolean bbMiddleTrendUp = bbMiddle.getValue(lastIndex).isGreaterThan(bbMiddle.getValue(lastIndex - 1));
+        boolean bbMiddleTrendDown = bbMiddle.getValue(lastIndex).isLessThan(bbMiddle.getValue(lastIndex - 1));
         
         return new TradingSignal(
             market,
@@ -114,12 +138,20 @@ public class TradingSignalService {
             closePrice.getValue(lastIndex),
             goldenCross,
             deadCross,
+            ema50Above200,
+            ema50Below200,
+            ema50Cross200Up,
+            ema50Cross200Down,
             macdBuySignal,
             macdSellSignal,
             rsiOversold,
             rsiOverbought,
             bbOverSold,
-            bbOverBought
+            bbOverBought,
+            priceAboveBBMiddle,
+            priceBelowBBMiddle,
+            bbMiddleTrendUp,
+            bbMiddleTrendDown
         );
     }
 } 
