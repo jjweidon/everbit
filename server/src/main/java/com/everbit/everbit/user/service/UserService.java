@@ -2,7 +2,6 @@ package com.everbit.everbit.user.service;
 
 import com.everbit.everbit.oauth2.dto.KakaoResponse;
 import com.everbit.everbit.oauth2.dto.OAuth2Response;
-import com.everbit.everbit.user.entity.BotSetting;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.exception.UserException;
 import com.everbit.everbit.user.repository.UserRepository;
@@ -31,8 +30,6 @@ public class UserService {
                 .orElseGet(() -> {
                     log.info("새로운 사용자 등록: {}", username);
                     User newUser = User.init(oAuth2Response);
-                    BotSetting botSetting = BotSetting.init(newUser);
-                    newUser.setBotSetting(botSetting);
                     return userRepository.save(newUser);
                 });
     }

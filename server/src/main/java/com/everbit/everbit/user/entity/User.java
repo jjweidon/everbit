@@ -38,9 +38,6 @@ public class User extends BaseTime {
     @Builder.Default
     private Boolean isBotActive = false;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private BotSetting botSetting;
-
     public static User init(OAuth2Response oAuth2Response) {
         String username = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
         return User.builder()
@@ -62,9 +59,5 @@ public class User extends BaseTime {
 
     public void toggleBotActive() {
         this.isBotActive = !this.isBotActive;
-    }
-
-    public void setBotSetting(BotSetting botSetting) {
-        this.botSetting = botSetting;
     }
 }
