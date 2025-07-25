@@ -132,7 +132,7 @@ public class TradingSignalService {
         boolean bbMiddleTrendUp = bbMiddle.getValue(lastIndex).isGreaterThan(bbMiddle.getValue(lastIndex - 1));
         boolean bbMiddleTrendDown = bbMiddle.getValue(lastIndex).isLessThan(bbMiddle.getValue(lastIndex - 1));
         
-        TradingSignal tradingSignal = new TradingSignal(
+        return new TradingSignal(
             market,
             series.getLastBar().getEndTime(),
             closePrice.getValue(lastIndex),
@@ -153,12 +153,5 @@ public class TradingSignalService {
             bbMiddleTrendUp,
             bbMiddleTrendDown
         );
-        
-        // 디버깅을 위한 상세 로그
-        log.debug("마켓: {} - 시그널 분석 결과: EMA골든크로스={}, EMA데드크로스={}, 50/200골든크로스={}, 50/200데드크로스={}, MACD매수={}, MACD매도={}, RSI과매도={}, RSI과매수={}, BB과매도={}, BB과매수={}", 
-            market, goldenCross, deadCross, ema50Cross200Up, ema50Cross200Down, 
-            macdBuySignal, macdSellSignal, rsiOversold, rsiOverbought, bbOverSold, bbOverBought);
-        
-        return tradingSignal;
     }
 } 

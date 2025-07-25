@@ -34,122 +34,101 @@ public record TradingSignal(
     boolean bbMiddleTrendDown    // 중앙선 하락추세
 ) {
     /**
-     * EMA + 모멘텀 전략의 매수 시그널
-     * - 단기/중기 EMA 골든크로스
-     * - MACD 상승 신호
-     * - RSI 과매도 상태에서 회복
+     * EMA + MACD 전략의 매수 시그널
      */
     public boolean isEmaMomentumBuySignal() {
-        return isEmaGoldenCrossSignal() && macdBuySignal && rsiOversold;
+        return goldenCross && macdBuySignal && priceAboveBBMiddle && bbMiddleTrendUp;
     }
 
     /**
-     * EMA + 모멘텀 전략의 매도 시그널
-     * - 단기/중기 EMA 데드크로스
-     * - MACD 하락 신호
-     * - RSI 과매수 상태
+     * EMA + MACD 전략의 매도 시그널
      */
     public boolean isEmaMomentumSellSignal() {
-        return isEmaDeadCrossSignal() && macdSellSignal && rsiOverbought;
+        return deadCross && macdSellSignal && priceBelowBBMiddle && bbMiddleTrendDown;
     }
 
     /**
      * MACD + RSI 전략의 매수 시그널
      */
     public boolean isMacdRsiBuySignal() {
-        return macdBuySignal && rsiOversold;
+        return macdBuySignal && rsiOversold && priceBelowBBMiddle;
     }
 
     /**
      * MACD + RSI 전략의 매도 시그널
      */
     public boolean isMacdRsiSellSignal() {
-        return macdSellSignal && rsiOverbought;
+        return macdSellSignal && rsiOverbought && priceAboveBBMiddle;
     }
 
     /**
      * 볼린저밴드 + RSI 전략의 매수 시그널
      */
     public boolean isBBMomentumBuySignal() {
-        return bbOverSold && rsiOversold;
+        return bbOverSold && rsiOversold && bbMiddleTrendUp;
     }
 
     /**
      * 볼린저밴드 + RSI 전략의 매도 시그널
      */
     public boolean isBBMomentumSellSignal() {
-        return bbOverBought && rsiOverbought;
+        return bbOverBought && rsiOverbought && bbMiddleTrendDown;
     }
 
     /**
-     * 골든크로스 전략의 매수 시그널 (50/200 EMA 상향돌파)
+     * 골든크로스 전략의 매수 시그널
      */
     public boolean isGoldenCrossSignal() {
-        return ema50Cross200Up;
+        return ema50Cross200Up && priceAboveBBMiddle && !rsiOverbought;
     }
 
     /**
-     * 데드크로스 전략의 매도 시그널 (50/200 EMA 하향돌파)
+     * 데드크로스 전략의 매도 시그널
      */
     public boolean isDeadCrossSignal() {
-        return ema50Cross200Down;
-    }
-
-    /**
-     * 단기/중기 EMA 골든크로스 시그널
-     */
-    public boolean isEmaGoldenCrossSignal() {
-        return goldenCross;
-    }
-
-    /**
-     * 단기/중기 EMA 데드크로스 시그널
-     */
-    public boolean isEmaDeadCrossSignal() {
-        return deadCross;
+        return ema50Cross200Down && priceBelowBBMiddle && !rsiOversold;
     }
 
     /**
      * 앙상블 전략의 매수 시그널
-     * - 최소 2개 이상의 매수 시그널이 동시에 발생
-     * - 전체적인 상승 추세 확인
+     * - 여러 전략의 매수 시그널이 동시에 발생
+     * - 추세와 모멘텀이 일치
      */
     public boolean isEnsembleBuySignal() {
-        // 매수 시그널 카운트
+        // 최소 2개 이상의 매수 시그널
         int buySignals = 0;
         if (isEmaMomentumBuySignal()) buySignals++;
         if (isMacdRsiBuySignal()) buySignals++;
         if (isBBMomentumBuySignal()) buySignals++;
         if (isGoldenCrossSignal()) buySignals++;
 
-        // 전체적인 상승 추세 확인 (50일선이 200일선 위에 있고, 볼린저밴드 중앙선 상승)
-        boolean upTrend = ema50Above200 && bbMiddleTrendUp;
+        // 전체적인 상승 추세 확인
+        boolean upTrend = ema50Above200 && bbMiddleTrendUp && priceAboveBBMiddle;
         
         return buySignals >= 2 && upTrend;
     }
 
     /**
      * 앙상블 전략의 매도 시그널
-     * - 최소 2개 이상의 매도 시그널이 동시에 발생
-     * - 전체적인 하락 추세 확인
+     * - 여러 전략의 매도 시그널이 동시에 발생
+     * - 추세와 모멘텀이 일치
      */
     public boolean isEnsembleSellSignal() {
-        // 매도 시그널 카운트
+        // 최소 2개 이상의 매도 시그널
         int sellSignals = 0;
         if (isEmaMomentumSellSignal()) sellSignals++;
         if (isMacdRsiSellSignal()) sellSignals++;
         if (isBBMomentumSellSignal()) sellSignals++;
         if (isDeadCrossSignal()) sellSignals++;
 
-        // 전체적인 하락 추세 확인 (50일선이 200일선 아래에 있고, 볼린저밴드 중앙선 하락)
-        boolean downTrend = ema50Below200 && bbMiddleTrendDown;
+        // 전체적인 하락 추세 확인
+        boolean downTrend = ema50Below200 && bbMiddleTrendDown && priceBelowBBMiddle;
         
         return sellSignals >= 2 && downTrend;
     }
 
     /**
      * 현재 신호에 해당하는 전략 반환
-     * 우선순위: 골든크로스 > EMA+모멘텀 > MACD+RSI > 볼린저밴드 > 앙상블
      */
     public Strategy determineStrategy() {
         if (isGoldenCrossSignal() || isDeadCrossSignal()) {
@@ -167,7 +146,7 @@ public record TradingSignal(
         if (isEnsembleBuySignal() || isEnsembleSellSignal()) {
             return Strategy.ENSEMBLE;
         }
-        return null; // 시그널이 없는 경우
+        return Strategy.ENSEMBLE; // 기본값
     }
 
     /**
