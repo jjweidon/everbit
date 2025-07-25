@@ -71,10 +71,10 @@ public record TradingSignal(
     // }
 
     public boolean isBuySignal() {
-        return isGoldenCrossBuySignal();
+        return rsiOversold || bbOverSold;
     }
     
     public boolean isSellSignal() {
-        return isGoldenCrossSellSignal();
+        return rsiOverbought || bbOverBought;
     }
 } 

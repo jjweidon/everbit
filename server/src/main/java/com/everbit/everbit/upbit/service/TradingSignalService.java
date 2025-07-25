@@ -28,6 +28,7 @@ public class TradingSignalService {
     private static final ZoneId UTC = ZoneId.of("UTC");
     
     // 기술적 지표 계산을 위한 상수 정의
+    private static final int CANDLE_INTERVAL = 3; // 3분봉
     private static final int CANDLE_COUNT = 200; // 데이터 포인트 수 증가
     private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
     private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
@@ -39,7 +40,7 @@ public class TradingSignalService {
     
     public BarSeries createBarSeries(String market) {
         // 최근 50개의 5분봉 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(5, market, null, CANDLE_COUNT);
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(CANDLE_INTERVAL, market, null, CANDLE_COUNT);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
