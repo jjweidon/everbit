@@ -39,12 +39,10 @@ public class TradingSignalService {
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     private static final double CROSS_THRESHOLD = 0.005; // 크로스 시그널 임계값 (0.5%)
     
-    // 통계적 평균회귀 강화 상수
-    private static final int Z_SCORE_PERIOD = 20; // Z-Score 계산 기간
-    private static final double Z_SCORE_BUY_THRESHOLD = -1.5; // Z-Score 매수 임계값
-    private static final double Z_SCORE_SELL_THRESHOLD = 1.5; // Z-Score 매도 임계값
-    private static final int MOVING_AVERAGE_PERIOD = 20; // 이동평균 기간
-    private static final double VOLATILITY_THRESHOLD = 0.015; // 변동성 임계값 (1.5%)
+    // 평균 회귀 전략을 위한 상수
+    private static final int MEAN_REVERSION_LOOKBACK = 20; // 20캔들 전 비교
+    private static final int MEAN_REVERSION_SHORT_LOOKBACK = 1; // 5분캔들 전후 비교 (1캔들)
+    private static final double MEAN_REVERSION_THRESHOLD = 0.02; // 2% 이상 차이 시 시그널
     
     public BarSeries createBarSeries(String market) {
         // 최근 50개의 5분봉 데이터 조회
@@ -126,9 +124,9 @@ public class TradingSignalService {
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
         boolean bbOverBought = closePrice.getValue(lastIndex).isGreaterThan(bbu.getValue(lastIndex));
         
-        // 개선된 평균 회귀 시그널 (통계적 접근)
-        boolean meanReversionBuySignal = calculateEnhancedMeanReversionBuySignal(series, closePrice, lastIndex);
-        boolean meanReversionSellSignal = calculateEnhancedMeanReversionSellSignal(series, closePrice, lastIndex);
+        // 평균 회귀 시그널 (20캔들 전과 5분캔들 전후 비교)
+        boolean meanReversionBuySignal = calculateMeanReversionBuySignal(series, closePrice, lastIndex);
+        boolean meanReversionSellSignal = calculateMeanReversionSellSignal(series, closePrice, lastIndex);
         
         return new TradingSignal(
             market,
@@ -147,127 +145,47 @@ public class TradingSignalService {
         );
     }
     
-    // 개선된 평균 회귀 매수 시그널 계산 (통계적 접근)
-    private boolean calculateEnhancedMeanReversionBuySignal(BarSeries series, ClosePriceIndicator closePrice, int lastIndex) {
-        if (lastIndex < Z_SCORE_PERIOD) {
-            return false;
+    // 평균 회귀 매수 시그널 계산 (20캔들 전과 5분캔들 전후 비교)
+    private boolean calculateMeanReversionBuySignal(BarSeries series, ClosePriceIndicator closePrice, int lastIndex) {
+        if (lastIndex < MEAN_REVERSION_LOOKBACK + MEAN_REVERSION_SHORT_LOOKBACK) {
+            return false; // 충분한 데이터가 없으면 시그널 없음
         }
         
-        // 1. Z-Score 계산
-        double zScore = calculateZScore(series, closePrice, lastIndex);
-        
-        // 2. 이동평균 비교
+        // 현재 가격
         double currentPrice = closePrice.getValue(lastIndex).doubleValue();
-        double movingAverage = calculateMovingAverage(closePrice, lastIndex, MOVING_AVERAGE_PERIOD);
         
-        // 3. 변동성 체크
-        double volatility = calculateVolatility(closePrice, lastIndex, MOVING_AVERAGE_PERIOD);
+        // 20캔들 전 가격
+        double price20CandlesAgo = closePrice.getValue(lastIndex - MEAN_REVERSION_LOOKBACK).doubleValue();
         
-        // 4. 볼린저 밴드 하단 체크
-        boolean bbOversold = closePrice.getValue(lastIndex).isLessThan(
-            new BollingerBandsLowerIndicator(
-                new BollingerBandsMiddleIndicator(new EMAIndicator(closePrice, BB_PERIOD)),
-                new StandardDeviationIndicator(closePrice, BB_PERIOD)
-            ).getValue(lastIndex)
-        );
+        // 5분캔들 전 가격
+        double price5MinAgo = closePrice.getValue(lastIndex - MEAN_REVERSION_SHORT_LOOKBACK).doubleValue();
         
-        // 매수 조건: Z-Score 과매도 + 이동평균 아래 + 적절한 변동성 + 볼린저 밴드 하단
-        return zScore <= Z_SCORE_BUY_THRESHOLD && 
-               currentPrice < movingAverage * 0.995 && // 이동평균보다 0.5% 이상 낮음
-               volatility >= VOLATILITY_THRESHOLD && 
-               bbOversold;
+        // 20캔들 전 대비 현재 가격이 2% 이상 하락했고, 5분캔들 전 대비도 하락 추세인 경우
+        double dropFrom20Candles = (price20CandlesAgo - currentPrice) / price20CandlesAgo;
+        double dropFrom5Min = (price5MinAgo - currentPrice) / price5MinAgo;
+        
+        return dropFrom20Candles >= MEAN_REVERSION_THRESHOLD && dropFrom5Min > 0;
     }
     
-    // 개선된 평균 회귀 매도 시그널 계산 (통계적 접근)
-    private boolean calculateEnhancedMeanReversionSellSignal(BarSeries series, ClosePriceIndicator closePrice, int lastIndex) {
-        if (lastIndex < Z_SCORE_PERIOD) {
-            return false;
+    // 평균 회귀 매도 시그널 계산 (20캔들 전과 5분캔들 전후 비교)
+    private boolean calculateMeanReversionSellSignal(BarSeries series, ClosePriceIndicator closePrice, int lastIndex) {
+        if (lastIndex < MEAN_REVERSION_LOOKBACK + MEAN_REVERSION_SHORT_LOOKBACK) {
+            return false; // 충분한 데이터가 없으면 시그널 없음
         }
         
-        // 1. Z-Score 계산
-        double zScore = calculateZScore(series, closePrice, lastIndex);
-        
-        // 2. 이동평균 비교
+        // 현재 가격
         double currentPrice = closePrice.getValue(lastIndex).doubleValue();
-        double movingAverage = calculateMovingAverage(closePrice, lastIndex, MOVING_AVERAGE_PERIOD);
         
-        // 3. 변동성 체크
-        double volatility = calculateVolatility(closePrice, lastIndex, MOVING_AVERAGE_PERIOD);
+        // 20캔들 전 가격
+        double price20CandlesAgo = closePrice.getValue(lastIndex - MEAN_REVERSION_LOOKBACK).doubleValue();
         
-        // 4. 볼린저 밴드 상단 체크
-        boolean bbOverbought = closePrice.getValue(lastIndex).isGreaterThan(
-            new BollingerBandsUpperIndicator(
-                new BollingerBandsMiddleIndicator(new EMAIndicator(closePrice, BB_PERIOD)),
-                new StandardDeviationIndicator(closePrice, BB_PERIOD)
-            ).getValue(lastIndex)
-        );
+        // 5분캔들 전 가격
+        double price5MinAgo = closePrice.getValue(lastIndex - MEAN_REVERSION_SHORT_LOOKBACK).doubleValue();
         
-        // 매도 조건: Z-Score 과매수 + 이동평균 위 + 적절한 변동성 + 볼린저 밴드 상단
-        return zScore >= Z_SCORE_SELL_THRESHOLD && 
-               currentPrice > movingAverage * 1.005 && // 이동평균보다 0.5% 이상 높음
-               volatility >= VOLATILITY_THRESHOLD && 
-               bbOverbought;
-    }
-    
-    // Z-Score 계산
-    private double calculateZScore(BarSeries series, ClosePriceIndicator closePrice, int lastIndex) {
-        if (lastIndex < Z_SCORE_PERIOD) {
-            return 0.0;
-        }
+        // 20캔들 전 대비 현재 가격이 2% 이상 상승했고, 5분캔들 전 대비도 상승 추세인 경우
+        double riseFrom20Candles = (currentPrice - price20CandlesAgo) / price20CandlesAgo;
+        double riseFrom5Min = (currentPrice - price5MinAgo) / price5MinAgo;
         
-        // 최근 Z_SCORE_PERIOD 기간의 가격 데이터 수집
-        double[] prices = new double[Z_SCORE_PERIOD];
-        for (int i = 0; i < Z_SCORE_PERIOD; i++) {
-            prices[i] = closePrice.getValue(lastIndex - i).doubleValue();
-        }
-        
-        // 평균 계산
-        double mean = 0.0;
-        for (double price : prices) {
-            mean += price;
-        }
-        mean /= Z_SCORE_PERIOD;
-        
-        // 표준편차 계산
-        double variance = 0.0;
-        for (double price : prices) {
-            variance += Math.pow(price - mean, 2);
-        }
-        double stdDev = Math.sqrt(variance / Z_SCORE_PERIOD);
-        
-        // Z-Score 계산
-        double currentPrice = closePrice.getValue(lastIndex).doubleValue();
-        return stdDev > 0 ? (currentPrice - mean) / stdDev : 0.0;
-    }
-    
-    // 이동평균 계산
-    private double calculateMovingAverage(ClosePriceIndicator closePrice, int lastIndex, int period) {
-        if (lastIndex < period) {
-            return closePrice.getValue(lastIndex).doubleValue();
-        }
-        
-        double sum = 0.0;
-        for (int i = 0; i < period; i++) {
-            sum += closePrice.getValue(lastIndex - i).doubleValue();
-        }
-        return sum / period;
-    }
-    
-    // 변동성 계산 (표준편차 기반)
-    private double calculateVolatility(ClosePriceIndicator closePrice, int lastIndex, int period) {
-        if (lastIndex < period) {
-            return 0.0;
-        }
-        
-        double mean = calculateMovingAverage(closePrice, lastIndex, period);
-        double variance = 0.0;
-        
-        for (int i = 0; i < period; i++) {
-            double price = closePrice.getValue(lastIndex - i).doubleValue();
-            variance += Math.pow(price - mean, 2);
-        }
-        
-        double stdDev = Math.sqrt(variance / period);
-        return stdDev / mean; // 변동성 (표준편차/평균)
+        return riseFrom20Candles >= MEAN_REVERSION_THRESHOLD && riseFrom5Min > 0;
     }
 } 

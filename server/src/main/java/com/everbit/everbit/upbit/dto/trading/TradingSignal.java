@@ -83,12 +83,12 @@ public record TradingSignal(
     // 기존 평균 회귀 전략 (볼린저 밴드 + RSI)
     public boolean isMeanReversionBuySignal() {
         // 가격이 이동평균선 아래로 크게 떨어졌을 때 매수 (과매도 상황)
-        return bbOverSold || rsiOversold;
+        return bbOverSold && rsiOversold;
     }
     
     public boolean isMeanReversionSellSignal() {
         // 가격이 이동평균선 위로 크게 올라갔을 때 매도 (과매수 상황)
-        return bbOverBought || rsiOverbought;
+        return bbOverBought && rsiOverbought;
     }
     
     // 새로운 평균 회귀 전략 (20캔들 전과 5분캔들 전후 비교)
