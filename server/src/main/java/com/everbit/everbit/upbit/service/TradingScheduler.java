@@ -34,8 +34,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL"}; // 거래할 마켓 목록
-    private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
-    private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
+    private static final BigDecimal FIXED_ORDER_AMOUNT = new BigDecimal("6000"); // 고정 주문 금액 6000원
     
     @Transactional
     @Scheduled(fixedRate = 60000) // 1분마다 실행
@@ -70,11 +69,11 @@ public class TradingScheduler {
                     .multiply(BigDecimal.ONE.add(new BigDecimal(orderChance.bidFee())));
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
                 
-                // 2. 주문 가능 수량 계산 (잔고의 25%만 사용)
+                // 2. 주문 가능 수량 계산 (고정 금액 6000원 사용)
                 List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
                 TickerResponse ticker = tickers.get(0);
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
-                BigDecimal orderBalance = availableBalance.multiply(BUY_AMOUNT_RATIO).max(minOrderKRW);
+                BigDecimal orderBalance = FIXED_ORDER_AMOUNT.max(minOrderKRW);
                 log.info("마켓: {} - 매수 금액: {}", market, orderBalance);
                 BigDecimal orderAmount = orderBalance.divide(currentPrice, 8, RoundingMode.HALF_UP);
 
@@ -85,7 +84,7 @@ public class TradingScheduler {
                 }
 
                 if (availableBalance.compareTo(orderBalance) < 0) {
-                    log.info("마켓: {} - 계좌 잔고({})가 매수 금액({})보다 작아 매수 건너뜀", market, availableBalance, orderBalance);
+                    log.info("마켓: {} - 계좌 잔고({})가 고정 매수 금액({})보다 작아 매수 건너뜀", market, availableBalance, orderBalance);
                     return;
                 }
                 
@@ -122,14 +121,19 @@ public class TradingScheduler {
                 BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
                 log.info("마켓: {} - 현재 가격: {}", market, currentPrice);
 
-                // 보유 수량의 50%만 매도 (소수점 8자리까지만 사용)
-                BigDecimal sellAmount = availableAmount.multiply(SELL_AMOUNT_RATIO)
-                    .setScale(8, RoundingMode.DOWN);
+                // 고정 금액(6000원)에 맞는 매도 수량 계산
+                BigDecimal sellAmount = FIXED_ORDER_AMOUNT.divide(currentPrice, 8, RoundingMode.DOWN);
                 log.info("마켓: {} - 매도 수량: {}", market, sellAmount);
 
                 if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     log.info("마켓: {} - 매도 수량이 0 이하여서 매도 건너뜀", market);
                     return;
+                }
+
+                // 보유 수량보다 매도 수량이 많으면 보유 수량만큼만 매도
+                if (sellAmount.compareTo(availableAmount) > 0) {
+                    sellAmount = availableAmount;
+                    log.info("마켓: {} - 매도 수량을 보유 수량으로 조정: {}", market, sellAmount);
                 }
 
                 // 매도 주문 금액 계산 및 최소 주문 금액 체크
