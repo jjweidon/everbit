@@ -13,7 +13,7 @@ import com.everbit.everbit.upbit.dto.trading.TradingSignal;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import com.everbit.everbit.trade.service.TradeService;
-import com.everbit.everbit.trade.entity.enums.Strategy;
+import com.everbit.everbit.trade.entity.enums.SignalType;
 
 import java.util.List;
 import java.math.BigDecimal;
@@ -54,7 +54,7 @@ public class TradingScheduler {
             }
         }
     }
-
+    
     @Transactional
     private void processSignal(TradingSignal signal, User user) {
         String market = signal.market();
@@ -92,11 +92,11 @@ public class TradingScheduler {
                 OrderRequest orderRequest = OrderRequest.createBuyOrder(market, orderAmount.toString(), currentPrice.toString());
                 OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
 
-                // 주문 결과 저장
-                Strategy strategy = signal.determineStrategy();
-                tradeService.saveTrade(user, market, orderResponse, currentPrice, strategy);
-                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 전략: {}", 
-                    market, orderResponse, strategy.getName());
+                // 4. 주문 결과 저장
+                SignalType signalType = determineSignalType(signal);
+                tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
+                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}", 
+                    market, orderResponse, signalType.getDescription());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매수 시그널 처리 실패", user.getUsername(), market, e);
             }
@@ -145,14 +145,26 @@ public class TradingScheduler {
                 OrderRequest orderRequest = OrderRequest.createSellOrder(market, sellAmount.toString(), currentPrice.toString());
                 OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
 
-                // 주문 결과 저장
-                Strategy strategy = signal.determineStrategy();
-                tradeService.saveTrade(user, market, orderResponse, currentPrice, strategy);
-                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 전략: {}", 
-                    market, sellAmount, orderResponse, strategy.getName());
+                // 3. 주문 결과 저장
+                SignalType signalType = determineSignalType(signal);
+                tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
+                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}", 
+                    market, sellAmount, orderResponse, signalType.getDescription());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매도 시그널 처리 실패", user.getUsername(), market, e);
             }
         }
+    }
+
+    private SignalType determineSignalType(TradingSignal signal) {
+        if (signal.goldenCross()) return SignalType.GOLDEN_CROSS;
+        if (signal.macdBuySignal()) return SignalType.MACD_BUY;
+        if (signal.rsiOversold()) return SignalType.RSI_OVERSOLD;
+        if (signal.bbOverSold()) return SignalType.BB_OVERSOLD;
+        if (signal.deadCross()) return SignalType.DEAD_CROSS;
+        if (signal.macdSellSignal()) return SignalType.MACD_SELL;
+        if (signal.rsiOverbought()) return SignalType.RSI_OVERBOUGHT;
+        if (signal.bbOverBought()) return SignalType.BB_OVERBOUGHT;
+        return SignalType.UNKNOWN;
     }
 } 
