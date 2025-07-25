@@ -33,7 +33,7 @@ public class TradingScheduler {
     private final UserService userService;
     private final TradeService tradeService;
     
-    private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL"}; // 거래할 마켓 목록
+    private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-DOGE", "KRW-USDT"}; // 거래할 마켓 목록
     private static final BigDecimal FIXED_ORDER_AMOUNT = new BigDecimal("6000"); // 고정 주문 금액 6000원
     
     @Transactional
