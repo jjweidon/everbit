@@ -38,7 +38,7 @@ public class TradingScheduler {
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
     
     @Transactional
-    @Scheduled(fixedRate = 300000) // 5분마다 실행
+    @Scheduled(fixedRate = 60000) // 1분마다 실행
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         

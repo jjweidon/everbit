@@ -62,11 +62,19 @@ public record TradingSignal(
         return cnt >= 2;
     }
 
+    // public boolean isBuySignal() {
+    //     return isEnsembleBuySignal() || isEmaMomentumBuySignal() || isMacdRsiBuySignal() || isBbMomentumBuySignal() || isGoldenCrossBuySignal();
+    // }
+    
+    // public boolean isSellSignal() {
+    //     return isEnsembleSellSignal() || isEmaMomentumSellSignal() || isMacdRsiSellSignal() || isBbMomentumSellSignal() || isGoldenCrossSellSignal();
+    // }
+
     public boolean isBuySignal() {
-        return isEnsembleBuySignal() || isEmaMomentumBuySignal() || isMacdRsiBuySignal() || isBbMomentumBuySignal() || isGoldenCrossBuySignal();
+        return isGoldenCrossBuySignal();
     }
     
     public boolean isSellSignal() {
-        return isEnsembleSellSignal() || isEmaMomentumSellSignal() || isMacdRsiSellSignal() || isBbMomentumSellSignal() || isGoldenCrossSellSignal();
+        return isGoldenCrossSellSignal();
     }
 } 
