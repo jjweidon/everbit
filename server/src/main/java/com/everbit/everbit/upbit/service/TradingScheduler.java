@@ -15,13 +15,9 @@ import com.everbit.everbit.user.service.UserService;
 import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import java.util.concurrent.TimeUnit;
-
 import java.util.List;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,67 +32,22 @@ public class TradingScheduler {
     private final UpbitQuotationClient upbitQuotationClient;
     private final UserService userService;
     private final TradeService tradeService;
-    private final RedisTemplate<String, String> redisTemplate;
     
     private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL"}; // 거래할 마켓 목록
     private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
-    private static final String REDIS_KEY_PREFIX = "trading:last_execution:";
-    
-    // Redis key 생성
-    private String createRedisKey(String userId, String market, Strategy strategy) {
-        return REDIS_KEY_PREFIX + userId + ":" + market + ":" + strategy.name();
-    }
-    
-    // 마지막 실행 시간 조회
-    private long getLastExecutionTime(String userId, String market, Strategy strategy) {
-        String key = createRedisKey(userId, market, strategy);
-        String value = redisTemplate.opsForValue().get(key);
-        return value != null ? Long.parseLong(value) : 0L;
-    }
-    
-    // 마지막 실행 시간 업데이트
-    private void updateLastExecutionTime(String userId, String market, Strategy strategy, long timestamp) {
-        String key = createRedisKey(userId, market, strategy);
-        redisTemplate.opsForValue().set(key, String.valueOf(timestamp));
-        // 데이터 유효기간 설정 (전략 주기의 3배)
-        redisTemplate.expire(key, strategy.getInterval() * 3L, TimeUnit.SECONDS);
-    }
     
     @Transactional
-    @Scheduled(fixedRate = 60000) // 1분마다 실행
+    @Scheduled(fixedRate = 300000) // 5분마다 실행
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
-        Instant now = Instant.now();
         
         for (User user : activeUsers) {
-            String userId = user.getId();
-            
             for (String market : MARKETS) {
                 try {
-                    log.debug("사용자: {}, 마켓: {} - 전략 실행 시간 확인", user.getUsername(), market);
-                    
-                    // 각 전략별로 실행 주기 확인
-                    for (Strategy strategy : Strategy.values()) {
-                        long lastExecution = getLastExecutionTime(userId, market, strategy);
-                        long currentTime = now.toEpochMilli();
-                        
-                        // 전략의 실행 주기가 되었는지 확인
-                        if (currentTime - lastExecution >= strategy.getIntervalMillis()) {
-                            log.info("사용자: {}, 마켓: {}, 전략: {} - 시그널 체크 실행", 
-                                user.getUsername(), market, strategy.getName());
-                            
-                            TradingSignal signal = tradingSignalService.calculateSignals(market);
-                            
-                            // 현재 전략에 맞는 시그널인 경우에만 처리
-                            if (signal.determineStrategy() == strategy) {
-                                processSignal(signal, user);
-                            }
-                            
-                            // 실행 시간 업데이트
-                            updateLastExecutionTime(userId, market, strategy, currentTime);
-                        }
-                    }
+                    log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 확인 중", user.getUsername(), market);
+                    TradingSignal signal = tradingSignalService.calculateSignals(market);
+                    processSignal(signal, user);
                 } catch (Exception e) {
                     log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
                 }

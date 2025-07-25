@@ -82,6 +82,11 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false)
     private Integer candleCoun = 10; // 분석할 캔들 개수
 
+    // 봇 활성화 상태
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isActive = false;
+
     public static BotSetting init(User user) {
         return BotSetting.builder()
             .user(user)
