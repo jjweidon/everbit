@@ -48,7 +48,7 @@ public class Trade extends BaseTime {
     @Column(nullable = false)
     private BigDecimal price; // 주문 가격
 
-    @Column(nullable = false, precision = 20, scale = 10)
+    @Column(nullable = false)
     private BigDecimal amount; // 주문 수량
 
     @Column(nullable = false)
