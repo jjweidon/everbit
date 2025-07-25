@@ -48,4 +48,11 @@ public class RedisConfig {
         
         return template;
     }
+    
+    @PostConstruct
+    public void printRedisConfig() {
+        log.info("REDIS_HOST: " + redisHost);
+        log.info("REDIS_PORT: " + redisPort);
+        log.info("REDIS_PASSWORD: " + redisPassword);
+    }
 } 
