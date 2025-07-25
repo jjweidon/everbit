@@ -39,7 +39,7 @@ public class TradingSignalService {
     
     public BarSeries createBarSeries(String market) {
         // 최근 50개의 5분봉 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(3, market, null, CANDLE_COUNT);
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(5, market, null, CANDLE_COUNT);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
