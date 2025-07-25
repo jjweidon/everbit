@@ -15,8 +15,7 @@ import com.everbit.everbit.user.service.UserService;
 import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import java.util.concurrent.TimeUnit;
+import com.everbit.everbit.global.config.util.RedisUtils;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -37,46 +36,44 @@ public class TradingScheduler {
     private final UpbitQuotationClient upbitQuotationClient;
     private final UserService userService;
     private final TradeService tradeService;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisUtils redisUtils;
     
     private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL"}; // 거래할 마켓 목록
     private static final BigDecimal BUY_AMOUNT_RATIO = new BigDecimal("0.25"); // 잔고의 25%만 주문
     private static final BigDecimal SELL_AMOUNT_RATIO = new BigDecimal("0.50"); // 보유 수량의 50%만 매도
-    private static final String REDIS_KEY_PREFIX = "trading:last_execution:";
+    private static final String LAST_EXECUTION_KEY_PREFIX = "trading:last_execution:";
     private static final String RATE_LIMIT_KEY_PREFIX = "trading:rate_limit:";
     private static final long RATE_LIMIT_DURATION = 60; // 60초 제한
     
     // Redis key 생성
     private String createRedisKey(String userId, String market, Strategy strategy) {
-        return REDIS_KEY_PREFIX + userId + ":" + market + ":" + strategy.name();
+        return LAST_EXECUTION_KEY_PREFIX + userId + ":" + market + ":" + strategy.name();
     }
     
     // 마지막 실행 시간 조회
     private long getLastExecutionTime(String userId, String market, Strategy strategy) {
         String key = createRedisKey(userId, market, strategy);
-        String value = redisTemplate.opsForValue().get(key);
+        String value = redisUtils.getData(key);
         return value != null ? Long.parseLong(value) : 0L;
     }
     
     // 마지막 실행 시간 업데이트
     private void updateLastExecutionTime(String userId, String market, Strategy strategy, long timestamp) {
         String key = createRedisKey(userId, market, strategy);
-        redisTemplate.opsForValue().set(key, String.valueOf(timestamp));
-        // 데이터 유효기간 설정 (전략 주기의 3배)
-        redisTemplate.expire(key, strategy.getInterval() * 3L, TimeUnit.SECONDS);
+        redisUtils.setData(key, String.valueOf(timestamp), strategy.getIntervalSeconds() * 3L);
     }
     
     // 요청 제한 확인
     private boolean isRateLimited(String market) {
         String key = RATE_LIMIT_KEY_PREFIX + market;
-        String value = redisTemplate.opsForValue().get(key);
+        String value = redisUtils.getData(key);
         return value != null;
     }
     
     // 요청 제한 설정
     private void setRateLimit(String market) {
         String key = RATE_LIMIT_KEY_PREFIX + market;
-        redisTemplate.opsForValue().set(key, "1", RATE_LIMIT_DURATION, TimeUnit.SECONDS);
+        redisUtils.setData(key, "1", RATE_LIMIT_DURATION);
     }
     
     @Transactional
@@ -126,8 +123,22 @@ public class TradingScheduler {
                                 user.getUsername(), market, strategy.getName());
                             
                             // 현재 전략에 맞는 시그널인 경우에만 처리
-                            if (signal.determineStrategy() == strategy) {
-                                processSignal(signal, user);
+                            Strategy determinedStrategy = signal.determineStrategy();
+                            
+                            if (determinedStrategy == null) {
+                                log.debug("사용자: {}, 마켓: {}, 전략: {} - 시그널 없음", 
+                                    user.getUsername(), market, strategy.getName());
+                            } else {
+                                log.debug("사용자: {}, 마켓: {}, 전략: {} - 결정된 전략: {}, 매수시그널: {}, 매도시그널: {}", 
+                                    user.getUsername(), market, strategy.getName(), determinedStrategy.getName(),
+                                    signal.isBuySignal(), signal.isSellSignal());
+                                
+                                if (determinedStrategy == strategy) {
+                                    processSignal(signal, user);
+                                } else {
+                                    log.debug("사용자: {}, 마켓: {}, 전략: {} - 시그널 불일치로 건너뜀", 
+                                        user.getUsername(), market, strategy.getName());
+                                }
                             }
                             
                             // 실행 시간 업데이트
