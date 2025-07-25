@@ -37,7 +37,7 @@ public class TradingScheduler {
     private static final BigDecimal FIXED_ORDER_AMOUNT = new BigDecimal("6000"); // 고정 주문 금액 6000원
     
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
+    @Scheduled(cron = "0 */5 * * * *")
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         

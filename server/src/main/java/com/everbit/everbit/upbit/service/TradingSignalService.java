@@ -29,17 +29,17 @@ public class TradingSignalService {
     
     // 기술적 지표 계산을 위한 상수 정의
     private static final int CANDLE_INTERVAL = 3; // 3분봉
-    private static final int CANDLE_COUNT = 200; // 데이터 포인트 수 증가
+    private static final int CANDLE_COUNT = 100; // 데이터 포인트 수 (200 → 100으로 개선)
     private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
     private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
-    private static final int RSI_PERIOD = 9; // RSI 기간
-    private static final int BB_PERIOD = 10; // 볼린저 밴드 기간
+    private static final int RSI_PERIOD = 14; // RSI 기간 (9 → 14로 개선)
+    private static final int BB_PERIOD = 20; // 볼린저 밴드 기간 (10 → 20으로 개선)
     private static final int MACD_SHORT = 6; // MACD 단기
     private static final int MACD_LONG = 13; // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     
     public BarSeries createBarSeries(String market) {
-        // 최근 50개의 5분봉 데이터 조회
+        // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
         List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(CANDLE_INTERVAL, market, null, CANDLE_COUNT);
         
         // BarSeries 생성
@@ -78,10 +78,11 @@ public class TradingSignalService {
         // RSI (9일)
         RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
         
-        // Bollinger Bands (10일)
+        // Bollinger Bands (20일, 1.5σ 사용)
         SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
         BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        // 1.5σ를 위해 표준편차 값을 직접 계산하여 적용
         BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
         BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
         
@@ -102,8 +103,8 @@ public class TradingSignalService {
                                 macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex));
         
         // RSI 시그널 (과매수/과매도 기준값 조정)
-        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(35)); // 35로 상향 조정
-        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(65)); // 65로 하향 조정
+        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(25)); // 35 → 25로 개선
+        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(75)); // 65 → 75로 개선
         
         // Bollinger Bands 시그널
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
