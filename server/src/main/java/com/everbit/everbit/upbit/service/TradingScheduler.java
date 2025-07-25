@@ -19,6 +19,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -91,54 +92,46 @@ public class TradingScheduler {
                 try {
                     log.debug("사용자: {}, 마켓: {} - 전략 실행 시간 확인", user.getUsername(), market);
                     
-                    // 마켓별로 캔들 데이터를 한 번만 가져오기
-                    TradingSignal signal = null;
-                    boolean shouldProcessMarket = false;
-                    
-                    // 각 전략별로 실행 주기 확인
+                    // 실행할 전략들을 먼저 확인
+                    List<Strategy> strategiesToExecute = new ArrayList<>();
                     for (Strategy strategy : Strategy.values()) {
                         long lastExecution = getLastExecutionTime(userId, market, strategy);
                         long currentTime = now.toEpochMilli();
                         
                         // 전략의 실행 주기가 되었는지 확인
                         if (currentTime - lastExecution >= strategy.getIntervalMillis()) {
-                            shouldProcessMarket = true;
-                            break;
+                            strategiesToExecute.add(strategy);
                         }
                     }
                     
                     // 실행할 전략이 있는 경우에만 캔들 데이터를 가져옴
-                    if (shouldProcessMarket) {
+                    if (!strategiesToExecute.isEmpty()) {
                         // 요청 제한 확인
                         if (isRateLimited(market)) {
                             log.info("사용자: {}, 마켓: {} - 요청 제한으로 인해 건너뜀", user.getUsername(), market);
                             continue;
                         }
                         
-                        log.info("사용자: {}, 마켓: {} - 시그널 계산 실행", user.getUsername(), market);
-                        signal = tradingSignalService.calculateSignals(market);
+                        log.info("사용자: {}, 마켓: {} - {}개 전략 실행 예정", 
+                            user.getUsername(), market, strategiesToExecute.size());
+                        
+                        TradingSignal signal = tradingSignalService.calculateSignals(market);
                         
                         // 요청 제한 설정
                         setRateLimit(market);
-                    }
-                    
-                    // 각 전략별로 처리
-                    for (Strategy strategy : Strategy.values()) {
-                        long lastExecution = getLastExecutionTime(userId, market, strategy);
-                        long currentTime = now.toEpochMilli();
                         
-                        // 전략의 실행 주기가 되었는지 확인
-                        if (currentTime - lastExecution >= strategy.getIntervalMillis()) {
+                        // 각 전략별로 처리
+                        for (Strategy strategy : strategiesToExecute) {
                             log.info("사용자: {}, 마켓: {}, 전략: {} - 시그널 체크 실행", 
                                 user.getUsername(), market, strategy.getName());
                             
                             // 현재 전략에 맞는 시그널인 경우에만 처리
-                            if (signal != null && signal.determineStrategy() == strategy) {
+                            if (signal.determineStrategy() == strategy) {
                                 processSignal(signal, user);
                             }
                             
                             // 실행 시간 업데이트
-                            updateLastExecutionTime(userId, market, strategy, currentTime);
+                            updateLastExecutionTime(userId, market, strategy, now.toEpochMilli());
                         }
                     }
                 } catch (Exception e) {
