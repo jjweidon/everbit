@@ -1,5 +1,6 @@
 // TradingViewWidget.jsx
 import React, { useEffect, useRef, memo } from 'react';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface TradingViewWidgetProps {
     symbol?: string;
@@ -31,7 +32,7 @@ interface TradingViewWidgetProps {
 function TradingViewWidget({
     symbol = 'UPBIT:BTCKRW',
     interval = '3',
-    theme = 'dark',
+    theme: propTheme,
     locale = 'kr',
     timezone = 'Asia/Seoul',
     allowSymbolChange = true,
@@ -39,8 +40,8 @@ function TradingViewWidget({
     hideTopToolbar = false,
     hideLegend = true,
     hideVolume = true,
-    backgroundColor = 'rgba(0, 0, 0, 1)',
-    gridColor = 'rgba(242, 242, 242, 0.06)',
+    backgroundColor,
+    gridColor,
     style = '1',
     width = '100%',
     height = '100%',
@@ -61,6 +62,12 @@ function TradingViewWidget({
     studies = []
 }: TradingViewWidgetProps) {
     const container = useRef<HTMLDivElement>(null);
+    const isDarkMode = useDarkMode();
+    
+    // 다크모드 상태에 따라 테마와 배경색, 그리드색을 동적으로 설정
+    const theme = propTheme || (isDarkMode ? 'dark' : 'light');
+    const dynamicBackgroundColor = backgroundColor || (isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)');
+    const dynamicGridColor = gridColor || (isDarkMode ? 'rgba(242, 242, 242, 0.06)' : 'rgba(0, 0, 0, 0.06)');
 
     useEffect(() => {
         if (!container.current) return;
@@ -85,8 +92,8 @@ function TradingViewWidget({
             symbol,
             theme,
             timezone,
-            backgroundColor,
-            gridColor,
+            backgroundColor: dynamicBackgroundColor,
+            gridColor: dynamicGridColor,
             watchlist,
             withdateranges: withDateRanges,
             compareSymbols,
@@ -120,9 +127,9 @@ function TradingViewWidget({
     }, [
         symbol, interval, theme, locale, timezone, allowSymbolChange,
         hideSideToolbar, hideTopToolbar, hideLegend, hideVolume,
-        backgroundColor, gridColor, style, width, height, autosize,
+        dynamicBackgroundColor, dynamicGridColor, style, width, height, autosize,
         saveImage, calendar, details, hotlist, withDateRanges,
-        watchlist, compareSymbols, studies
+        watchlist, compareSymbols, studies, isDarkMode
     ]);
 
     return (
