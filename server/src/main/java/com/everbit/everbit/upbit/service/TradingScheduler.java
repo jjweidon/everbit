@@ -123,7 +123,7 @@ public class TradingScheduler {
 
                 // 고정 금액(6000원)에 맞는 매도 수량 계산
                 BigDecimal sellAmount = FIXED_ORDER_AMOUNT.divide(currentPrice, 8, RoundingMode.DOWN);
-                log.info("마켓: {} - 매도 수량: {}", market, sellAmount);
+                log.info("마켓: {} - 계산된 매도 수량: {}", market, sellAmount);
 
                 if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     log.info("마켓: {} - 매도 수량이 0 이하여서 매도 건너뜀", market);
@@ -134,6 +134,17 @@ public class TradingScheduler {
                 if (sellAmount.compareTo(availableAmount) > 0) {
                     sellAmount = availableAmount;
                     log.info("마켓: {} - 매도 수량을 보유 수량으로 조정: {}", market, sellAmount);
+                }
+
+                // 매도 후 남을 수량 계산
+                BigDecimal remainingAmount = availableAmount.subtract(sellAmount);
+                BigDecimal remainingValue = remainingAmount.multiply(currentPrice);
+                
+                // 남은 수량이 6000원 이하이면 전체 보유 수량을 매도
+                if (remainingValue.compareTo(FIXED_ORDER_AMOUNT) <= 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    sellAmount = availableAmount;
+                    log.info("마켓: {} - 남은 수량이 6000원 이하({})이므로 전체 보유 수량 매도: {}", 
+                        market, remainingValue, sellAmount);
                 }
 
                 // 매도 주문 금액 계산 및 최소 주문 금액 체크
