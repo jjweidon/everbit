@@ -1,5 +1,6 @@
 package com.everbit.everbit.upbit.dto.trading;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import org.ta4j.core.num.Num;
 
@@ -13,6 +14,7 @@ public record TradingSignal(
     boolean macdSellSignal,
     boolean rsiOversold,
     boolean rsiOverbought,
+    BigDecimal rsiValue,
     boolean bbOverSold,
     boolean bbOverBought
 ) {
@@ -77,4 +79,4 @@ public record TradingSignal(
     public boolean isSellSignal() {
         return rsiOverbought || bbOverBought;
     }
-} 
+}

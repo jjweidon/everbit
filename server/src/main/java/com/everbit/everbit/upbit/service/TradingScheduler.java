@@ -32,9 +32,10 @@ public class TradingScheduler {
     private final UpbitQuotationClient upbitQuotationClient;
     private final UserService userService;
     private final TradeService tradeService;
-    
+    private static final BigDecimal BASE_ORDER_AMOUNT = new BigDecimal("6000");
+    private static final BigDecimal MAX_ORDER_AMOUNT = new BigDecimal("18000");
     private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-DOGE", "KRW-USDT"}; // 거래할 마켓 목록
-    private static final BigDecimal FIXED_ORDER_AMOUNT = new BigDecimal("6000"); // 고정 주문 금액 6000원
+
     
     @Transactional
     @Scheduled(cron = "0 */5 * * * *")
@@ -60,42 +61,37 @@ public class TradingScheduler {
         
         // 매수 주문 로직
         if (signal.isBuySignal()) {
-            log.info("마켓: {} - 매수 시그널 감지됨", market);
+            log.info("마켓: {} - 매수 시그널 감지됨, RSI: {}", market, signal.rsiValue());
             try {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
-                BigDecimal minOrderKRW = new BigDecimal(orderChance.market().bid().minTotal())
-                    .multiply(BigDecimal.ONE.add(new BigDecimal(orderChance.bidFee())));
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
                 
-                // 2. 주문 가능 수량 계산 (고정 금액 6000원 사용)
-                List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
-                TickerResponse ticker = tickers.get(0);
-                BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
-                BigDecimal orderBalance = FIXED_ORDER_AMOUNT.max(minOrderKRW);
-                log.info("마켓: {} - 매수 금액: {}", market, orderBalance);
-                BigDecimal orderAmount = orderBalance.divide(currentPrice, 8, RoundingMode.HALF_UP);
+                // 2. 주문 금액 계산
+                BigDecimal currentPrice = getCurrentPrice(market);
+                BigDecimal buyAmount = tradingSignalService.transformRsiValue(signal.rsiValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                buyAmount = buyAmount.min(availableBalance);
 
-                // 3. 주문 실행
-                if (orderBalance.compareTo(minOrderKRW) < 0) {
-                    log.info("마켓: {} - 매수 금액({})이 최소 주문 금액({})보다 작아 매수 건너뜀", market, orderBalance, minOrderKRW);
+                if (availableBalance.compareTo(buyAmount) < 0) {
+                    log.info("마켓: {} - 계좌 잔고({})가 매수 금액({})보다 작아 매수 건너뜀", market, availableBalance, buyAmount);
                     return;
                 }
 
-                if (availableBalance.compareTo(orderBalance) < 0) {
-                    log.info("마켓: {} - 계좌 잔고({})가 고정 매수 금액({})보다 작아 매수 건너뜀", market, availableBalance, orderBalance);
-                    return;
-                }
+                // 3. 주문 수량 계산 및 주문 실행
+                log.info("마켓: {} - 매수 금액: {}", market, buyAmount);
+                BigDecimal buyQuantity = buyAmount.divide(currentPrice, 8, RoundingMode.HALF_UP);
                 
-                OrderRequest orderRequest = OrderRequest.createBuyOrder(market, orderAmount.toString(), currentPrice.toString());
+                // BigDecimal을 일반 표기법으로 변환하여 주문 수량 문자열 생성
+                String buyQuantityStr = buyQuantity.toPlainString();
+                OrderRequest orderRequest = OrderRequest.createBuyOrder(market, buyQuantityStr, currentPrice.toString());
                 OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
 
                 // 4. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
-                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}", 
-                    market, orderResponse, signalType.getDescription());
+                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}, RSI: {}", 
+                    market, orderResponse, signalType.getDescription(), signal.rsiValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매수 시그널 처리 실패", user.getUsername(), market, e);
             }
@@ -103,68 +99,48 @@ public class TradingScheduler {
         
         // 매도 주문 로직
         if (signal.isSellSignal()) {
-            log.info("마켓: {} - 매도 시그널 감지됨", market);
+            log.info("마켓: {} - 매도 시그널 감지됨, RSI: {}", market, signal.rsiValue());
             try {
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
-                BigDecimal availableAmount = new BigDecimal(orderChance.askAccount().balance());
-                log.info("마켓: {} - 보유 수량: {}", market, availableAmount);
+                BigDecimal availableQuantity = new BigDecimal(orderChance.askAccount().balance());
+                log.info("마켓: {} - 보유 수량: {}", market, availableQuantity);
                 
-                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                if (availableQuantity.compareTo(BigDecimal.ZERO) <= 0) {
                     log.info("마켓: {} - 보유 수량이 없어 매도 건너뜀", market);
                     return;
                 }
 
-                // 2. 주문 실행
-                List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
-                TickerResponse ticker = tickers.get(0);
-                BigDecimal currentPrice = new BigDecimal(ticker.tradePrice());
-                log.info("마켓: {} - 현재 가격: {}", market, currentPrice);
+                // 2. 주문 금액 계산
+                BigDecimal currentPrice = getCurrentPrice(market);
+                BigDecimal sellAmount = tradingSignalService.transformRsiValue(signal.rsiValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
-                // 고정 금액(6000원)에 맞는 매도 수량 계산
-                BigDecimal sellAmount = FIXED_ORDER_AMOUNT.divide(currentPrice, 8, RoundingMode.DOWN);
-                log.info("마켓: {} - 계산된 매도 수량: {}", market, sellAmount);
+                // 3. 주문 수량 계산 및 주문 실행
+                BigDecimal sellQuantity = sellAmount.divide(currentPrice, 8, RoundingMode.DOWN);
 
-                if (sellAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    log.info("마켓: {} - 매도 수량이 0 이하여서 매도 건너뜀", market);
-                    return;
+                // 4. 매도 후 남을 수량 계산
+                BigDecimal remainingQuantity = availableQuantity.subtract(sellQuantity);
+                BigDecimal remainingAmount = remainingQuantity.multiply(currentPrice);
+                if (remainingAmount.compareTo(BASE_ORDER_AMOUNT) <= 0) {
+                    sellQuantity = availableQuantity;
+                    log.info("마켓: {} - 남은 주문 가능 금액 {}이 BASE_ORDER_AMOUNT({})이하이므로 전체 보유 수량 매도: {}", 
+                        market, remainingAmount, BASE_ORDER_AMOUNT, sellQuantity.multiply(currentPrice));
                 }
 
-                // 보유 수량보다 매도 수량이 많으면 보유 수량만큼만 매도
-                if (sellAmount.compareTo(availableAmount) > 0) {
-                    sellAmount = availableAmount;
-                    log.info("마켓: {} - 매도 수량을 보유 수량으로 조정: {}", market, sellAmount);
-                }
-
-                // 매도 후 남을 수량 계산
-                BigDecimal remainingAmount = availableAmount.subtract(sellAmount);
-                BigDecimal remainingValue = remainingAmount.multiply(currentPrice);
+                // 5. 매도 주문 금액 계산 및 주문 실행
+                sellAmount = sellQuantity.multiply(currentPrice);
                 
-                // 남은 수량이 6000원 이하이면 전체 보유 수량을 매도
-                if (remainingValue.compareTo(FIXED_ORDER_AMOUNT) <= 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    sellAmount = availableAmount;
-                    log.info("마켓: {} - 남은 수량이 6000원 이하({})이므로 전체 보유 수량 매도: {}", 
-                        market, remainingValue, sellAmount);
-                }
-
-                // 매도 주문 금액 계산 및 최소 주문 금액 체크
-                BigDecimal orderValue = sellAmount.multiply(currentPrice);
-                BigDecimal minOrderValue = new BigDecimal(orderChance.market().ask().minTotal());
-                
-                if (orderValue.compareTo(minOrderValue) < 0) {
-                    log.info("마켓: {} - 매도 주문 금액({})이 최소 주문 금액({})보다 작아 매도 건너뜀", 
-                        market, orderValue, minOrderValue);
-                    return;
-                }
-
-                OrderRequest orderRequest = OrderRequest.createSellOrder(market, sellAmount.toString(), currentPrice.toString());
+                // BigDecimal을 일반 표기법으로 변환하여 주문 수량 문자열 생성
+                String sellQuantityStr = sellQuantity.toPlainString();
+                OrderRequest orderRequest = OrderRequest.createSellOrder(market, sellQuantityStr, currentPrice.toString());
                 OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
 
-                // 3. 주문 결과 저장
+                // 6. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
-                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}", 
-                    market, sellAmount, orderResponse, signalType.getDescription());
+                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}, RSI: {}", 
+                    market, sellQuantity, orderResponse, signalType.getDescription(), signal.rsiValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매도 시그널 처리 실패", user.getUsername(), market, e);
             }
@@ -181,5 +157,11 @@ public class TradingScheduler {
         if (signal.rsiOverbought()) return SignalType.RSI_OVERBOUGHT;
         if (signal.bbOverBought()) return SignalType.BB_OVERBOUGHT;
         return SignalType.UNKNOWN;
+    }
+
+    private BigDecimal getCurrentPrice(String market) {
+        List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
+        TickerResponse ticker = tickers.get(0);
+        return new BigDecimal(ticker.tradePrice());
     }
 } 

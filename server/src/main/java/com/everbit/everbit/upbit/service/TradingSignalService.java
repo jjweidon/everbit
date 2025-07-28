@@ -17,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.List;
+import java.math.RoundingMode;
 
 @Slf4j
 @Service
@@ -29,14 +31,16 @@ public class TradingSignalService {
     
     // 기술적 지표 계산을 위한 상수 정의
     private static final int CANDLE_INTERVAL = 3; // 3분봉
-    private static final int CANDLE_COUNT = 100; // 데이터 포인트 수 (200 → 100으로 개선)
+    private static final int CANDLE_COUNT = 100; // 데이터 포인트 수
     private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
     private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
-    private static final int RSI_PERIOD = 14; // RSI 기간 (9 → 14로 개선)
-    private static final int BB_PERIOD = 20; // 볼린저 밴드 기간 (10 → 20으로 개선)
+    private static final int RSI_PERIOD = 14; // RSI 기간
+    private static final int BB_PERIOD = 20; // 볼린저 밴드 기간
     private static final int MACD_SHORT = 6; // MACD 단기
     private static final int MACD_LONG = 13; // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
+    private static final int RSI_BASE_OVERSOLD = 30; // RSI 과매도 기준
+    private static final int RSI_BASE_OVERBOUGHT = 70; // RSI 과매수 기준
     
     public BarSeries createBarSeries(String market) {
         // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
@@ -102,9 +106,9 @@ public class TradingSignalService {
         boolean macdSellSignal = macd.getValue(lastIndex - 1).isGreaterThan(signal.getValue(lastIndex - 1)) &&
                                 macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex));
         
-        // RSI 시그널 (과매수/과매도 기준값 조정)
-        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(25)); // 35 → 25로 개선
-        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(75)); // 65 → 75로 개선
+        // RSI 시그널
+        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(RSI_BASE_OVERSOLD));
+        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(RSI_BASE_OVERBOUGHT));
         
         // Bollinger Bands 시그널
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
@@ -120,8 +124,24 @@ public class TradingSignalService {
             macdSellSignal,
             rsiOversold,
             rsiOverbought,
+            new BigDecimal(rsi.getValue(lastIndex).doubleValue()),
             bbOverSold,
             bbOverBought
         );
+    }
+
+    public BigDecimal transformRsiValue(BigDecimal x, BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
+        if (x.compareTo(BigDecimal.ZERO) <= 0) {
+            return maxOrderAmount;
+        } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERSOLD)) <= 0) {
+            return baseOrderAmount.subtract(x.divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP).multiply(maxOrderAmount.subtract(baseOrderAmount)));
+        } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)) < 0) {
+            // return BigDecimal.ZERO;
+            return baseOrderAmount;
+        } else if (x.compareTo(BigDecimal.valueOf(100)) <= 0) {
+            return baseOrderAmount.add(x.subtract(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)).divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP).multiply(maxOrderAmount.subtract(baseOrderAmount)));
+        } else {
+            return maxOrderAmount;
+        }
     }
 } 

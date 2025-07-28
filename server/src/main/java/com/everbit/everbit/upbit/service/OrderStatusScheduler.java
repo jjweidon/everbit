@@ -24,7 +24,7 @@ public class OrderStatusScheduler {
     private final UpbitExchangeClient upbitExchangeClient;
 
     @Transactional
-    @Scheduled(fixedRate = 600000) // 10분마다 실행
+    @Scheduled(cron = "0 */10 * * * *") // 10분마다 실행
     public void checkOrderStatus() {
         log.info("주문 상태 확인 스케줄러 실행");
         
