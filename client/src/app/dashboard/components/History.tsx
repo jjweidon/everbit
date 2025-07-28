@@ -1,31 +1,33 @@
 import { useState } from 'react';
-import { FaFileExport, FaChartLine, FaHistory } from 'react-icons/fa';
+import { FaFileExport, FaChartLine, FaHistory, FaChartArea } from 'react-icons/fa';
 import { formatNumber } from '../utils/format';
 import { TradeHistoryData } from '../types';
 import { MOCK_DATA } from '../constants';
-import { TradingViewWidget } from './index';
+import { TradingViewWidget, TechnicalAnalysis } from './index';
 
 export default function History() {
     const [tradeHistoryData] = useState<TradeHistoryData>(MOCK_DATA.tradeHistory);
-    const [activeView, setActiveView] = useState<'chart' | 'history'>('history');
+    const [activeView, setActiveView] = useState<'history' | 'chart' | 'technical'>('history');
 
     return (
         <div>
             {/* 토글 버튼 */}
             <div className="flex justify-start pb-4">
-                <div className="relative flex bg-navy-100 dark:bg-navy-700 rounded-md">
+                <div className="relative flex bg-navy-100 dark:bg-navy-700 rounded-md w-[360px]">
                     {/* 슬라이드 배경 */}
                     <div
                         className={`absolute top-1 bottom-1 bg-navy-500 rounded-md transition-all duration-300 ease-in-out shadow-lg shadow-navy-500/30 ${
                             activeView === 'history'
-                                ? 'left-1 w-[calc(50%-2px)]'
-                                : 'left-[calc(50%-1px)] w-[calc(50%-2px)]'
+                                ? 'left-1 w-[120px]'
+                                : activeView === 'chart'
+                                ? 'left-[121px] w-[120px]'
+                                : 'left-[241px] w-[120px]'
                         }`}
                     />
 
                     <button
                         onClick={() => setActiveView('history')}
-                        className={`relative flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 font-medium z-10 min-w-[100px] ${
+                        className={`relative flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 font-medium z-10 w-[120px] ${
                             activeView === 'history'
                                 ? 'text-white'
                                 : 'text-navy-600 dark:text-navy-300 hover:text-navy-900 dark:hover:text-white'
@@ -36,7 +38,7 @@ export default function History() {
                     </button>
                     <button
                         onClick={() => setActiveView('chart')}
-                        className={`relative flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 font-medium z-10 min-w-[100px] ${
+                        className={`relative flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 font-medium z-10 w-[120px] ${
                             activeView === 'chart'
                                 ? 'text-white'
                                 : 'text-navy-600 dark:text-navy-300 hover:text-navy-900 dark:hover:text-white'
@@ -45,18 +47,19 @@ export default function History() {
                         <FaChartLine />
                         <span>차트</span>
                     </button>
+                    <button
+                        onClick={() => setActiveView('technical')}
+                        className={`relative flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 font-medium z-10 w-[120px] ${
+                            activeView === 'technical'
+                                ? 'text-white'
+                                : 'text-navy-600 dark:text-navy-300 hover:text-navy-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <FaChartArea />
+                        <span>분석</span>
+                    </button>   
                 </div>
             </div>
-
-            {/* TradingView 차트 */}
-            {activeView === 'chart' && (
-                <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-md shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
-                    <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">차트</h3>
-                    <div className="h-96">
-                        <TradingViewWidget />
-                    </div>
-                </div>
-            )}
 
             {/* 거래 내역 */}
             {activeView === 'history' && (
@@ -182,6 +185,24 @@ export default function History() {
                             <FaFileExport />
                             <span>CSV 내보내기</span>
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* TradingView 차트 */}
+            {activeView === 'chart' && (
+                <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-md shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                    <div className="h-96">
+                        <TradingViewWidget />
+                    </div>
+                </div>
+            )}
+
+            {/* 기술적 분석 */}
+            {activeView === 'technical' && (
+                <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-md shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                    <div className="h-96">
+                        <TechnicalAnalysis />
                     </div>
                 </div>
             )}
