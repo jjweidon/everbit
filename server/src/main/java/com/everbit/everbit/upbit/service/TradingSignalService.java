@@ -134,12 +134,18 @@ public class TradingSignalService {
         if (x.compareTo(BigDecimal.ZERO) <= 0) {
             return maxOrderAmount;
         } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERSOLD)) <= 0) {
-            return baseOrderAmount.subtract(x.divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP).multiply(maxOrderAmount.subtract(baseOrderAmount)));
+            return baseOrderAmount.subtract(maxOrderAmount)
+                .multiply(x)
+                .divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP)
+                .add(maxOrderAmount);
         } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)) < 0) {
-            // return BigDecimal.ZERO;
             return baseOrderAmount;
         } else if (x.compareTo(BigDecimal.valueOf(100)) <= 0) {
-            return baseOrderAmount.add(x.subtract(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)).divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP).multiply(maxOrderAmount.subtract(baseOrderAmount)));
+            return baseOrderAmount.subtract(maxOrderAmount)
+                .multiply(x)
+                .add(maxOrderAmount.multiply(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)))
+                .subtract(BigDecimal.valueOf(100).multiply(baseOrderAmount))
+                .divide(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT).subtract(BigDecimal.valueOf(100)), 8, RoundingMode.HALF_UP);
         } else {
             return maxOrderAmount;
         }

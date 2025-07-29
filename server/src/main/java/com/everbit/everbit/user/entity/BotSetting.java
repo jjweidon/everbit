@@ -36,31 +36,15 @@ public class BotSetting extends BaseTime {
     @Column(name = "market")
     private List<Market> marketList;
 
-    // 매수 설정
+    // 최소 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Double buyRatio = 0.25; // 매수 비율 (0.0 ~ 1.0)
+    private Long minOrderAmount = 6000L; // 최소 주문 금액 (KRW)
 
+    // 최대 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long minBuyAmount = 5000L; // 최소 주문 금액 (KRW)
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Long maxBuyAmount = 1000000L; // 최대 주문 금액 (KRW)
-
-    // 매도 설정
-    @Builder.Default
-    @Column(nullable = false)
-    private Double sellRatio = 0.5; // 매도 비율 (0.0 ~ 1.0)
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Double minSellRatio = 0.0; // 최소 매도 비율
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Double maxSellRatio = 1.0; // 최대 매도 비율
+    private Long maxOrderAmount = 1000000L; // 최대 주문 금액 (KRW)
 
     // 봇 실행 기간
     @Builder.Default
