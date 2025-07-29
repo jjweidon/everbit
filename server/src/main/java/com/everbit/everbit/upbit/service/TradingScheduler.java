@@ -34,7 +34,7 @@ public class TradingScheduler {
     private final UserService userService;
     private final TradeService tradeService;
     private static final BigDecimal BASE_ORDER_AMOUNT = new BigDecimal("6000");
-    private static final BigDecimal MAX_ORDER_AMOUNT = new BigDecimal("18000");
+    private static final BigDecimal MAX_ORDER_AMOUNT = new BigDecimal("12000");
     
     @Transactional
     @Scheduled(cron = "0 */5 * * * *")
@@ -66,6 +66,11 @@ public class TradingScheduler {
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
+
+                if (availableBalance.compareTo(BASE_ORDER_AMOUNT) < 0) {
+                    log.info("마켓: {} - 계좌 잔고가 최소 주문 금액({}) 이하이므로 매수 건너뜀", market, BASE_ORDER_AMOUNT);
+                    return;
+                }
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);

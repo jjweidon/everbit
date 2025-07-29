@@ -45,8 +45,8 @@ public class TradingSignalService {
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     private static final int RSI_BASE_OVERSOLD = 20; // RSI 과매도 기준
     private static final int RSI_BASE_OVERBOUGHT = 80; // RSI 과매수 기준
-    private static final int STOCH_RSI_OVERSOLD = 20; // Stoch RSI 과매도 기준
-    private static final int STOCH_RSI_OVERBOUGHT = 80; // Stoch RSI 과매수 기준
+    private static final int STOCH_RSI_OVERSOLD = 8; // Stoch RSI 과매도 기준
+    private static final int STOCH_RSI_OVERBOUGHT = 92; // Stoch RSI 과매수 기준
     
     public BarSeries createBarSeries(String market) {
         // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
@@ -228,6 +228,8 @@ public class TradingSignalService {
             rsiOversold,
             rsiOverbought,
             new BigDecimal(rsi.getValue(lastIndex).doubleValue()),
+            stochRsiOversold,
+            stochRsiOverbought,
             new BigDecimal(stochRsiKValue), // %K 값
             new BigDecimal(stochRsiDValue), // %D 값
             bbOverSold,

@@ -35,7 +35,8 @@ public class BotSetting extends BaseTime {
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default
-    @Column(name = "market_list")
+    @Column(name = "market")
+    @Enumerated(EnumType.STRING)
     @ElementCollection
     @CollectionTable(name = "bot_market_list", joinColumns = @JoinColumn(name = "bot_setting_id"))
     private List<Market> marketList = new ArrayList<>(List.of(Market.BTC));
