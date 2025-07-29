@@ -15,6 +15,8 @@ public record TradingSignal(
     boolean rsiOversold,
     boolean rsiOverbought,
     BigDecimal rsiValue,
+    BigDecimal stochRsiKValue,  // StochRSI %K 값
+    BigDecimal stochRsiDValue,  // StochRSI %D 값
     boolean bbOverSold,
     boolean bbOverBought
 ) {
@@ -73,10 +75,26 @@ public record TradingSignal(
     // }
 
     public boolean isBuySignal() {
-        return rsiOversold || bbOverSold;
+        return isStochRsiCrossBuySignal();
     }
     
     public boolean isSellSignal() {
-        return rsiOverbought || bbOverBought;
+        return isStochRsiCrossSellSignal();
+    }
+    
+    /**
+     * StochRSI %K와 %D 크로스오버 매수 시그널
+     * %K가 %D를 상향 돌파할 때
+     */
+    public boolean isStochRsiCrossBuySignal() {
+        return stochRsiKValue.compareTo(stochRsiDValue) > 0;
+    }
+    
+    /**
+     * StochRSI %K와 %D 크로스오버 매도 시그널
+     * %K가 %D를 하향 돌파할 때
+     */
+    public boolean isStochRsiCrossSellSignal() {
+        return stochRsiKValue.compareTo(stochRsiDValue) < 0;
     }
 }

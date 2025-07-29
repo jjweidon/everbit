@@ -31,7 +31,7 @@ interface TechnicalAnalysisProps {
 
 function TechnicalAnalysis({
     symbol = 'UPBIT:BTCKRW',
-    interval = 'D',
+    interval = '3',
     theme: propTheme,
     locale = 'kr',
     timezone = 'Asia/Seoul',

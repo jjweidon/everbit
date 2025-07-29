@@ -8,14 +8,14 @@ import lombok.RequiredArgsConstructor;
 public enum Market {
     BTC("KRW-BTC"),
     ETH("KRW-ETH"),
+    SOL("KRW-SOL"),
+    DOGE("KRW-DOGE"),
+    USDT("KRW-USDT"),
     STRIKE("KRW-STRIKE"),
     XRP("KRW-XRP"),
-    DOGE("KRW-DOGE"),
     PENGU("KRW-PENGU"),
-    SOL("KRW-SOL"),
     ARDR("KRW-ARDR"),
     STRAX("KRW-STRAX"),
-    USDT("KRW-USDT"),
     ENS("KRW-ENS"),
     AERGO("KRW-AERGO");
 

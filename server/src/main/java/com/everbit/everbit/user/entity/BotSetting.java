@@ -2,7 +2,7 @@ package com.everbit.everbit.user.entity;
 
 import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Market;
-import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.entity.enums.CandleInterval;
 
 import jakarta.persistence.*;
@@ -28,23 +28,24 @@ public class BotSetting extends BaseTime {
     private User user;
     
     @Enumerated(EnumType.STRING)
-    private SignalType signalType;
+    private Strategy strategy;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
+    @Builder.Default
+    @Column(name = "market_list")
     @ElementCollection
     @CollectionTable(name = "bot_market_list", joinColumns = @JoinColumn(name = "bot_setting_id"))
-    @Column(name = "market")
-    private List<Market> marketList;
+    private List<Market> marketList = List.of(Market.BTC);
 
     // 최소 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long minOrderAmount = 6000L; // 최소 주문 금액 (KRW)
+    private Long baseOrderAmount = 6000L; // 최소 주문 금액 (KRW)
 
     // 최대 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long maxOrderAmount = 1000000L; // 최대 주문 금액 (KRW)
+    private Long maxOrderAmount = 18000L; // 최대 주문 금액 (KRW)
 
     // 봇 실행 기간
     @Builder.Default

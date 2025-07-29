@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum TradeStatus {
-    WAIT("wait"),
-    WATCH("watch"),
-    DONE("done"),
-    CANCEL("cancel");
+    WAIT("대기"),
+    WATCH("관찰"),
+    DONE("완료"),
+    CANCEL("취소");
 
-    private final String value;
+    private final String description;
 } 

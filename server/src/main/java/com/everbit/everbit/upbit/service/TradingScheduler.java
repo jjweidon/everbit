@@ -70,7 +70,7 @@ public class TradingScheduler {
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal buyAmount = tradingSignalService.transformRsiValue(signal.rsiValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                BigDecimal buyAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -113,7 +113,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal sellAmount = tradingSignalService.transformRsiValue(signal.rsiValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                BigDecimal sellAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행
@@ -148,6 +148,8 @@ public class TradingScheduler {
     }
 
     private SignalType determineSignalType(TradingSignal signal) {
+        if (signal.isStochRsiCrossBuySignal()) return SignalType.STOCH_RSI_CROSS_BUY;
+        if (signal.isStochRsiCrossSellSignal()) return SignalType.STOCH_RSI_CROSS_SELL;
         if (signal.goldenCross()) return SignalType.GOLDEN_CROSS;
         if (signal.macdBuySignal()) return SignalType.MACD_BUY;
         if (signal.rsiOversold()) return SignalType.RSI_OVERSOLD;

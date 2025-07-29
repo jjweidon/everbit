@@ -1,8 +1,6 @@
 package com.everbit.everbit.trade.dto;
 
 import com.everbit.everbit.trade.entity.Trade;
-import com.everbit.everbit.trade.entity.enums.TradeType;
-import com.everbit.everbit.trade.entity.enums.TradeStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,25 +16,27 @@ import lombok.Builder;
 public record TradeResponse(
     String tradeId,
     String market,
-    TradeType type,
+    String type,
     String orderId,
     BigDecimal price,
     BigDecimal amount,
     BigDecimal totalPrice,
-    TradeStatus status,
-    String signalType
+    String status,
+    String signalType,
+    String updatedAt
 ) {
     public static TradeResponse from(Trade trade) {
         return TradeResponse.builder()
             .tradeId(trade.getId())
             .market(trade.getMarket().getCode())
-            .type(trade.getType())
+            .type(trade.getType().getDescription())
             .orderId(trade.getOrderId())
             .price(trade.getPrice())
             .amount(trade.getAmount())
             .totalPrice(trade.getTotalPrice())
-            .status(trade.getStatus())
+            .status(trade.getStatus().getDescription())
             .signalType(trade.getSignalType().getDescription())
+            .updatedAt(trade.getUpdatedAt().toString())
             .build();
     }
 

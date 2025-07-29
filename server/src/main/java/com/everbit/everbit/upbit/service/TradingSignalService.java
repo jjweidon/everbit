@@ -20,6 +20,7 @@ import java.time.ZonedDateTime;
 import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.ArrayList;
 import java.math.RoundingMode;
 
 @Slf4j
@@ -35,12 +36,17 @@ public class TradingSignalService {
     private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
     private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
     private static final int RSI_PERIOD = 14; // RSI 기간
+    private static final int STOCH_RSI_PERIOD = 14; // Stoch RSI 기간
+    private static final int STOCH_K_PERIOD = 3; // Stoch RSI %K 기간
+    private static final int STOCH_D_PERIOD = 3; // Stoch RSI %D 기간
     private static final int BB_PERIOD = 20; // 볼린저 밴드 기간
     private static final int MACD_SHORT = 6; // MACD 단기
     private static final int MACD_LONG = 13; // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
-    private static final int RSI_BASE_OVERSOLD = 30; // RSI 과매도 기준
-    private static final int RSI_BASE_OVERBOUGHT = 70; // RSI 과매수 기준
+    private static final int RSI_BASE_OVERSOLD = 20; // RSI 과매도 기준
+    private static final int RSI_BASE_OVERBOUGHT = 80; // RSI 과매수 기준
+    private static final int STOCH_RSI_OVERSOLD = 20; // Stoch RSI 과매도 기준
+    private static final int STOCH_RSI_OVERBOUGHT = 80; // Stoch RSI 과매수 기준
     
     public BarSeries createBarSeries(String market) {
         // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
@@ -65,6 +71,87 @@ public class TradingSignalService {
         }
         
         return series;
+    }
+    
+    /**
+     * StochRSI Raw 값 계산 (Fast %K)
+     */
+    private double calculateStochRSIRaw(BarSeries series, int index) {
+        if (index < STOCH_RSI_PERIOD) {
+            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
+        }
+        
+        // RSI 계산
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        RSIIndicator rsi = new RSIIndicator(closePrice, STOCH_RSI_PERIOD);
+        
+        // Stoch RSI 계산을 위한 최고/최저 RSI 값 찾기
+        double maxRsi = Double.MIN_VALUE;
+        double minRsi = Double.MAX_VALUE;
+        
+        for (int i = index - STOCH_RSI_PERIOD + 1; i <= index; i++) {
+            double rsiValue = rsi.getValue(i).doubleValue();
+            maxRsi = Math.max(maxRsi, rsiValue);
+            minRsi = Math.min(minRsi, rsiValue);
+        }
+        
+        double currentRsi = rsi.getValue(index).doubleValue();
+        
+        // Stoch RSI 공식: (현재 RSI - 최저 RSI) / (최고 RSI - 최저 RSI) * 100
+        if (maxRsi == minRsi) {
+            return 50.0; // 분모가 0인 경우 중간값 반환
+        }
+        
+        return ((currentRsi - minRsi) / (maxRsi - minRsi)) * 100.0;
+    }
+    
+    /**
+     * StochRSI %K 값 계산 (StochRSI Raw의 3기간 평균)
+     */
+    public double calculateStochRSI_K(BarSeries series, int index) {
+        if (index < STOCH_RSI_PERIOD + STOCH_K_PERIOD - 1) {
+            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
+        }
+        
+        // StochRSI Raw 값 3개 수집
+        List<Double> rawValues = new ArrayList<>();
+        
+        for (int i = index - STOCH_K_PERIOD + 1; i <= index; i++) {
+            double rawValue = calculateStochRSIRaw(series, i);
+            rawValues.add(rawValue);
+        }
+        
+        // %K = StochRSI Raw의 3기간 평균
+        return rawValues.stream().mapToDouble(d -> d).average().orElse(50.0);
+    }
+    
+    /**
+     * StochRSI %D 값 계산 (%K의 3기간 평균)
+     */
+    public double calculateStochRSI_D(BarSeries series, int index) {
+        if (index < STOCH_RSI_PERIOD + STOCH_K_PERIOD + STOCH_D_PERIOD - 2) {
+            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
+        }
+        
+        // %K 값 3개 수집
+        List<Double> kValues = new ArrayList<>();
+        
+        for (int i = index - STOCH_D_PERIOD + 1; i <= index; i++) {
+            double kValue = calculateStochRSI_K(series, i);
+            kValues.add(kValue);
+        }
+        
+        // %D = %K의 3기간 평균
+        return kValues.stream().mapToDouble(d -> d).average().orElse(50.0);
+    }
+    
+    /**
+     * StochRSI 계산 (기존 메서드와의 호환성을 위해 유지)
+     * @deprecated calculateStochRSI_K() 또는 calculateStochRSI_D() 사용 권장
+     */
+    @Deprecated
+    public double calculateStochRSI(BarSeries series, int index) {
+        return calculateStochRSI_K(series, index);
     }
     
     public TradingSignal calculateSignals(String market) {
@@ -110,6 +197,26 @@ public class TradingSignalService {
         boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(RSI_BASE_OVERSOLD));
         boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(RSI_BASE_OVERBOUGHT));
         
+        // Stoch RSI 시그널 (개선된 %K 값 사용)
+        double stochRsiKValue = calculateStochRSI_K(series, lastIndex);
+        double stochRsiDValue = calculateStochRSI_D(series, lastIndex);
+        boolean stochRsiOversold = stochRsiKValue <= STOCH_RSI_OVERSOLD;
+        boolean stochRsiOverbought = stochRsiKValue >= STOCH_RSI_OVERBOUGHT;
+        
+        // 디버깅 로그 (개선된 정보 포함)
+        log.info("Market: {}, Time: {}, RSI: {:.2f}, Stoch RSI %K: {:.2f}, Stoch RSI %D: {:.2f}", 
+            market, series.getLastBar().getEndTime(), 
+            rsi.getValue(lastIndex).doubleValue(), stochRsiKValue, stochRsiDValue);
+        
+        if (stochRsiOversold) {
+            log.info("Stoch RSI 과매도 시그널! Market: {}, Stoch RSI %K: {:.2f}, %D: {:.2f}", 
+                market, stochRsiKValue, stochRsiDValue);
+        }
+        if (stochRsiOverbought) {
+            log.info("Stoch RSI 과매수 시그널! Market: {}, Stoch RSI %K: {:.2f}, %D: {:.2f}", 
+                market, stochRsiKValue, stochRsiDValue);
+        }
+        
         // Bollinger Bands 시그널
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
         boolean bbOverBought = closePrice.getValue(lastIndex).isGreaterThan(bbu.getValue(lastIndex));
@@ -125,6 +232,8 @@ public class TradingSignalService {
             rsiOversold,
             rsiOverbought,
             new BigDecimal(rsi.getValue(lastIndex).doubleValue()),
+            new BigDecimal(stochRsiKValue), // %K 값
+            new BigDecimal(stochRsiDValue), // %D 값
             bbOverSold,
             bbOverBought
         );
