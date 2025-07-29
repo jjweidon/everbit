@@ -30,10 +30,4 @@ export const GUIDE_STEPS: GuideStep[] = [
             '발급된 Access Key와 Secret Key를 확인합니다.\n이 키들은 중요한 정보이므로 복사해서 안전하게 보관해주세요.\nSecret Key는 이 페이지를 벗어나면 다시 확인할 수 없습니다.',
         imagePath: '/images/upbit-key/step4-take-key.png',
     },
-    {
-        step: 5,
-        title: '출금허용주소 등록',
-        description: 'Open API를 통해 출금하기 위해서 출금허용주소를 반드시 등록해주세요.',
-        imagePath: '/images/upbit-key/step5-address.png',
-    },
 ];
