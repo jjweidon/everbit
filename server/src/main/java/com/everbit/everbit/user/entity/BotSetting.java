@@ -11,6 +11,7 @@ import lombok.*;
 import de.huxhorn.sulky.ulid.ULID;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,7 +38,7 @@ public class BotSetting extends BaseTime {
     @Column(name = "market_list")
     @ElementCollection
     @CollectionTable(name = "bot_market_list", joinColumns = @JoinColumn(name = "bot_setting_id"))
-    private List<Market> marketList = List.of(Market.BTC);
+    private List<Market> marketList = new ArrayList<>(List.of(Market.BTC));
 
     // 최소 주문 금액
     @Builder.Default
@@ -71,6 +72,12 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = false;
+
+    public static BotSetting init(User user) {
+        return BotSetting.builder()
+                .user(user)
+                .build();
+    }
 
     public void update(BotSettingRequest request) {
         this.strategy = request.strategy();

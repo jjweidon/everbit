@@ -63,4 +63,8 @@ public class User extends BaseTime {
     public void toggleBotActive() {
         this.isBotActive = !this.isBotActive;
     }
+
+    public void setBotSetting(BotSetting botSetting) {
+        this.botSetting = botSetting;
+    }
 }

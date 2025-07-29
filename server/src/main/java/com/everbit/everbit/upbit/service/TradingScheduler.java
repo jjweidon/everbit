@@ -45,7 +45,7 @@ public class TradingScheduler {
             for (Market market : user.getBotSetting().getMarketList()) {
                 try {
                     log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 확인 중", user.getUsername(), market);
-                    TradingSignal signal = tradingSignalService.calculateSignals(market.name());
+                    TradingSignal signal = tradingSignalService.calculateSignals(market.getCode());
                     processSignal(signal, user);
                 } catch (Exception e) {
                     log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
