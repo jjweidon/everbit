@@ -3,6 +3,7 @@ package com.everbit.everbit.user.entity;
 import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.trade.entity.enums.Strategy;
+import com.everbit.everbit.user.dto.BotSettingRequest;
 import com.everbit.everbit.trade.entity.enums.CandleInterval;
 
 import jakarta.persistence.*;
@@ -27,8 +28,9 @@ public class BotSetting extends BaseTime {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    private Strategy strategy;
+    private Strategy strategy = Strategy.STOCH_RSI;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default
@@ -59,14 +61,25 @@ public class BotSetting extends BaseTime {
     @Builder.Default
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CandleInterval candleInterval = CandleInterval.TEN; // 분봉 단위 (1, 3, 5, 10, 15, 30, 60, 240)
+    private CandleInterval candleInterval = CandleInterval.THREE; // 분봉 단위 (1, 3, 5, 10, 15, 30, 60, 240)
 
     @Builder.Default
     @Column(nullable = false)
-    private Integer candleCoun = 10; // 분석할 캔들 개수
+    private Integer candleCount = 100; // 분석할 캔들 개수
 
     // 봇 활성화 상태
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = false;
+
+    public void update(BotSettingRequest request) {
+        this.strategy = request.strategy();
+        this.marketList = request.marketList();
+        this.baseOrderAmount = request.baseOrderAmount();
+        this.maxOrderAmount = request.maxOrderAmount();
+        this.startTime = request.startTime();
+        this.endTime = request.endTime();
+        this.candleInterval = request.candleInterval();
+        this.candleCount = request.candleCount();
+    }
 }

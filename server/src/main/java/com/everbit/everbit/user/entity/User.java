@@ -38,6 +38,9 @@ public class User extends BaseTime {
     @Builder.Default
     private Boolean isBotActive = false;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private BotSetting botSetting;
+
     public static User init(OAuth2Response oAuth2Response) {
         String username = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
         return User.builder()

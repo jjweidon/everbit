@@ -204,17 +204,13 @@ public class TradingSignalService {
         boolean stochRsiOverbought = stochRsiKValue >= STOCH_RSI_OVERBOUGHT;
         
         // 디버깅 로그 (개선된 정보 포함)
-        log.info("Market: {}, Time: {}, RSI: {:.2f}, Stoch RSI %K: {:.2f}, Stoch RSI %D: {:.2f}", 
-            market, series.getLastBar().getEndTime(), 
-            rsi.getValue(lastIndex).doubleValue(), stochRsiKValue, stochRsiDValue);
-        
         if (stochRsiOversold) {
-            log.info("Stoch RSI 과매도 시그널! Market: {}, Stoch RSI %K: {:.2f}, %D: {:.2f}", 
-                market, stochRsiKValue, stochRsiDValue);
+            log.info("Stoch RSI 과매도 시그널! Market: {}, Stoch RSI %K: {}, %D: {}", 
+                market, String.format("%.2f", stochRsiKValue), String.format("%.2f", stochRsiDValue));
         }
         if (stochRsiOverbought) {
-            log.info("Stoch RSI 과매수 시그널! Market: {}, Stoch RSI %K: {:.2f}, %D: {:.2f}", 
-                market, stochRsiKValue, stochRsiDValue);
+            log.info("Stoch RSI 과매수 시그널! Market: {}, Stoch RSI %K: {}, %D: {}", 
+                market, String.format("%.2f", stochRsiKValue), String.format("%.2f", stochRsiDValue));
         }
         
         // Bollinger Bands 시그널

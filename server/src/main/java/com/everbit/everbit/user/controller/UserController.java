@@ -3,6 +3,8 @@ package com.everbit.everbit.user.controller;
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
+import com.everbit.everbit.user.dto.BotSettingRequest;
+import com.everbit.everbit.user.dto.BotSettingResponse;
 import com.everbit.everbit.user.dto.EmailRequest;
 import com.everbit.everbit.user.dto.UpbitApiKeysResponse;
 import com.everbit.everbit.user.dto.UpbitKeyRequest;
@@ -65,5 +67,23 @@ public class UserController {
         log.info("PATCH 봇 활성화 토글: {}", username);
         UserResponse response = userManager.toggleBotActive(username);
         return ApiResponse.success(response, "봇 활성화 토글 성공");
+    }
+
+    // 봇 설정 조회
+    @GetMapping("/me/bot-setting")
+    public ApiResponse<Response> getBotSetting(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+        String username = oAuth2User.getName();
+        log.info("GET 봇 설정 조회: {}", username);
+        BotSettingResponse response = userManager.getBotSetting(username);
+        return ApiResponse.success(response, "봇 설정 조회 성공");
+    }
+
+    // 봇 설정 업데이트
+    @PutMapping("/me/bot-setting")
+    public ApiResponse<Response> updateBotSetting(@AuthenticationPrincipal CustomOAuth2User oAuth2User, @RequestBody BotSettingRequest request) {
+        String username = oAuth2User.getName();
+        log.info("PUT 봇 설정 업데이트: {}", username);
+        BotSettingResponse response = userManager.updateBotSetting(username, request);
+        return ApiResponse.success(response, "봇 설정 업데이트 성공");
     }
 } 

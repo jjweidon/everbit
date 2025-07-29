@@ -1,0 +1,26 @@
+package com.everbit.everbit.user.dto;
+
+import com.everbit.everbit.user.entity.BotSetting;
+import com.everbit.everbit.global.dto.Response;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.everbit.everbit.trade.entity.enums.Market;
+import java.util.List;
+
+import lombok.Builder;
+
+@Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+public record BotSettingResponse(
+    String botSettingId,
+    String strategy,
+    List<Market> marketList
+) implements Response {
+    public static BotSettingResponse from(BotSetting botSetting) {
+        return BotSettingResponse.builder()
+            .botSettingId(botSetting.getId())
+            .strategy(botSetting.getStrategy().name())
+            .marketList(botSetting.getMarketList())
+            .build();
+    }
+}

@@ -4,10 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.everbit.everbit.global.util.EncryptionUtil;
+import com.everbit.everbit.user.dto.BotSettingRequest;
+import com.everbit.everbit.user.dto.BotSettingResponse;
 import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.dto.UpbitApiKeysResponse;
 import com.everbit.everbit.user.dto.UserResponse;
 import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.user.entity.BotSetting;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,5 +57,20 @@ public class UserManager {
         user.toggleBotActive();
         userService.saveUser(user);
         return UserResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public BotSettingResponse getBotSetting(String username) {
+        User user = userService.findUserByUsername(username);
+        return BotSettingResponse.from(user.getBotSetting());
+    }
+
+    @Transactional
+    public BotSettingResponse updateBotSetting(String username, BotSettingRequest request) {
+        User user = userService.findUserByUsername(username);
+        BotSetting botSetting = user.getBotSetting();
+        botSetting.update(request);
+        userService.saveUser(user);
+        return BotSettingResponse.from(botSetting);
     }
 }

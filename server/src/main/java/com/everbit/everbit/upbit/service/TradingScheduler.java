@@ -9,6 +9,7 @@ import com.everbit.everbit.upbit.dto.quotation.TickerResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderChanceResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderRequest;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
+import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
@@ -34,8 +35,6 @@ public class TradingScheduler {
     private final TradeService tradeService;
     private static final BigDecimal BASE_ORDER_AMOUNT = new BigDecimal("6000");
     private static final BigDecimal MAX_ORDER_AMOUNT = new BigDecimal("18000");
-    private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-DOGE", "KRW-USDT"}; // 거래할 마켓 목록
-
     
     @Transactional
     @Scheduled(cron = "0 */5 * * * *")
@@ -43,10 +42,10 @@ public class TradingScheduler {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         
         for (User user : activeUsers) {
-            for (String market : MARKETS) {
+            for (Market market : user.getBotSetting().getMarketList()) {
                 try {
                     log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 확인 중", user.getUsername(), market);
-                    TradingSignal signal = tradingSignalService.calculateSignals(market);
+                    TradingSignal signal = tradingSignalService.calculateSignals(market.name());
                     processSignal(signal, user);
                 } catch (Exception e) {
                     log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
@@ -61,7 +60,7 @@ public class TradingScheduler {
         
         // 매수 주문 로직
         if (signal.isBuySignal()) {
-            log.info("마켓: {} - 매수 시그널 감지됨, RSI: {}", market, signal.rsiValue());
+            log.info("마켓: {} - 매수 시그널 감지됨, Stoch RSI %K: {}", market, signal.stochRsiKValue());
             try {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -90,8 +89,8 @@ public class TradingScheduler {
                 // 4. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
-                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}, RSI: {}", 
-                    market, orderResponse, signalType.getDescription(), signal.rsiValue());
+                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
+                    market, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매수 시그널 처리 실패", user.getUsername(), market, e);
             }
@@ -99,7 +98,7 @@ public class TradingScheduler {
         
         // 매도 주문 로직
         if (signal.isSellSignal()) {
-            log.info("마켓: {} - 매도 시그널 감지됨, RSI: {}", market, signal.rsiValue());
+            log.info("마켓: {} - 매도 시그널 감지됨, Stoch RSI %K: {}", market, signal.stochRsiKValue());
             try {
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -139,8 +138,8 @@ public class TradingScheduler {
                 // 6. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
-                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}, RSI: {}", 
-                    market, sellQuantity, orderResponse, signalType.getDescription(), signal.rsiValue());
+                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
+                    market, sellQuantity, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매도 시그널 처리 실패", user.getUsername(), market, e);
             }
