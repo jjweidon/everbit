@@ -33,8 +33,6 @@ public class TradingScheduler {
     private final UpbitQuotationClient upbitQuotationClient;
     private final UserService userService;
     private final TradeService tradeService;
-    private static final BigDecimal BASE_ORDER_AMOUNT = new BigDecimal("6000");
-    private static final BigDecimal MAX_ORDER_AMOUNT = new BigDecimal("12000");
     
     @Transactional
     @Scheduled(cron = "0 */5 * * * *")
@@ -45,7 +43,7 @@ public class TradingScheduler {
             for (Market market : user.getBotSetting().getMarketList()) {
                 try {
                     log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 확인 중", user.getUsername(), market);
-                    TradingSignal signal = tradingSignalService.calculateSignals(market.getCode());
+                    TradingSignal signal = tradingSignalService.calculateSignals(market.getCode(), user);
                     processSignal(signal, user);
                 } catch (Exception e) {
                     log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
@@ -57,6 +55,8 @@ public class TradingScheduler {
     @Transactional
     private void processSignal(TradingSignal signal, User user) {
         String market = signal.market();
+        BigDecimal baseOrderAmount = new BigDecimal(user.getBotSetting().getBaseOrderAmount());
+        BigDecimal maxOrderAmount = new BigDecimal(user.getBotSetting().getMaxOrderAmount());
         
         // 매수 주문 로직
         if (signal.isBuySignal()) {
@@ -67,14 +67,14 @@ public class TradingScheduler {
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
 
-                if (availableBalance.compareTo(BASE_ORDER_AMOUNT) < 0) {
-                    log.info("마켓: {} - 계좌 잔고가 최소 주문 금액({}) 이하이므로 매수 건너뜀", market, BASE_ORDER_AMOUNT);
+                if (availableBalance.compareTo(baseOrderAmount) < 0) {
+                    log.info("마켓: {} - 계좌 잔고가 최소 주문 금액({}) 이하이므로 매수 건너뜀", market, baseOrderAmount);
                     return;
                 }
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal buyAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                BigDecimal buyAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), baseOrderAmount, maxOrderAmount);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -117,7 +117,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal sellAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT);
+                BigDecimal sellAmount = tradingSignalService.transformRsiValue(signal.stochRsiKValue(), baseOrderAmount, maxOrderAmount);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행
@@ -126,10 +126,10 @@ public class TradingScheduler {
                 // 4. 매도 후 남을 수량 계산
                 BigDecimal remainingQuantity = availableQuantity.subtract(sellQuantity);
                 BigDecimal remainingAmount = remainingQuantity.multiply(currentPrice);
-                if (remainingAmount.compareTo(BASE_ORDER_AMOUNT) <= 0) {
+                if (remainingAmount.compareTo(baseOrderAmount) <= 0) {
                     sellQuantity = availableQuantity;
                     log.info("마켓: {} - 남은 주문 가능 금액 {}이 BASE_ORDER_AMOUNT({})이하이므로 전체 보유 수량 매도: {}", 
-                        market, remainingAmount, BASE_ORDER_AMOUNT, sellQuantity.multiply(currentPrice));
+                        market, remainingAmount, baseOrderAmount, sellQuantity.multiply(currentPrice));
                 }
 
                 // 5. 매도 주문 금액 계산 및 주문 실행

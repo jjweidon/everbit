@@ -11,6 +11,7 @@ import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 
+import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.upbit.dto.quotation.MinuteCandleResponse;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,8 @@ public class TradingSignalService {
     private static final ZoneId UTC = ZoneId.of("UTC");
     
     // 기술적 지표 계산을 위한 상수 정의
-    private static final int CANDLE_INTERVAL = 3; // 3분봉
-    private static final int CANDLE_COUNT = 100; // 데이터 포인트 수
+    // private static final int CANDLE_INTERVAL = 3; // 3분봉
+    // private static final int CANDLE_COUNT = 100; // 데이터 포인트 수
     private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
     private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
     private static final int RSI_PERIOD = 14; // RSI 기간
@@ -48,9 +49,11 @@ public class TradingSignalService {
     private static final int STOCH_RSI_OVERSOLD = 8; // Stoch RSI 과매도 기준
     private static final int STOCH_RSI_OVERBOUGHT = 92; // Stoch RSI 과매수 기준
     
-    public BarSeries createBarSeries(String market) {
+    public BarSeries createBarSeries(String market, User user) {
+        int candleInterval = user.getBotSetting().getCandleInterval().getMinutes();
+        int candleCount = user.getBotSetting().getCandleCount();
         // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(CANDLE_INTERVAL, market, null, CANDLE_COUNT);
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(candleInterval, market, null, candleCount);
         
         // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
@@ -154,8 +157,8 @@ public class TradingSignalService {
         return calculateStochRSI_K(series, index);
     }
     
-    public TradingSignal calculateSignals(String market) {
-        BarSeries series = createBarSeries(market);
+    public TradingSignal calculateSignals(String market, User user) {
+        BarSeries series = createBarSeries(market, user);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         
         // 이동평균선 (3일, 10일)
