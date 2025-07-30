@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.upbit.dto.exchange.AccountResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderRequest;
@@ -141,7 +141,7 @@ public class LossManagementScheduler {
             OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
             
             // 주문 결과 저장
-            tradeService.saveTrade(user, market, orderResponse, currentPrice, SignalType.LOSS_MANAGEMENT);
+            tradeService.saveTrade(user, market, Strategy.LOSS_MANAGEMENT, orderResponse, currentPrice);
             
             log.info("사용자: {}, 마켓: {} - 전량 매도 주문 완료. 주문ID: {}, 수량: {}, 가격: {}", 
                 user.getUsername(), market, orderResponse.uuid(), sellQuantityStr, currentPrice);

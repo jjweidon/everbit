@@ -1,6 +1,7 @@
 package com.everbit.everbit.trade.entity;
 
 import com.everbit.everbit.global.entity.BaseTime;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.entity.enums.TradeType;
 import com.everbit.everbit.trade.entity.enums.SignalType;
@@ -40,6 +41,10 @@ public class Trade extends BaseTime {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private Strategy strategy; // 매매 전략
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TradeType type; // 매수/매도 구분
 
     @Column(nullable = false)
@@ -58,21 +63,17 @@ public class Trade extends BaseTime {
     @Column(nullable = false)
     private TradeStatus status; // 주문 상태
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SignalType signalType; // 매매 시그널 정보 (예: MACD_CROSS, RSI_OVERSOLD 등)
-
-    public static Trade of(User user, String market, OrderResponse orderResponse, BigDecimal price, SignalType signalType) {
+    public static Trade of(User user, String market, Strategy strategy, OrderResponse orderResponse, BigDecimal price) {
         return Trade.builder()
             .user(user)
             .market(Market.fromCode(market))
+            .strategy(strategy)
             .type(TradeType.valueOf(orderResponse.side().toUpperCase()))
             .orderId(orderResponse.uuid())
             .price(price)
             .amount(new BigDecimal(orderResponse.volume()))
             .totalPrice(price.multiply(new BigDecimal(orderResponse.volume())))
             .status(TradeStatus.WAIT)
-            .signalType(signalType)
             .build();
     }
 

@@ -88,3 +88,31 @@ export const MOCK_DATA = {
         },
     },
 } as const;
+
+// 봇 설정 관련 상수
+export const BASE_ORDER_AMOUNT = 6000;
+export const MAX_ORDER_AMOUNT = 100000;
+
+export const CANDLE_INTERVALS = [
+    { value: 'ONE', label: '1분' },
+    { value: 'THREE', label: '3분' },
+    { value: 'FIVE', label: '5분' },
+    { value: 'TEN', label: '10분' },
+    { value: 'FIFTEEN', label: '15분' },
+    { value: 'THIRTY', label: '30분' },
+    { value: 'SIXTY', label: '1시간' },
+    { value: 'TWO_FORTY', label: '4시간' },
+];
+
+export const STRATEGIES = [
+    { value: 'STOCH_RSI', label: 'Stoch RSI', description: 'Stoch RSI를 이용한 전략' },
+    { value: 'RSI_BB', label: 'RSI + 볼린저밴드', description: 'RSI와 볼린저밴드를 결합한 전략' },
+    { value: 'EMA_MOMENTUM', label: 'EMA 크로스 + 모멘텀', description: 'EMA(9) vs EMA(21) 크로스와 ADX 모멘텀 필터를 결합한 전략' },
+    { value: 'BB_MOMENTUM', label: '볼린저밴드 + 모멘텀', description: '볼린저밴드 평균회귀와 모멘텀 필터를 결합한 전략' },
+    { value: 'GOLDEN_CROSS', label: '골든크로스', description: '50일 EMA와 200일 EMA의 크로스를 이용한 장기 추세추종 전략' },
+    { value: 'ENSEMBLE', label: '앙상블 전략', description: '여러 전략의 시그널을 종합적으로 분석하여 매매하는 전략' },
+];
+
+export const MARKETS = [
+    'BTC', 'ETH', 'SOL', 'DOGE', 'USDT', 'STRIKE', 'XRP', 'PENGU', 'ARDR', 'STRAX', 'ENS', 'AERGO'
+];

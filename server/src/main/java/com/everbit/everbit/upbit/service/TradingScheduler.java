@@ -10,6 +10,7 @@ import com.everbit.everbit.upbit.dto.exchange.OrderChanceResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderRequest;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
 import com.everbit.everbit.trade.entity.enums.Market;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
@@ -57,6 +58,7 @@ public class TradingScheduler {
         String market = signal.market();
         BigDecimal baseOrderAmount = new BigDecimal(user.getBotSetting().getBaseOrderAmount());
         BigDecimal maxOrderAmount = new BigDecimal(user.getBotSetting().getMaxOrderAmount());
+        Strategy strategy = user.getBotSetting().getStrategy();
         
         // 매수 주문 로직
         if (signal.isBuySignal()) {
@@ -93,7 +95,7 @@ public class TradingScheduler {
 
                 // 4. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
-                tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
+                tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
                 log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
                     market, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {
@@ -142,7 +144,7 @@ public class TradingScheduler {
 
                 // 6. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
-                tradeService.saveTrade(user, market, orderResponse, currentPrice, signalType);
+                tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
                 log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
                     market, sellQuantity, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {

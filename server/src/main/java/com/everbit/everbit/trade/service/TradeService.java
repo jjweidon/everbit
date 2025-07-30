@@ -12,7 +12,7 @@ import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.repository.TradeRepository;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
 import com.everbit.everbit.user.entity.User;
-import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,13 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 public class TradeService {
     private final TradeRepository tradeRepository;
 
-    public List<TradeResponse> getTrades() {
-        return TradeResponse.from(tradeRepository.findAll());
+    public List<Trade> getTrades(User user) {
+        return tradeRepository.findByUser(user);
     }
 
     @Transactional
-    public Trade saveTrade(User user, String market, OrderResponse orderResponse, BigDecimal price, SignalType signalType) {
-        Trade trade = Trade.of(user, market, orderResponse, price, signalType);
+    public Trade saveTrade(User user, String market, Strategy strategy, OrderResponse orderResponse, BigDecimal price) {
+        Trade trade = Trade.of(user, market, strategy, orderResponse, price);
         return tradeRepository.save(trade);
     }
 

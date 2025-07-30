@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { BotSettingsData, BacktestData } from '../types';
 import { FaChartLine, FaChartArea, FaCrosshairs, FaBitcoin, FaChevronUp, FaChevronDown, FaSave, FaSpinner } from 'react-icons/fa';
-import { MOCK_DATA } from '../constants';
+import { 
+    MOCK_DATA, 
+    BASE_ORDER_AMOUNT, 
+    MAX_ORDER_AMOUNT, 
+    CANDLE_INTERVALS, 
+    STRATEGIES, 
+    MARKETS 
+} from '../constants';
 import { userApi } from '@/api/services/userApi';
 import { BotSettingRequest } from '@/api/types/user';
 
@@ -40,32 +47,7 @@ const selectInputStyle = `
     appearance-none
 `;
 
-const BASE_ORDER_AMOUNT = 6000;
-const MAX_ORDER_AMOUNT = 100000;
 
-const CANDLE_INTERVALS = [
-    { value: 'ONE', label: '1분' },
-    { value: 'THREE', label: '3분' },
-    { value: 'FIVE', label: '5분' },
-    { value: 'TEN', label: '10분' },
-    { value: 'FIFTEEN', label: '15분' },
-    { value: 'THIRTY', label: '30분' },
-    { value: 'SIXTY', label: '1시간' },
-    { value: 'TWO_FORTY', label: '4시간' },
-];
-
-const AVAILABLE_STRATEGIES = [
-    { value: 'STOCH_RSI', label: 'Stoch RSI', description: 'Stoch RSI를 이용한 전략' },
-    { value: 'RSI_BB', label: 'RSI + 볼린저밴드', description: 'RSI와 볼린저밴드를 결합한 전략' },
-    { value: 'EMA_MOMENTUM', label: 'EMA 크로스 + 모멘텀', description: 'EMA(9) vs EMA(21) 크로스와 ADX 모멘텀 필터를 결합한 전략' },
-    { value: 'BB_MOMENTUM', label: '볼린저밴드 + 모멘텀', description: '볼린저밴드 평균회귀와 모멘텀 필터를 결합한 전략' },
-    { value: 'GOLDEN_CROSS', label: '골든크로스', description: '50일 EMA와 200일 EMA의 크로스를 이용한 장기 추세추종 전략' },
-    { value: 'ENSEMBLE', label: '앙상블 전략', description: '여러 전략의 시그널을 종합적으로 분석하여 매매하는 전략' },
-];
-
-const AVAILABLE_MARKETS = [
-    'BTC', 'ETH', 'SOL', 'DOGE', 'USDT', 'STRIKE', 'XRP', 'PENGU', 'ARDR', 'STRAX', 'ENS', 'AERGO'
-];
 
 export default function Settings() {
     const [botSettingsData] = useState<BotSettingsData>(MOCK_DATA.botSettings);
@@ -202,7 +184,7 @@ export default function Settings() {
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">전략 선택</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {AVAILABLE_STRATEGIES.map((strategy) => (
+                    {STRATEGIES.map((strategy) => (
                         <button
                             key={strategy.value}
                             onClick={() => setBotSetting(prev => ({ ...prev, strategy: strategy.value }))}
@@ -227,7 +209,7 @@ export default function Settings() {
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">거래소 마켓 선택</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {AVAILABLE_MARKETS.map((market) => (
+                    {MARKETS.map((market) => (
                         <button
                             key={market}
                             onClick={() => handleMarketToggle(market)}
