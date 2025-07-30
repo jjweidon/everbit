@@ -46,13 +46,15 @@ export interface Algorithm {
 }
 
 export interface BotSettings {
-    readonly algorithm: string;
-    readonly params: {
-        readonly period: number;
-        readonly tradeRatio: number;
-        readonly stopLoss: number;
-        readonly takeProfit: number;
-    };
+    readonly botSettingId: string;
+    readonly strategy: string;
+    readonly marketList: ReadonlyArray<string>;
+    readonly baseOrderAmount: number;
+    readonly maxOrderAmount: number;
+    readonly startTime: string;
+    readonly endTime: string;
+    readonly candleInterval: string;
+    readonly candleCount: number;
 }
 
 export interface BacktestData {

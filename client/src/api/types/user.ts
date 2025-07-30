@@ -21,6 +21,20 @@ export const UpbitApiKeys = z.object({
 export type UpbitApiKeysResponse = z.infer<typeof UpbitApiKeys>;
 export type UpbitApiKeysRequest = z.infer<typeof UpbitApiKeys>;
 
+export const BotSetting = z.object({
+    botSettingId: z.string(),
+    strategy: z.string(),
+    marketList: z.array(z.string()),
+    baseOrderAmount: z.number(),
+    maxOrderAmount: z.number(),
+    startTime: z.string().nullable(),
+    endTime: z.string().nullable(),
+    candleInterval: z.string(),
+    candleCount: z.number(),
+});
+export type BotSettingResponse = z.infer<typeof BotSetting>;
+export type BotSettingRequest = z.infer<typeof BotSetting>;
+
 // Request Types
 export const Email = z.object({
     email: z.string(),

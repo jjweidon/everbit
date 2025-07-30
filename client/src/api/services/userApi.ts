@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/apiClient';
-import { EmailRequest, UpbitApiKeysRequest, UpbitApiKeysResponse, UserResponse } from '../types';
+import { EmailRequest, UpbitApiKeysRequest, UpbitApiKeysResponse, UserResponse, BotSettingResponse, BotSettingRequest } from '../types';
 
 export const userApi = {
     getCurrentUser: async (): Promise<UserResponse> => {
@@ -24,5 +24,13 @@ export const userApi = {
 
     toggleBotActive: async (): Promise<UserResponse> => {
         return apiClient.patch<UserResponse>('/users/me/bot-active');
+    },
+
+    getBotSetting: async (): Promise<BotSettingResponse> => {
+        return apiClient.get<BotSettingResponse>('/users/me/bot-setting');
+    },
+
+    updateBotSetting: async (request: BotSettingRequest): Promise<BotSettingResponse> => {
+        return apiClient.put<BotSettingResponse>('/users/me/bot-setting', request);
     },
 } as const; 

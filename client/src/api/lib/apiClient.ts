@@ -26,6 +26,15 @@ export class ApiClient {
         });
     }
 
+    async put<T>(url: string, data?: any, options: ApiOptions = {}): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'PUT',
+            data,
+            ...options,
+        });
+    }
+
     async patch<T>(url: string, data?: any, options: ApiOptions = {}): Promise<T> {
         return this.request<T>({
             url,
