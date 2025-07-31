@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.everbit.everbit.trade.dto.TradeResponse;
 import com.everbit.everbit.trade.entity.Trade;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.repository.TradeRepository;

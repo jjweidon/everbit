@@ -10,12 +10,19 @@ export default function History() {
     const [activeView, setActiveView] = useState<'history' | 'chart' | 'technical'>('history');
 
     useEffect(() => {
-        getTradeHistory();
-    }, []);
+        console.log('activeView', activeView);
+        if (activeView === 'history') {
+            getTradeHistory();
+        }
+    }, [activeView]);
 
     const getTradeHistory = async () => {
-        const response = await tradeApi.getTrades();
-        setTradeHistoryData(response);
+        try {
+            const response = await tradeApi.getTrades();
+            setTradeHistoryData(response);
+        } catch (error) {
+            console.error('거래 내역 조회 실패:', error);
+        }
     };
 
     const formatDate = (date: Date) => {
@@ -126,7 +133,7 @@ export default function History() {
                                         <div className="grid grid-cols-2 gap-2 text-sm">
                                             <div>
                                                 <p className="text-navy-500 dark:text-navy-400">시간</p>
-                                                <p className="text-navy-600 dark:text-navy-300">
+                                                <p className="text-navy-600 dark:text-navy-300 text-xs">
                                                     {formatDate(trade.updatedAt)}
                                                 </p>
                                             </div>

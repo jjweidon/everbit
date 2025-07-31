@@ -49,7 +49,7 @@ public class BotSetting extends BaseTime {
     // 최대 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long maxOrderAmount = 18000L; // 최대 주문 금액 (KRW)
+    private Long maxOrderAmount = 12000L; // 최대 주문 금액 (KRW)
 
     // 봇 실행 기간
     @Builder.Default
