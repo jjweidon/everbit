@@ -60,9 +60,13 @@ public class TradingScheduler {
         BigDecimal maxOrderAmount = new BigDecimal(user.getBotSetting().getMaxOrderAmount());
         Strategy strategy = user.getBotSetting().getStrategy();
         
+        // 사용자가 선택한 전략에 따라 매수 시그널 결정
+        boolean buySignal = determineBuySignal(signal, strategy);
+        boolean sellSignal = determineSellSignal(signal, strategy);
+        
         // 매수 주문 로직
-        if (signal.isBuySignal()) {
-            log.info("마켓: {} - 매수 시그널 감지됨, Stoch RSI %K: {}", market, signal.stochRsiKValue());
+        if (buySignal) {
+            log.info("마켓: {} - 매수 시그널 감지됨 (전략: {}), Stoch RSI %K: {}", market, strategy, signal.stochRsiKValue());
             try {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -96,16 +100,16 @@ public class TradingScheduler {
                 // 4. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
-                log.info("마켓: {} - 매수 주문 실행 및 저장 완료. 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
-                    market, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
+                log.info("마켓: {} - 매수 주문 실행 및 저장 완료 (전략: {}). 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
+                    market, strategy.getValue(), orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매수 시그널 처리 실패", user.getUsername(), market, e);
             }
         }
         
         // 매도 주문 로직
-        if (signal.isSellSignal()) {
-            log.info("마켓: {} - 매도 시그널 감지됨, Stoch RSI %K: {}", market, signal.stochRsiKValue());
+        if (sellSignal) {
+            log.info("마켓: {} - 매도 시그널 감지됨 (전략: {}), Stoch RSI %K: {}", market, strategy, signal.stochRsiKValue());
             try {
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -145,17 +149,71 @@ public class TradingScheduler {
                 // 6. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
                 tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
-                log.info("마켓: {} - 매도 주문 실행 및 저장 완료. 주문 수량: {}, 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
-                    market, sellQuantity, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
+                log.info("마켓: {} - 매도 주문 실행 및 저장 완료 (전략: {}). 주문 수량: {}, 주문 정보: {}, 시그널: {}, Stoch RSI %K: {}", 
+                    market, strategy.getValue(), sellQuantity, orderResponse, signalType.getDescription(), signal.stochRsiKValue());
             } catch (Exception e) {
                 log.error("사용자: {}, 마켓: {} - 매도 시그널 처리 실패", user.getUsername(), market, e);
             }
         }
     }
 
+    /**
+     * 사용자가 선택한 전략에 따라 매수 시그널을 결정합니다.
+     */
+    private boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
+        switch (strategy) {
+            case STOCH_RSI:
+                return signal.isStochRsiCrossBuySignal();
+            case BOLLINGER_MEAN_REVERSION:
+                return signal.isBollingerMeanReversionBuySignal();
+            case ENSEMBLE:
+                return signal.isEnsembleBuySignal();
+            case ENHANCED_ENSEMBLE:
+                return signal.isEnhancedEnsembleBuySignal();
+            case EMA_MOMENTUM:
+                return signal.isEmaMomentumBuySignal();
+            case MACD_RSI:
+                return signal.isMacdRsiBuySignal();
+            case BB_MOMENTUM:
+                return signal.isBbMomentumBuySignal();
+            case GOLDEN_CROSS:
+                return signal.isGoldenCrossBuySignal();
+            default:
+                return signal.isBuySignal(); // 기본값은 Stoch RSI
+        }
+    }
+    
+    /**
+     * 사용자가 선택한 전략에 따라 매도 시그널을 결정합니다.
+     */
+    private boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
+        switch (strategy) {
+            case STOCH_RSI:
+                return signal.isStochRsiCrossSellSignal();
+            case BOLLINGER_MEAN_REVERSION:
+                return signal.isBollingerMeanReversionSellSignal();
+            case ENSEMBLE:
+                return signal.isEnsembleSellSignal();
+            case ENHANCED_ENSEMBLE:
+                return signal.isEnhancedEnsembleSellSignal();
+            case EMA_MOMENTUM:
+                return signal.isEmaMomentumSellSignal();
+            case MACD_RSI:
+                return signal.isMacdRsiSellSignal();
+            case BB_MOMENTUM:
+                return signal.isBbMomentumSellSignal();
+            case GOLDEN_CROSS:
+                return signal.isGoldenCrossSellSignal();
+            default:
+                return signal.isSellSignal(); // 기본값은 Stoch RSI
+        }
+    }
+
     private SignalType determineSignalType(TradingSignal signal) {
         if (signal.isStochRsiCrossBuySignal()) return SignalType.STOCH_RSI_CROSS_BUY;
         if (signal.isStochRsiCrossSellSignal()) return SignalType.STOCH_RSI_CROSS_SELL;
+        if (signal.isBollingerMeanReversionBuySignal()) return SignalType.BOLLINGER_MEAN_REVERSION_BUY;
+        if (signal.isBollingerMeanReversionSellSignal()) return SignalType.BOLLINGER_MEAN_REVERSION_SELL;
         if (signal.goldenCross()) return SignalType.GOLDEN_CROSS;
         if (signal.macdBuySignal()) return SignalType.MACD_BUY;
         if (signal.rsiOversold()) return SignalType.RSI_OVERSOLD;

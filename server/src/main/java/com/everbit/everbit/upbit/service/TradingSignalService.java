@@ -216,9 +216,23 @@ public class TradingSignalService {
                 market, String.format("%.2f", stochRsiKValue), String.format("%.2f", stochRsiDValue));
         }
         
-        // Bollinger Bands 시그널
+        // Bollinger Bands 시그널 (기존)
         boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
         boolean bbOverBought = closePrice.getValue(lastIndex).isGreaterThan(bbu.getValue(lastIndex));
+        
+        // 볼린저 밴드 평균 회귀 전략 시그널 (새로 추가)
+        boolean bbMeanReversionBuySignal = calculateBollingerMeanReversionBuySignal(series, lastIndex);
+        boolean bbMeanReversionSellSignal = calculateBollingerMeanReversionSellSignal(series, lastIndex);
+        
+        // 볼린저 밴드 평균 회귀 시그널 로깅
+        if (bbMeanReversionBuySignal) {
+            log.info("볼린저 밴드 평균 회귀 매수 시그널! Market: {}, Price: {}, Lower Band: {}", 
+                market, closePrice.getValue(lastIndex), bbl.getValue(lastIndex));
+        }
+        if (bbMeanReversionSellSignal) {
+            log.info("볼린저 밴드 평균 회귀 매도 시그널! Market: {}, Price: {}, Middle Band: {}", 
+                market, closePrice.getValue(lastIndex), bbm.getValue(lastIndex));
+        }
         
         return new TradingSignal(
             market,
@@ -236,7 +250,9 @@ public class TradingSignalService {
             new BigDecimal(stochRsiKValue), // %K 값
             new BigDecimal(stochRsiDValue), // %D 값
             bbOverSold,
-            bbOverBought
+            bbOverBought,
+            bbMeanReversionBuySignal,
+            bbMeanReversionSellSignal
         );
     }
 
@@ -259,5 +275,64 @@ public class TradingSignalService {
         } else {
             return maxOrderAmount;
         }
+    }
+    
+    /**
+     * 볼린저 밴드 평균 회귀 매수 시그널 계산
+     * 조건: 가격이 하단 밴드 터치 + RSI 과매도 + MACD 상승 신호
+     */
+    private boolean calculateBollingerMeanReversionBuySignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
+        
+        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // 현재 가격이 하단 밴드 터치 또는 하단 아래
+        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index));
+        
+        // RSI 과매도 상태
+        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD));
+        
+        // MACD 상승 신호 (MACD가 시그널선을 상향 돌파)
+        boolean macdRising = index > 0 && 
+                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+        
+        return priceAtLowerBand && rsiOversold && macdRising;
+    }
+    
+    /**
+     * 볼린저 밴드 평균 회귀 매도 시그널 계산
+     * 조건: 가격이 중간 밴드 도달 + RSI 과매수 + MACD 하락 신호
+     */
+    private boolean calculateBollingerMeanReversionSellSignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
+        
+        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // 현재 가격이 중간 밴드 도달 또는 상단 밴드 터치
+        boolean priceAtMiddleOrUpperBand = closePrice.getValue(index).isGreaterThanOrEqual(bbm.getValue(index)) ||
+                                          closePrice.getValue(index).isGreaterThanOrEqual(bbu.getValue(index));
+        
+        // RSI 과매수 상태
+        boolean rsiOverbought = rsi.getValue(index).isGreaterThan(series.numOf(RSI_BASE_OVERBOUGHT));
+        
+        // MACD 하락 신호 (MACD가 시그널선을 하향 돌파)
+        boolean macdFalling = index > 0 && 
+                            macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isLessThan(signal.getValue(index));
+        
+        return priceAtMiddleOrUpperBand && (rsiOverbought || macdFalling);
     }
 } 
