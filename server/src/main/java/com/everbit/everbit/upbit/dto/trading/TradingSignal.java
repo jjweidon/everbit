@@ -1,6 +1,5 @@
 package com.everbit.everbit.upbit.dto.trading;
 
-import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import org.ta4j.core.num.Num;
 
@@ -8,138 +7,99 @@ public record TradingSignal(
     String market,
     ZonedDateTime timestamp,
     Num currentPrice,
-    boolean goldenCross,
-    boolean deadCross,
-    boolean macdBuySignal,
-    boolean macdSellSignal,
-    boolean rsiOversold,
-    boolean rsiOverbought,
-    BigDecimal rsiValue,
-    boolean stochRsiOversold,
-    boolean stochRsiOverbought,
-    BigDecimal stochRsiKValue,  // StochRSI %K 값
-    BigDecimal stochRsiDValue,  // StochRSI %D 값
-    boolean bbOverSold,
-    boolean bbOverBought,
     boolean bbMeanReversionBuySignal,   // 볼린저 밴드 평균 회귀 매수 시그널
-    boolean bbMeanReversionSellSignal   // 볼린저 밴드 평균 회귀 매도 시그널
+    boolean bbMeanReversionSellSignal,  // 볼린저 밴드 평균 회귀 매도 시그널
+    boolean bbMomentumBuySignal,        // 볼린저 밴드 + 모멘텀 매수 시그널
+    boolean bbMomentumSellSignal,       // 볼린저 밴드 + 모멘텀 매도 시그널
+    boolean emaMomentumBuySignal,       // EMA 모멘텀 매수 시그널
+    boolean emaMomentumSellSignal       // EMA 모멘텀 매도 시그널
 ) {
-    public boolean isEmaMomentumBuySignal() {
-        return goldenCross && macdBuySignal;
-    }
-    public boolean isEmaMomentumSellSignal() {
-        return deadCross && macdSellSignal;
-    }
-    
-    public boolean isMacdRsiBuySignal() {
-        return macdBuySignal && rsiOversold;
-    }
-    public boolean isMacdRsiSellSignal() {
-        return macdSellSignal && rsiOverbought;
-    }
-
-    public boolean isBbMomentumBuySignal() {
-        return bbOverSold && macdBuySignal;
-    }
-    public boolean isBbMomentumSellSignal() {
-        return bbOverBought && macdSellSignal;
-    }
-
-    public boolean isGoldenCrossBuySignal() {
-        return goldenCross;
-    }
-    public boolean isGoldenCrossSellSignal() {
-        return deadCross;
-    }
-
-    public boolean isEnsembleBuySignal() {
-        int cnt = 0;
-        if (isEmaMomentumBuySignal()) cnt++;
-        if (isMacdRsiBuySignal()) cnt++;
-        if (isBbMomentumBuySignal()) cnt++;
-        if (isGoldenCrossBuySignal()) cnt++;
-        return cnt >= 2;
-    }
-
-    public boolean isEnsembleSellSignal() {
-        int cnt = 0;
-        if (isEmaMomentumSellSignal()) cnt++;
-        if (isMacdRsiSellSignal()) cnt++;
-        if (isBbMomentumSellSignal()) cnt++;
-        if (isGoldenCrossSellSignal()) cnt++;
-        return cnt >= 2;
-    }
-
-    // public boolean isBuySignal() {
-    //     return isEnsembleBuySignal() || isEmaMomentumBuySignal() || isMacdRsiBuySignal() || isBbMomentumBuySignal() || isGoldenCrossBuySignal();
-    // }
-    
-    // public boolean isSellSignal() {
-    //     return isEnsembleSellSignal() || isEmaMomentumSellSignal() || isMacdRsiSellSignal() || isBbMomentumSellSignal() || isGoldenCrossSellSignal();
-    // }
-
-    public boolean isBuySignal() {
-        return isStochRsiCrossBuySignal();
-    }
-    
-    public boolean isSellSignal() {
-        return isStochRsiCrossSellSignal();
-    }
     
     /**
-     * StochRSI %K와 %D 크로스오버 매수 시그널
-     * %K가 %D를 상향 돌파할 때
-     */
-    public boolean isStochRsiCrossBuySignal() {
-        return stochRsiOversold;
-    }
-    
-    /**
-     * StochRSI %K와 %D 크로스오버 매도 시그널
-     * %K가 %D를 하향 돌파할 때
-     */
-    public boolean isStochRsiCrossSellSignal() {
-        return stochRsiOverbought;
-    }
-    
-    /**
-     * 볼린저 밴드 평균 회귀 매수 시그널
-     * 조건: 가격이 하단 밴드 터치 + RSI 과매도 + MACD 상승 신호
+     * 볼린저 평균회귀 전략 매수 시그널
+     * 조건: 가격이 볼린저 밴드 하단을 터치하고 과매도(RSI) 상태일 때, 반등을 노리는 평균 회귀 전략
      */
     public boolean isBollingerMeanReversionBuySignal() {
         return bbMeanReversionBuySignal;
     }
     
     /**
-     * 볼린저 밴드 평균 회귀 매도 시그널
-     * 조건: 가격이 중간 밴드 도달 + RSI 과매수 + MACD 하락 신호
+     * 볼린저 평균회귀 전략 매도 시그널
      */
     public boolean isBollingerMeanReversionSellSignal() {
         return bbMeanReversionSellSignal;
     }
     
     /**
-     * 볼린저 밴드 평균 회귀 전략을 포함한 앙상블 매수 시그널
+     * 볼린저 + 모멘텀 전략 매수 시그널
+     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈할 때, 모멘텀 지표로 추세 방향을 판단하여 진입하는 전략
+     */
+    public boolean isBbMomentumBuySignal() {
+        return bbMomentumBuySignal;
+    }
+    
+    /**
+     * 볼린저 + 모멘텀 전략 매도 시그널
+     */
+    public boolean isBbMomentumSellSignal() {
+        return bbMomentumSellSignal;
+    }
+    
+    /**
+     * EMA 모멘텀 전략 매수 시그널
+     * 조건: 단기/중기 이동평균(EMA 9/21)의 교차와 MACD로 추세를 판단해 추세에 진입하는 전략
+     */
+    public boolean isEmaMomentumBuySignal() {
+        return emaMomentumBuySignal;
+    }
+    
+    /**
+     * EMA 모멘텀 전략 매도 시그널
+     */
+    public boolean isEmaMomentumSellSignal() {
+        return emaMomentumSellSignal;
+    }
+    
+    /**
+     * 앙상블 전략 매수 시그널
+     * 조건: 여러 개별 전략의 매수/매도 시그널을 조합하여 신뢰도 높은 매매 타이밍을 포착하는 전략
+     */
+    public boolean isEnsembleBuySignal() {
+        int cnt = 0;
+        if (isEmaMomentumBuySignal()) cnt++;
+        if (isBbMomentumBuySignal()) cnt++;
+        return cnt >= 2;
+    }
+
+    /**
+     * 앙상블 전략 매도 시그널
+     */
+    public boolean isEnsembleSellSignal() {
+        int cnt = 0;
+        if (isEmaMomentumSellSignal()) cnt++;
+        if (isBbMomentumSellSignal()) cnt++;
+        return cnt >= 2;
+    }
+    
+    /**
+     * 강화 앙상블 전략 매수 시그널
+     * 조건: 볼린저 평균회귀 등 복수 전략을 통합 분석해 더 정교하게 매매 타이밍을 결정하는 전략
      */
     public boolean isEnhancedEnsembleBuySignal() {
         int cnt = 0;
         if (isEmaMomentumBuySignal()) cnt++;
-        if (isMacdRsiBuySignal()) cnt++;
         if (isBbMomentumBuySignal()) cnt++;
-        if (isGoldenCrossBuySignal()) cnt++;
         if (isBollingerMeanReversionBuySignal()) cnt++;
         return cnt >= 2;
     }
     
     /**
-     * 볼린저 밴드 평균 회귀 전략을 포함한 앙상블 매도 시그널
+     * 강화 앙상블 전략 매도 시그널
      */
     public boolean isEnhancedEnsembleSellSignal() {
         int cnt = 0;
         if (isEmaMomentumSellSignal()) cnt++;
-        if (isMacdRsiSellSignal()) cnt++;
         if (isBbMomentumSellSignal()) cnt++;
-        if (isGoldenCrossSellSignal()) cnt++;
         if (isBollingerMeanReversionSellSignal()) cnt++;
         return cnt >= 2;
     }

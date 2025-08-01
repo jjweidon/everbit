@@ -59,17 +59,34 @@ export const MOCK_DATA = {
     botSettings: {
         algorithms: [
             {
-                id: 'momentum',
-                name: '모멘텀 전략',
-                description: '가격 모멘텀을 기반으로 한 매매 전략',
+                id: 'BOLLINGER_MEAN_REVERSION',
+                name: '볼린저 평균회귀',
+                description: '가격이 볼린저 밴드 하단을 터치하고 과매도(RSI) 상태일 때, 반등을 노리는 평균 회귀 전략',
             },
-            { id: 'ema', name: 'EMA 크로스', description: '이동평균선 크로스를 활용한 매매 전략' },
-            { id: 'rsi', name: 'RSI 전략', description: 'RSI 지표를 활용한 매매 전략' },
-            { id: 'bollinger', name: '볼린저 밴드', description: '볼린저 밴드를 활용한 매매 전략' },
+            {
+                id: 'BB_MOMENTUM',
+                name: '볼린저 + 모멘텀',
+                description: '가격이 볼린저 밴드 수렴 구간에서 이탈할 때, 모멘텀 지표로 추세 방향을 판단하여 진입하는 전략',
+            },
+            {
+                id: 'EMA_MOMENTUM',
+                name: 'EMA 모멘텀',
+                description: '단기/중기 이동평균(EMA 9/21)의 교차와 MACD로 추세를 판단해 추세에 진입하는 전략',
+            },
+            {
+                id: 'ENSEMBLE',
+                name: '앙상블',
+                description: '여러 개별 전략의 매수/매도 시그널을 조합하여 신뢰도 높은 매매 타이밍을 포착하는 전략',
+            },
+            {
+                id: 'ENHANCED_ENSEMBLE',
+                name: '강화 앙상블',
+                description: '볼린저 평균회귀 등 복수 전략을 통합 분석해 더 정교하게 매매 타이밍을 결정하는 전략',
+            },
         ],
         currentSettings: {
             botSettingId: '1',
-            strategy: 'momentum',
+            strategy: 'BOLLINGER_MEAN_REVERSION',
             marketList: ['KRW-BTC', 'KRW-ETH'],
             baseOrderAmount: 100000,
             maxOrderAmount: 1000000,

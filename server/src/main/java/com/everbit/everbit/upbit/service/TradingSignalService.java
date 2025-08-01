@@ -3,6 +3,7 @@ package com.everbit.everbit.upbit.service;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
@@ -12,269 +13,172 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 
 import com.everbit.everbit.user.entity.User;
-import com.everbit.everbit.upbit.dto.quotation.MinuteCandleResponse;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import java.time.ZonedDateTime;
 import java.math.BigDecimal;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.ArrayList;
 import java.math.RoundingMode;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TradingSignalService {
-    private final UpbitQuotationClient upbitQuotationClient;
-    private static final ZoneId UTC = ZoneId.of("UTC");
+    private final CandleDataService candleDataService;
     
     // 기술적 지표 계산을 위한 상수 정의
-    // private static final int CANDLE_INTERVAL = 3; // 3분봉
-    // private static final int CANDLE_COUNT = 100; // 데이터 포인트 수
-    private static final int SHORT_SMA = 5;  // 단기 이동평균선 기간
-    private static final int LONG_SMA = 20;  // 장기 이동평균선 기간
+    private static final int SHORT_EMA = 9;  // 단기 EMA 기간
+    private static final int LONG_EMA = 21;  // 장기 EMA 기간
     private static final int RSI_PERIOD = 14; // RSI 기간
-    private static final int STOCH_RSI_PERIOD = 14; // Stoch RSI 기간
-    private static final int STOCH_K_PERIOD = 3; // Stoch RSI %K 기간
-    private static final int STOCH_D_PERIOD = 3; // Stoch RSI %D 기간
     private static final int BB_PERIOD = 20; // 볼린저 밴드 기간
     private static final int MACD_SHORT = 6; // MACD 단기
     private static final int MACD_LONG = 13; // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     private static final int RSI_BASE_OVERSOLD = 20; // RSI 과매도 기준
     private static final int RSI_BASE_OVERBOUGHT = 80; // RSI 과매수 기준
-    private static final int STOCH_RSI_OVERSOLD = 8; // Stoch RSI 과매도 기준
-    private static final int STOCH_RSI_OVERBOUGHT = 92; // Stoch RSI 과매수 기준
-    
-    public BarSeries createBarSeries(String market, User user) {
-        int candleInterval = user.getBotSetting().getCandleInterval().getMinutes();
-        int candleCount = user.getBotSetting().getCandleCount();
-        // 최근 100개의 3분봉 데이터 조회 (200 → 100으로 개선)
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(candleInterval, market, null, candleCount);
-        
-        // BarSeries 생성
-        BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
-        
-        // 캔들 데이터를 BarSeries에 추가 (시간 순서대로)
-        for (int i = candles.size() - 1; i >= 0; i--) {
-            MinuteCandleResponse candle = candles.get(i);
-            ZonedDateTime zonedDateTime = candle.candleDateTimeUtc().atZone(UTC);
-            
-            series.addBar(
-                zonedDateTime,
-                candle.openingPrice(),
-                candle.highPrice(),
-                candle.lowPrice(),
-                candle.tradePrice(),
-                candle.candleAccTradeVolume()
-            );
-        }
-        
-        return series;
-    }
-    
-    /**
-     * StochRSI Raw 값 계산 (Fast %K)
-     */
-    private double calculateStochRSIRaw(BarSeries series, int index) {
-        if (index < STOCH_RSI_PERIOD) {
-            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
-        }
-        
-        // RSI 계산
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        RSIIndicator rsi = new RSIIndicator(closePrice, STOCH_RSI_PERIOD);
-        
-        // Stoch RSI 계산을 위한 최고/최저 RSI 값 찾기
-        double maxRsi = Double.MIN_VALUE;
-        double minRsi = Double.MAX_VALUE;
-        
-        for (int i = index - STOCH_RSI_PERIOD + 1; i <= index; i++) {
-            double rsiValue = rsi.getValue(i).doubleValue();
-            maxRsi = Math.max(maxRsi, rsiValue);
-            minRsi = Math.min(minRsi, rsiValue);
-        }
-        
-        double currentRsi = rsi.getValue(index).doubleValue();
-        
-        // Stoch RSI 공식: (현재 RSI - 최저 RSI) / (최고 RSI - 최저 RSI) * 100
-        if (maxRsi == minRsi) {
-            return 50.0; // 분모가 0인 경우 중간값 반환
-        }
-        
-        return ((currentRsi - minRsi) / (maxRsi - minRsi)) * 100.0;
-    }
-    
-    /**
-     * StochRSI %K 값 계산 (StochRSI Raw의 3기간 평균)
-     */
-    public double calculateStochRSI_K(BarSeries series, int index) {
-        if (index < STOCH_RSI_PERIOD + STOCH_K_PERIOD - 1) {
-            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
-        }
-        
-        // StochRSI Raw 값 3개 수집
-        List<Double> rawValues = new ArrayList<>();
-        
-        for (int i = index - STOCH_K_PERIOD + 1; i <= index; i++) {
-            double rawValue = calculateStochRSIRaw(series, i);
-            rawValues.add(rawValue);
-        }
-        
-        // %K = StochRSI Raw의 3기간 평균
-        return rawValues.stream().mapToDouble(d -> d).average().orElse(50.0);
-    }
-    
-    /**
-     * StochRSI %D 값 계산 (%K의 3기간 평균)
-     */
-    public double calculateStochRSI_D(BarSeries series, int index) {
-        if (index < STOCH_RSI_PERIOD + STOCH_K_PERIOD + STOCH_D_PERIOD - 2) {
-            return 50.0; // 충분한 데이터가 없을 때 중간값 반환
-        }
-        
-        // %K 값 3개 수집
-        List<Double> kValues = new ArrayList<>();
-        
-        for (int i = index - STOCH_D_PERIOD + 1; i <= index; i++) {
-            double kValue = calculateStochRSI_K(series, i);
-            kValues.add(kValue);
-        }
-        
-        // %D = %K의 3기간 평균
-        return kValues.stream().mapToDouble(d -> d).average().orElse(50.0);
-    }
-    
-    /**
-     * StochRSI 계산 (기존 메서드와의 호환성을 위해 유지)
-     * @deprecated calculateStochRSI_K() 또는 calculateStochRSI_D() 사용 권장
-     */
-    @Deprecated
-    public double calculateStochRSI(BarSeries series, int index) {
-        return calculateStochRSI_K(series, index);
-    }
     
     public TradingSignal calculateSignals(String market, User user) {
-        BarSeries series = createBarSeries(market, user);
+        BarSeries series = candleDataService.createBarSeries(market, user);
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        
-        // 이동평균선 (3일, 10일)
-        SMAIndicator smaShort = new SMAIndicator(closePrice, SHORT_SMA);
-        SMAIndicator smaLong = new SMAIndicator(closePrice, LONG_SMA);
-        
-        // MACD (6, 13, 5)
-        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
-        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
-        
-        // RSI (9일)
-        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
-        
-        // Bollinger Bands (20일, 1.5σ 사용)
-        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
-        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
-        // 1.5σ를 위해 표준편차 값을 직접 계산하여 적용
-        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
-        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
         
         int lastIndex = series.getEndIndex();
         
-        // MA 크로스 시그널
-        boolean goldenCross = smaShort.getValue(lastIndex - 1).isLessThan(smaLong.getValue(lastIndex - 1)) &&
-                            smaShort.getValue(lastIndex).isGreaterThan(smaLong.getValue(lastIndex));
-                            
-        boolean deadCross = smaShort.getValue(lastIndex - 1).isGreaterThan(smaLong.getValue(lastIndex - 1)) &&
-                           smaShort.getValue(lastIndex).isLessThan(smaLong.getValue(lastIndex));
-        
-        // MACD 시그널
-        boolean macdBuySignal = macd.getValue(lastIndex - 1).isLessThan(signal.getValue(lastIndex - 1)) &&
-                               macd.getValue(lastIndex).isGreaterThan(signal.getValue(lastIndex));
-                               
-        boolean macdSellSignal = macd.getValue(lastIndex - 1).isGreaterThan(signal.getValue(lastIndex - 1)) &&
-                                macd.getValue(lastIndex).isLessThan(signal.getValue(lastIndex));
-        
-        // RSI 시그널
-        boolean rsiOversold = rsi.getValue(lastIndex).isLessThan(series.numOf(RSI_BASE_OVERSOLD));
-        boolean rsiOverbought = rsi.getValue(lastIndex).isGreaterThan(series.numOf(RSI_BASE_OVERBOUGHT));
-        
-        // Stoch RSI 시그널 (개선된 %K 값 사용)
-        double stochRsiKValue = calculateStochRSI_K(series, lastIndex);
-        double stochRsiDValue = calculateStochRSI_D(series, lastIndex);
-        boolean stochRsiOversold = stochRsiKValue <= STOCH_RSI_OVERSOLD;
-        boolean stochRsiOverbought = stochRsiKValue >= STOCH_RSI_OVERBOUGHT;
-        
-        // 디버깅 로그 (개선된 정보 포함)
-        if (stochRsiOversold) {
-            log.info("Stoch RSI 과매도 시그널! Market: {}, Stoch RSI %K: {}, %D: {}", 
-                market, String.format("%.2f", stochRsiKValue), String.format("%.2f", stochRsiDValue));
-        }
-        if (stochRsiOverbought) {
-            log.info("Stoch RSI 과매수 시그널! Market: {}, Stoch RSI %K: {}, %D: {}", 
-                market, String.format("%.2f", stochRsiKValue), String.format("%.2f", stochRsiDValue));
-        }
-        
-        // Bollinger Bands 시그널 (기존)
-        boolean bbOverSold = closePrice.getValue(lastIndex).isLessThan(bbl.getValue(lastIndex));
-        boolean bbOverBought = closePrice.getValue(lastIndex).isGreaterThan(bbu.getValue(lastIndex));
-        
-        // 볼린저 밴드 평균 회귀 전략 시그널 (새로 추가)
+        // 전략별 시그널 계산
         boolean bbMeanReversionBuySignal = calculateBollingerMeanReversionBuySignal(series, lastIndex);
         boolean bbMeanReversionSellSignal = calculateBollingerMeanReversionSellSignal(series, lastIndex);
-        
-        // 볼린저 밴드 평균 회귀 시그널 로깅
-        if (bbMeanReversionBuySignal) {
-            log.info("볼린저 밴드 평균 회귀 매수 시그널! Market: {}, Price: {}, Lower Band: {}", 
-                market, closePrice.getValue(lastIndex), bbl.getValue(lastIndex));
-        }
-        if (bbMeanReversionSellSignal) {
-            log.info("볼린저 밴드 평균 회귀 매도 시그널! Market: {}, Price: {}, Middle Band: {}", 
-                market, closePrice.getValue(lastIndex), bbm.getValue(lastIndex));
-        }
-        
+        boolean bbMomentumBuySignal = calculateBollingerMomentumBuySignal(series, lastIndex);
+        boolean bbMomentumSellSignal = calculateBollingerMomentumSellSignal(series, lastIndex);
+        boolean emaMomentumBuySignal = calculateEmaMomentumBuySignal(series, lastIndex);
+        boolean emaMomentumSellSignal = calculateEmaMomentumSellSignal(series, lastIndex);
+
         return new TradingSignal(
             market,
             series.getLastBar().getEndTime(),
             closePrice.getValue(lastIndex),
-            goldenCross,
-            deadCross,
-            macdBuySignal,
-            macdSellSignal,
-            rsiOversold,
-            rsiOverbought,
-            new BigDecimal(rsi.getValue(lastIndex).doubleValue()),
-            stochRsiOversold,
-            stochRsiOverbought,
-            new BigDecimal(stochRsiKValue), // %K 값
-            new BigDecimal(stochRsiDValue), // %D 값
-            bbOverSold,
-            bbOverBought,
             bbMeanReversionBuySignal,
-            bbMeanReversionSellSignal
+            bbMeanReversionSellSignal,
+            bbMomentumBuySignal,
+            bbMomentumSellSignal,
+            emaMomentumBuySignal,
+            emaMomentumSellSignal
         );
     }
 
-    public BigDecimal transformRsiValue(BigDecimal x, BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
-        if (x.compareTo(BigDecimal.ZERO) <= 0) {
-            return maxOrderAmount;
-        } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERSOLD)) <= 0) {
-            return baseOrderAmount.subtract(maxOrderAmount)
-                .multiply(x)
-                .divide(BigDecimal.valueOf(RSI_BASE_OVERSOLD), 8, RoundingMode.HALF_UP)
-                .add(maxOrderAmount);
-        } else if (x.compareTo(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)) < 0) {
-            return baseOrderAmount;
-        } else if (x.compareTo(BigDecimal.valueOf(100)) <= 0) {
-            return baseOrderAmount.subtract(maxOrderAmount)
-                .multiply(x)
-                .add(maxOrderAmount.multiply(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT)))
-                .subtract(BigDecimal.valueOf(100).multiply(baseOrderAmount))
-                .divide(BigDecimal.valueOf(RSI_BASE_OVERBOUGHT).subtract(BigDecimal.valueOf(100)), 8, RoundingMode.HALF_UP);
-        } else {
-            return maxOrderAmount;
+    /**
+     * 시그널 강도에 따른 주문 금액 계산
+     * 시그널이 강할수록 maxOrderAmount에 가까워지고, 약할수록 baseOrderAmount에 가까워집니다.
+     */
+    public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy, 
+                                                          BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
+        // 시그널 강도 계산 (0.0 ~ 1.0)
+        double signalStrength = calculateSignalStrength(signal, strategy);
+        
+        // 시그널 강도에 따른 주문 금액 계산
+        BigDecimal strengthMultiplier = BigDecimal.valueOf(signalStrength);
+        BigDecimal orderAmount = baseOrderAmount.add(
+            maxOrderAmount.subtract(baseOrderAmount).multiply(strengthMultiplier)
+        );
+        
+        return orderAmount.setScale(8, RoundingMode.HALF_UP);
+    }
+    
+    /**
+     * 선택된 전략의 시그널 강도를 계산합니다 (0.0 ~ 1.0)
+     */
+    private double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
+        switch (strategy) {
+            case BOLLINGER_MEAN_REVERSION:
+                return calculateBollingerMeanReversionSignalStrength(signal);
+            case BB_MOMENTUM:
+                return calculateBollingerMomentumSignalStrength(signal);
+            case EMA_MOMENTUM:
+                return calculateEmaMomentumSignalStrength(signal);
+            case ENSEMBLE:
+                return calculateEnsembleSignalStrength(signal);
+            case ENHANCED_ENSEMBLE:
+                return calculateEnhancedEnsembleSignalStrength(signal);
+            default:
+                return 0.5; // 기본값
         }
+    }
+    
+    /**
+     * 볼린저 평균회귀 전략 시그널 강도 계산
+     */
+    private double calculateBollingerMeanReversionSignalStrength(TradingSignal signal) {
+        if (signal.isBollingerMeanReversionBuySignal() || signal.isBollingerMeanReversionSellSignal()) {
+            // RSI 기반 강도 계산 (RSI가 극단적일수록 강한 시그널)
+            // 실제 구현에서는 RSI 값을 직접 계산해야 하지만, 여기서는 기본값 사용
+            return 0.8; // 강한 시그널
+        }
+        return 0.0; // 시그널 없음
+    }
+    
+    /**
+     * 볼린저 모멘텀 전략 시그널 강도 계산
+     */
+    private double calculateBollingerMomentumSignalStrength(TradingSignal signal) {
+        if (signal.isBbMomentumBuySignal() || signal.isBbMomentumSellSignal()) {
+            // 볼린저 밴드 이탈 정도와 MACD 강도 기반 계산
+            return 0.7; // 중간-강한 시그널
+        }
+        return 0.0; // 시그널 없음
+    }
+    
+    /**
+     * EMA 모멘텀 전략 시그널 강도 계산
+     */
+    private double calculateEmaMomentumSignalStrength(TradingSignal signal) {
+        if (signal.isEmaMomentumBuySignal() || signal.isEmaMomentumSellSignal()) {
+            // EMA 교차 각도와 MACD 강도 기반 계산
+            return 0.6; // 중간 시그널
+        }
+        return 0.0; // 시그널 없음
+    }
+    
+    /**
+     * 앙상블 전략 시그널 강도 계산
+     */
+    private double calculateEnsembleSignalStrength(TradingSignal signal) {
+        int buySignals = 0;
+        int sellSignals = 0;
+        
+        if (signal.isEmaMomentumBuySignal()) buySignals++;
+        if (signal.isBbMomentumBuySignal()) buySignals++;
+        if (signal.isEmaMomentumSellSignal()) sellSignals++;
+        if (signal.isBbMomentumSellSignal()) sellSignals++;
+        
+        int totalSignals = buySignals + sellSignals;
+        if (totalSignals >= 2) {
+            return 0.9; // 매우 강한 시그널 (여러 전략이 동시에 시그널)
+        } else if (totalSignals == 1) {
+            return 0.5; // 약한 시그널
+        }
+        return 0.0; // 시그널 없음
+    }
+    
+    /**
+     * 강화 앙상블 전략 시그널 강도 계산
+     */
+    private double calculateEnhancedEnsembleSignalStrength(TradingSignal signal) {
+        int buySignals = 0;
+        int sellSignals = 0;
+        
+        if (signal.isEmaMomentumBuySignal()) buySignals++;
+        if (signal.isBbMomentumBuySignal()) buySignals++;
+        if (signal.isBollingerMeanReversionBuySignal()) buySignals++;
+        if (signal.isEmaMomentumSellSignal()) sellSignals++;
+        if (signal.isBbMomentumSellSignal()) sellSignals++;
+        if (signal.isBollingerMeanReversionSellSignal()) sellSignals++;
+        
+        int totalSignals = buySignals + sellSignals;
+        if (totalSignals >= 3) {
+            return 1.0; // 최대 강도 시그널
+        } else if (totalSignals == 2) {
+            return 0.8; // 강한 시그널
+        } else if (totalSignals == 1) {
+            return 0.4; // 약한 시그널
+        }
+        return 0.0; // 시그널 없음
     }
     
     /**
@@ -334,5 +238,103 @@ public class TradingSignalService {
                             macd.getValue(index).isLessThan(signal.getValue(index));
         
         return priceAtMiddleOrUpperBand && (rsiOverbought || macdFalling);
+    }
+    
+    /**
+     * 볼린저 밴드 + 모멘텀 매수 시그널 계산
+     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈 + 모멘텀 지표 상승
+     */
+    private boolean calculateBollingerMomentumBuySignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
+        
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파)
+        boolean priceBreakout = closePrice.getValue(index).isGreaterThan(bbu.getValue(index));
+        
+        // 모멘텀 지표 상승 (MACD 상승 신호)
+        boolean momentumRising = index > 0 && 
+                               macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                               macd.getValue(index).isGreaterThan(signal.getValue(index));
+        
+        return priceBreakout && momentumRising;
+    }
+    
+    /**
+     * 볼린저 밴드 + 모멘텀 매도 시그널 계산
+     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈 + 모멘텀 지표 하락
+     */
+    private boolean calculateBollingerMomentumSellSignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
+        
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 하단 밴드를 하향 돌파)
+        boolean priceBreakdown = closePrice.getValue(index).isLessThan(bbl.getValue(index));
+        
+        // 모멘텀 지표 하락 (MACD 하락 신호)
+        boolean momentumFalling = index > 0 && 
+                                macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
+                                macd.getValue(index).isLessThan(signal.getValue(index));
+        
+        return priceBreakdown && momentumFalling;
+    }
+    
+    /**
+     * EMA 모멘텀 매수 시그널 계산
+     * 조건: 단기/중기 EMA 교차 + MACD 상승 신호
+     */
+    private boolean calculateEmaMomentumBuySignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        EMAIndicator emaShort = new EMAIndicator(closePrice, SHORT_EMA);
+        EMAIndicator emaLong = new EMAIndicator(closePrice, LONG_EMA);
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // EMA 골든크로스
+        boolean emaGoldenCross = index > 0 &&
+                               emaShort.getValue(index - 1).isLessThan(emaLong.getValue(index - 1)) &&
+                               emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
+        
+        // MACD 상승 신호
+        boolean macdRising = index > 0 && 
+                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+        
+        return emaGoldenCross && macdRising;
+    }
+    
+    /**
+     * EMA 모멘텀 매도 시그널 계산
+     * 조건: 단기/중기 EMA 교차 + MACD 하락 신호
+     */
+    private boolean calculateEmaMomentumSellSignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        EMAIndicator emaShort = new EMAIndicator(closePrice, SHORT_EMA);
+        EMAIndicator emaLong = new EMAIndicator(closePrice, LONG_EMA);
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        
+        // EMA 데드크로스
+        boolean emaDeadCross = index > 0 &&
+                             emaShort.getValue(index - 1).isGreaterThan(emaLong.getValue(index - 1)) &&
+                             emaShort.getValue(index).isLessThan(emaLong.getValue(index));
+        
+        // MACD 하락 신호
+        boolean macdFalling = index > 0 && 
+                            macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isLessThan(signal.getValue(index));
+        
+        return emaDeadCross && macdFalling;
     }
 } 

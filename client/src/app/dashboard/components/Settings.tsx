@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { BotSettingsData, BacktestData } from '../types';
+import { BacktestData } from '../types';
 import { FaChartLine, FaChartArea, FaCrosshairs, FaBitcoin, FaChevronUp, FaChevronDown, FaSave, FaSpinner } from 'react-icons/fa';
 import { 
     MOCK_DATA, 
     BASE_ORDER_AMOUNT, 
     MAX_ORDER_AMOUNT, 
-    CANDLE_INTERVALS,
     MARKETS 
 } from '../constants';
 import { userApi } from '@/api/services/userApi';
@@ -51,21 +50,16 @@ const selectInputStyle = `
 
 
 export default function Settings() {
-    const [botSettingsData] = useState<BotSettingsData>(MOCK_DATA.botSettings);
     const [backtestData] = useState<BacktestData>(MOCK_DATA.backtest);
     const [strategies, setStrategies] = useState<StrategyResponse[]>([]);
 
     // Bot settings state
     const [botSetting, setBotSetting] = useState<BotSettingRequest>({
         botSettingId: '',
-        strategy: 'STOCH_RSI',
+        strategy: 'BOLLINGER_MEAN_REVERSION',
         marketList: ['BTC'],
         baseOrderAmount: BASE_ORDER_AMOUNT,
         maxOrderAmount: MAX_ORDER_AMOUNT,
-        startTime: null,
-        endTime: null,
-        candleInterval: 'THREE',
-        candleCount: 100,
     });
     
     const [isLoading, setIsLoading] = useState(false);
@@ -90,23 +84,12 @@ export default function Settings() {
         try {
             const response = await userApi.getBotSetting();
             
-            // ISO 문자열을 시간 형식으로 변환
-            const formatTimeFromISO = (isoString: string | null) => {
-                if (!isoString) return null;
-                const date = new Date(isoString);
-                return date.toTimeString().slice(0, 5); // HH:mm 형식으로 변환
-            };
-            
             setBotSetting({
                 botSettingId: response.botSettingId,
                 strategy: response.strategy,
                 marketList: response.marketList,
                 baseOrderAmount: response.baseOrderAmount,
                 maxOrderAmount: response.maxOrderAmount,
-                startTime: formatTimeFromISO(response.startTime) || '09:00',
-                endTime: formatTimeFromISO(response.endTime),
-                candleInterval: response.candleInterval,
-                candleCount: response.candleCount,
             });
         } catch (err) {
             console.error('Failed to load bot settings:', err);
@@ -122,19 +105,8 @@ export default function Settings() {
         setSuccess(null);
         
         try {
-            // 시간 형식을 ISO 문자열로 변환
-            const formatTimeToISO = (timeString: string | null) => {
-                if (!timeString) return null;
-                const today = new Date();
-                const [hours, minutes] = timeString.split(':');
-                today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                return today.toISOString();
-            };
-            
             const requestData = {
                 ...botSetting,
-                startTime: formatTimeToISO(botSetting.startTime) || '09:00',
-                endTime: formatTimeToISO(botSetting.endTime),
             };
             
             await userApi.updateBotSetting(requestData);
@@ -308,90 +280,6 @@ export default function Settings() {
                                 </button>
                                 <button
                                     onClick={() => handleDecrement(botSetting.maxOrderAmount, (value) => setBotSetting(prev => ({ ...prev, maxOrderAmount: value })), BASE_ORDER_AMOUNT)}
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {/* <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            거래 시작 시간
-                        </label>
-                        <input
-                            type="time"
-                            value={botSetting.startTime || ''}
-                            onChange={(e) => setBotSetting(prev => ({ ...prev, startTime: e.target.value }))}
-                            className={timeInputStyle}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            거래 종료 시간
-                        </label>
-                        <input
-                            type="time"
-                            value={botSetting.endTime || ''}
-                            onChange={(e) => setBotSetting(prev => ({ ...prev, endTime: e.target.value }))}
-                            className={timeInputStyle}
-                        />
-                    </div> */}
-                </div>
-            </div>
-
-            {/* 차트 설정 */}
-            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
-                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">차트 설정</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            캔들 간격
-                        </label>
-                        <select
-                            value={botSetting.candleInterval}
-                            onChange={(e) => setBotSetting(prev => ({ ...prev, candleInterval: e.target.value }))}
-                            className={selectInputStyle}
-                        >
-                            {CANDLE_INTERVALS.map((interval) => (
-                                <option key={interval.value} value={interval.value}>
-                                    {interval.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            캔들 개수
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={botSetting.candleCount}
-                                onChange={(e) => {
-                                    const rawValue = parseInt(e.target.value, 10) || 0;
-                                    setBotSetting(prev => ({ ...prev, candleCount: rawValue }));
-                                }}
-                                onBlur={(e) => {
-                                    const rawValue = parseInt(e.target.value, 10) || 0;
-                                    if (rawValue < 10) {
-                                        setBotSetting(prev => ({ ...prev, candleCount: 10 }));
-                                    } else if (rawValue > 200) {
-                                        setBotSetting(prev => ({ ...prev, candleCount: 200 }));
-                                    }
-                                }}
-                                className={`${inputStyle} pr-12`}
-                                placeholder="100"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => handleIncrement(botSetting.candleCount, (value) => setBotSetting(prev => ({ ...prev, candleCount: value })), 200)}
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => handleDecrement(botSetting.candleCount, (value) => setBotSetting(prev => ({ ...prev, candleCount: value })), 10)}
                                     className={spinButtonStyle}
                                 >
                                     <FaChevronDown size={8} />

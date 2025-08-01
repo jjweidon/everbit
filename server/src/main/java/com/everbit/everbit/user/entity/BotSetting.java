@@ -4,13 +4,11 @@ import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.user.dto.BotSettingRequest;
-import com.everbit.everbit.trade.entity.enums.CandleInterval;
 
 import jakarta.persistence.*;
 import lombok.*;
 import de.huxhorn.sulky.ulid.ULID;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +29,7 @@ public class BotSetting extends BaseTime {
     
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    private Strategy strategy = Strategy.STOCH_RSI;
+    private Strategy strategy = Strategy.BOLLINGER_MEAN_REVERSION;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default
@@ -49,25 +47,7 @@ public class BotSetting extends BaseTime {
     // 최대 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long maxOrderAmount = 12000L; // 최대 주문 금액 (KRW)
-
-    // 봇 실행 기간
-    @Builder.Default
-    @Column(nullable = false)
-    private LocalDateTime startTime = LocalDateTime.now(); // 봇 시작 시간
-
-    @Column
-    private LocalDateTime endTime; // 봇 종료 시간 (null인 경우 무기한)
-
-    // 캔들 설정
-    @Builder.Default
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CandleInterval candleInterval = CandleInterval.THREE; // 분봉 단위 (1, 3, 5, 10, 15, 30, 60, 240)
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Integer candleCount = 100; // 분석할 캔들 개수
+    private Long maxOrderAmount = 10000L; // 최대 주문 금액 (KRW)
 
     // 봇 활성화 상태
     @Column(nullable = false)
@@ -85,9 +65,5 @@ public class BotSetting extends BaseTime {
         this.marketList = request.marketList();
         this.baseOrderAmount = request.baseOrderAmount();
         this.maxOrderAmount = request.maxOrderAmount();
-        this.startTime = request.startTime();
-        this.endTime = request.endTime();
-        this.candleInterval = request.candleInterval();
-        this.candleCount = request.candleCount();
     }
 }
