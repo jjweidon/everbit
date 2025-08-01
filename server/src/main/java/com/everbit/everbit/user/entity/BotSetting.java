@@ -49,11 +49,6 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false)
     private Long maxOrderAmount = 10000L; // 최대 주문 금액 (KRW)
 
-    // 봇 활성화 상태
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean isActive = false;
-
     public static BotSetting init(User user) {
         return BotSetting.builder()
                 .user(user)

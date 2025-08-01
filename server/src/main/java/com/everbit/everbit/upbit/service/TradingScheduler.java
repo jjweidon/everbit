@@ -36,7 +36,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     @Transactional
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */3 * * * *")
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         

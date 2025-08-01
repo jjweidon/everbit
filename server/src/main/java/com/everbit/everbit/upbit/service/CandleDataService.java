@@ -5,15 +5,17 @@ import org.ta4j.core.*;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 import com.everbit.everbit.user.entity.User;
+import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.quotation.MinuteCandleResponse;
-import com.everbit.everbit.upbit.dto.trading.CandleSettings;
-
 import lombok.RequiredArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+/**
+ * 캔들 데이터 처리 및 BarSeries 생성을 담당하는 서비스
+ */
 @Service
 @RequiredArgsConstructor
 public class CandleDataService {
@@ -24,30 +26,30 @@ public class CandleDataService {
      * 사용자의 전략에 맞는 최적화된 캔들 설정으로 BarSeries를 생성합니다.
      */
     public BarSeries createBarSeries(String market, User user) {
-        // 전략별 최적화된 캔들 설정 적용
-        CandleSettings candleSettings = CandleSettings.getOptimalSettings(user.getBotSetting().getStrategy());
+        // 전략에서 직접 캔들 설정 가져오기
+        Strategy strategy = user.getBotSetting().getStrategy();
         
         // 최근 캔들 데이터 조회
         List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
-            candleSettings.getInterval(), 
+            strategy.getCandleInterval(), 
             market, 
             null, 
-            candleSettings.getCount()
+            strategy.getCandleCount()
         );
         
         return buildBarSeries(market, candles);
     }
     
     /**
-     * 지정된 캔들 설정으로 BarSeries를 생성합니다.
+     * 지정된 전략으로 BarSeries를 생성합니다.
      */
-    public BarSeries createBarSeries(String market, CandleSettings candleSettings) {
+    public BarSeries createBarSeries(String market, Strategy strategy) {
         // 최근 캔들 데이터 조회
         List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
-            candleSettings.getInterval(), 
+            strategy.getCandleInterval(), 
             market, 
             null, 
-            candleSettings.getCount()
+            strategy.getCandleCount()
         );
         
         return buildBarSeries(market, candles);
