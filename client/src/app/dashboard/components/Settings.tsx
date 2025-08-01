@@ -5,12 +5,13 @@ import {
     MOCK_DATA, 
     BASE_ORDER_AMOUNT, 
     MAX_ORDER_AMOUNT, 
-    CANDLE_INTERVALS, 
-    STRATEGIES, 
+    CANDLE_INTERVALS,
     MARKETS 
 } from '../constants';
 import { userApi } from '@/api/services/userApi';
 import { BotSettingRequest } from '@/api/types/user';
+import { tradeApi } from '@/api/services/tradeApi';
+import { StrategyResponse } from '@/api/types/trade';
 
 const inputStyle = `
     w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md 
@@ -52,7 +53,8 @@ const selectInputStyle = `
 export default function Settings() {
     const [botSettingsData] = useState<BotSettingsData>(MOCK_DATA.botSettings);
     const [backtestData] = useState<BacktestData>(MOCK_DATA.backtest);
-    
+    const [strategies, setStrategies] = useState<StrategyResponse[]>([]);
+
     // Bot settings state
     const [botSetting, setBotSetting] = useState<BotSettingRequest>({
         botSettingId: '',
@@ -74,7 +76,13 @@ export default function Settings() {
     // Load bot settings on component mount
     useEffect(() => {
         loadBotSettings();
+        loadStrategies();
     }, []);
+
+    const loadStrategies = async () => {
+        const response = await tradeApi.getStrategies();
+        setStrategies(response);
+    };
 
     const loadBotSettings = async () => {
         setIsLoading(true);
@@ -184,18 +192,18 @@ export default function Settings() {
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">전략 선택</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {STRATEGIES.map((strategy) => (
+                    {strategies.map((strategy) => (
                         <button
-                            key={strategy.value}
-                            onClick={() => setBotSetting(prev => ({ ...prev, strategy: strategy.value }))}
+                            key={strategy.name}
+                            onClick={() => setBotSetting(prev => ({ ...prev, strategy: strategy.name }))}
                             className={`p-4 rounded-lg text-left transition-all duration-200 ${
-                                botSetting.strategy === strategy.value
+                                botSetting.strategy === strategy.name
                                     ? 'bg-navy-100 dark:bg-navy-700 border-2 border-navy-500'
                                     : 'bg-navy-50/50 dark:bg-navy-800/50 border-2 border-transparent hover:border-navy-300'
                             }`}
                         >
                             <h4 className="text-base font-medium text-navy-900 dark:text-white mb-2">
-                                {strategy.label}
+                                {strategy.value}
                             </h4>
                             <p className="text-sm text-navy-600 dark:text-navy-300">
                                 {strategy.description}

@@ -15,3 +15,9 @@ export interface TradeResponse {
     status: Status;
     updatedAt: Date;
 }
+
+export interface StrategyResponse {
+    name: string;
+    value: string;
+    description: string;
+}

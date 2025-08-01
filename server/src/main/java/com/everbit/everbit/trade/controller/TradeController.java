@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.global.dto.ApiResponse;
+import com.everbit.everbit.trade.dto.StrategyResponse;
 import com.everbit.everbit.trade.dto.TradeResponse;
 import com.everbit.everbit.trade.service.TradeManager;
 
@@ -27,5 +28,11 @@ public class TradeController {
         String username = oAuth2User.getName();
         log.info("GET 거래 내역 조회: {}", username);
         return ApiResponse.success(tradeManager.getTrades(username), "거래 내역 조회 성공");
+    }
+
+    @GetMapping("/strategies")
+    public ApiResponse<List<StrategyResponse>> getStrategies() {
+        log.info("GET 전략 목록 조회");
+        return ApiResponse.success(tradeManager.getStrategies(), "전략 목록 조회 성공");
     }
 }

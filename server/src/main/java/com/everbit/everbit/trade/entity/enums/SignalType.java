@@ -17,6 +17,8 @@ public enum SignalType {
     LOSS_MANAGEMENT("손실 관리"),
     STOCH_RSI_CROSS_BUY("Stoch RSI 크로스 매수"),
     STOCH_RSI_CROSS_SELL("Stoch RSI 크로스 매도"),
+    BOLLINGER_MEAN_REVERSION_BUY("볼린저 밴드 평균 회귀 매수"),
+    BOLLINGER_MEAN_REVERSION_SELL("볼린저 밴드 평균 회귀 매도"),
     UNKNOWN("알 수 없음");
 
     private final String description;
