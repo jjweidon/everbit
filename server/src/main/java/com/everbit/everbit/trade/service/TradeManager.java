@@ -23,6 +23,6 @@ public class TradeManager {
     }
 
     public List<StrategyResponse> getStrategies() {
-        return StrategyResponse.getAll();
+        return StrategyResponse.getUserConfigurableStrategies();
     }
 }

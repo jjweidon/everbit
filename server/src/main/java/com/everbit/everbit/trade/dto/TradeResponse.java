@@ -1,5 +1,6 @@
 package com.everbit.everbit.trade.dto;
 
+import com.everbit.everbit.global.dto.Response;
 import com.everbit.everbit.trade.entity.Trade;
 
 import java.math.BigDecimal;
@@ -24,7 +25,7 @@ public record TradeResponse(
     BigDecimal totalPrice,
     String status,
     LocalDateTime updatedAt
-) {
+) implements Response {
     public static TradeResponse from(Trade trade) {
         return TradeResponse.builder()
             .tradeId(trade.getId())
