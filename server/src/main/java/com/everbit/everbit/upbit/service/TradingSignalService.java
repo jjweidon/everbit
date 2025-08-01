@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZonedDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -84,7 +85,7 @@ public class TradingSignalService {
     /**
      * 선택된 전략의 시그널 강도를 계산합니다 (0.0 ~ 1.0)
      */
-    private double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
+    public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
             case BOLLINGER_MEAN_REVERSION:
                 return calculateBollingerMeanReversionSignalStrength(signal);
@@ -107,8 +108,8 @@ public class TradingSignalService {
     private double calculateBollingerMeanReversionSignalStrength(TradingSignal signal) {
         if (signal.isBollingerMeanReversionBuySignal() || signal.isBollingerMeanReversionSellSignal()) {
             // RSI 기반 강도 계산 (RSI가 극단적일수록 강한 시그널)
-            // 실제 구현에서는 RSI 값을 직접 계산해야 하지만, 여기서는 기본값 사용
-            return 0.8; // 강한 시그널
+            double rsiStrength = calculateRSIStrength(signal.market(), signal.timestamp());
+            return rsiStrength;
         }
         return 0.0; // 시그널 없음
     }
@@ -119,7 +120,9 @@ public class TradingSignalService {
     private double calculateBollingerMomentumSignalStrength(TradingSignal signal) {
         if (signal.isBbMomentumBuySignal() || signal.isBbMomentumSellSignal()) {
             // 볼린저 밴드 이탈 정도와 MACD 강도 기반 계산
-            return 0.7; // 중간-강한 시그널
+            double bbStrength = calculateBollingerBandStrength(signal.market(), signal.timestamp());
+            double macdStrength = calculateMACDStrength(signal.market(), signal.timestamp());
+            return (bbStrength + macdStrength) / 2.0; // 두 지표의 평균
         }
         return 0.0; // 시그널 없음
     }
@@ -130,7 +133,9 @@ public class TradingSignalService {
     private double calculateEmaMomentumSignalStrength(TradingSignal signal) {
         if (signal.isEmaMomentumBuySignal() || signal.isEmaMomentumSellSignal()) {
             // EMA 교차 각도와 MACD 강도 기반 계산
-            return 0.6; // 중간 시그널
+            double emaStrength = calculateEMAStrength(signal.market(), signal.timestamp());
+            double macdStrength = calculateMACDStrength(signal.market(), signal.timestamp());
+            return (emaStrength + macdStrength) / 2.0; // 두 지표의 평균
         }
         return 0.0; // 시그널 없음
     }
@@ -336,5 +341,172 @@ public class TradingSignalService {
                             macd.getValue(index).isLessThan(signal.getValue(index));
         
         return emaDeadCross && macdFalling;
+    }
+    
+    /**
+     * RSI 기반 시그널 강도 계산 (0.0 ~ 1.0)
+     * RSI가 극단적일수록(0 또는 100에 가까울수록) 강한 시그널
+     */
+    private double calculateRSIStrength(String market, ZonedDateTime timestamp) {
+        try {
+            // 기본 전략으로 BarSeries 생성 (EMA_MOMENTUM 전략 사용)
+            BarSeries series = candleDataService.createBarSeries(market, Strategy.EMA_MOMENTUM);
+            ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+            RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
+            
+            int lastIndex = series.getEndIndex();
+            if (lastIndex < 0) {
+                return 0.5; // 기본값
+            }
+            
+            double rsiValue = rsi.getValue(lastIndex).doubleValue();
+            
+            // RSI 값에 따른 강도 계산
+            // RSI가 0 또는 100에 가까울수록 강한 시그널 (0.8 ~ 1.0)
+            // RSI가 중간값(50)에 가까울수록 약한 시그널 (0.0 ~ 0.3)
+            if (rsiValue <= 20 || rsiValue >= 80) {
+                // 극단적 과매수/과매도 구간
+                double extremeFactor = Math.min(rsiValue, 100 - rsiValue) / 20.0; // 0~20 구간을 0~1로 정규화
+                return 0.8 + (0.2 * extremeFactor); // 0.8 ~ 1.0
+            } else if (rsiValue <= 30 || rsiValue >= 70) {
+                // 과매수/과매도 구간
+                double moderateFactor = Math.min(rsiValue, 100 - rsiValue) / 30.0; // 0~30 구간을 0~1로 정규화
+                return 0.5 + (0.3 * moderateFactor); // 0.5 ~ 0.8
+            } else {
+                // 중립 구간
+                double neutralFactor = Math.abs(50 - rsiValue) / 20.0; // 0~20 구간을 0~1로 정규화
+                return 0.2 + (0.3 * neutralFactor); // 0.2 ~ 0.5
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 기본값 반환
+            return 0.5;
+        }
+    }
+    
+    /**
+     * 볼린저 밴드 기반 시그널 강도 계산 (0.0 ~ 1.0)
+     * 가격이 밴드 경계에서 멀수록 강한 시그널
+     */
+    private double calculateBollingerBandStrength(String market, ZonedDateTime timestamp) {
+        try {
+            BarSeries series = candleDataService.createBarSeries(market, Strategy.BB_MOMENTUM);
+            ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+            SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+            StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
+            BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+            BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
+            BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
+            
+            int lastIndex = series.getEndIndex();
+            if (lastIndex < 0) {
+                return 0.5;
+            }
+            
+            double currentPrice = closePrice.getValue(lastIndex).doubleValue();
+            double upperBand = bbu.getValue(lastIndex).doubleValue();
+            double lowerBand = bbl.getValue(lastIndex).doubleValue();
+            double middleBand = bbm.getValue(lastIndex).doubleValue();
+            
+            // 가격이 밴드 경계에서 얼마나 멀리 있는지 계산
+            double bandWidth = upperBand - lowerBand;
+            if (bandWidth == 0) {
+                return 0.5;
+            }
+            
+            double pricePosition;
+            if (currentPrice > upperBand) {
+                // 상단 밴드 위에 있을 때
+                pricePosition = (currentPrice - upperBand) / bandWidth;
+                return Math.min(0.8 + (0.2 * pricePosition), 1.0);
+            } else if (currentPrice < lowerBand) {
+                // 하단 밴드 아래에 있을 때
+                pricePosition = (lowerBand - currentPrice) / bandWidth;
+                return Math.min(0.8 + (0.2 * pricePosition), 1.0);
+            } else {
+                // 밴드 내부에 있을 때
+                pricePosition = Math.abs(currentPrice - middleBand) / (bandWidth / 2.0);
+                return 0.3 + (0.5 * pricePosition);
+            }
+        } catch (Exception e) {
+            return 0.5;
+        }
+    }
+    
+    /**
+     * MACD 기반 시그널 강도 계산 (0.0 ~ 1.0)
+     * MACD 히스토그램의 크기가 클수록 강한 시그널
+     */
+    private double calculateMACDStrength(String market, ZonedDateTime timestamp) {
+        try {
+            BarSeries series = candleDataService.createBarSeries(market, Strategy.EMA_MOMENTUM);
+            ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+            MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+            SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+            
+            int lastIndex = series.getEndIndex();
+            if (lastIndex < 0) {
+                return 0.5;
+            }
+            
+            double macdValue = macd.getValue(lastIndex).doubleValue();
+            double signalValue = signal.getValue(lastIndex).doubleValue();
+            double histogram = macdValue - signalValue;
+            
+            // MACD 히스토그램의 절대값이 클수록 강한 시그널
+            double absHistogram = Math.abs(histogram);
+            
+            // 히스토그램 크기에 따른 강도 계산 (임계값은 경험적으로 설정)
+            if (absHistogram > 100) {
+                return 1.0; // 매우 강한 시그널
+            } else if (absHistogram > 50) {
+                return 0.8; // 강한 시그널
+            } else if (absHistogram > 20) {
+                return 0.6; // 중간 시그널
+            } else if (absHistogram > 10) {
+                return 0.4; // 약한 시그널
+            } else {
+                return 0.2; // 매우 약한 시그널
+            }
+        } catch (Exception e) {
+            return 0.5;
+        }
+    }
+    
+    /**
+     * EMA 기반 시그널 강도 계산 (0.0 ~ 1.0)
+     * EMA 간격이 클수록 강한 시그널
+     */
+    private double calculateEMAStrength(String market, ZonedDateTime timestamp) {
+        try {
+            BarSeries series = candleDataService.createBarSeries(market, Strategy.EMA_MOMENTUM);
+            ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+            EMAIndicator emaShort = new EMAIndicator(closePrice, SHORT_EMA);
+            EMAIndicator emaLong = new EMAIndicator(closePrice, LONG_EMA);
+            
+            int lastIndex = series.getEndIndex();
+            if (lastIndex < 0) {
+                return 0.5;
+            }
+            
+            double emaShortValue = emaShort.getValue(lastIndex).doubleValue();
+            double emaLongValue = emaLong.getValue(lastIndex).doubleValue();
+            double emaDiff = Math.abs(emaShortValue - emaLongValue);
+            double emaRatio = emaDiff / emaLongValue; // 백분율로 계산
+            
+            // EMA 차이 비율에 따른 강도 계산
+            if (emaRatio > 0.05) { // 5% 이상 차이
+                return 1.0; // 매우 강한 시그널
+            } else if (emaRatio > 0.03) { // 3% 이상 차이
+                return 0.8; // 강한 시그널
+            } else if (emaRatio > 0.02) { // 2% 이상 차이
+                return 0.6; // 중간 시그널
+            } else if (emaRatio > 0.01) { // 1% 이상 차이
+                return 0.4; // 약한 시그널
+            } else {
+                return 0.2; // 매우 약한 시그널
+            }
+        } catch (Exception e) {
+            return 0.5;
+        }
     }
 } 
