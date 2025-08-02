@@ -33,8 +33,8 @@ public class TradingSignalService {
     private static final int MACD_SHORT = 6; // MACD 단기
     private static final int MACD_LONG = 13; // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
-    private static final int RSI_BASE_OVERSOLD = 20; // RSI 과매도 기준
-    private static final int RSI_BASE_OVERBOUGHT = 80; // RSI 과매수 기준
+    private static final int RSI_BASE_OVERSOLD = 30; // RSI 과매도 기준
+    private static final int RSI_BASE_OVERBOUGHT = 70; // RSI 과매수 기준
     
     public TradingSignal calculateSignals(String market, User user) {
         BarSeries series = candleDataService.createBarSeries(market, user);
@@ -191,16 +191,17 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // 현재 가격이 하단 밴드 터치 또는 하단 아래
-        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index));
+        // 현재 가격이 하단 밴드 근처 (2% 여유)
+        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index).multipliedBy(series.numOf(1.02)));
         
-        // RSI 과매도 상태 (기준: 20)
-        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD)); // 20 기준
+        // RSI 과매도 상태 (기준: 30)
+        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD)); // 30 기준
         
-        // MACD 상승 신호 (MACD가 시그널선을 상향 돌파)
+        // MACD 상승 신호 (MACD가 시그널선을 상향 돌파) 또는 MACD가 양수
         boolean macdRising = index > 0 && 
-                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+                           (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                           macd.getValue(index).isGreaterThan(series.numOf(0));
         
         // 디버깅 로그 추가
         if (index == series.getEndIndex()) {
@@ -261,25 +262,29 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파)
+        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파) 또는 중간 밴드 위
         boolean priceBreakout = closePrice.getValue(index).isGreaterThan(bbu.getValue(index));
+        boolean priceAboveMiddle = closePrice.getValue(index).isGreaterThan(bbm.getValue(index));
         
-        // 모멘텀 지표 상승 (MACD 상승 신호)
+        // 모멘텀 지표 상승 (MACD 상승 신호) 또는 MACD가 양수
         boolean momentumRising = index > 0 && 
-                               macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                               macd.getValue(index).isGreaterThan(signal.getValue(index));
+                               (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                                macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                               macd.getValue(index).isGreaterThan(series.numOf(0));
         
         // 디버깅 로그 추가
         if (index == series.getEndIndex()) {
             System.out.println("=== 볼린저 모멘텀 매수 시그널 디버깅 ===");
             System.out.println("현재 가격: " + closePrice.getValue(index));
             System.out.println("상단 밴드: " + bbu.getValue(index));
+            System.out.println("중간 밴드: " + bbm.getValue(index));
             System.out.println("가격 돌파: " + priceBreakout);
+            System.out.println("가격이 중간 밴드 위: " + priceAboveMiddle);
             System.out.println("모멘텀 상승: " + momentumRising);
-            System.out.println("최종 시그널: " + (priceBreakout && momentumRising));
+            System.out.println("최종 시그널: " + ((priceBreakout || priceAboveMiddle) && momentumRising));
         }
         
-        return priceBreakout && momentumRising;
+        return (priceBreakout || priceAboveMiddle) && momentumRising;
     }
     
     /**
@@ -318,15 +323,19 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // EMA 골든크로스
+        // EMA 골든크로스 또는 단기 EMA가 장기 EMA보다 높음
         boolean emaGoldenCross = index > 0 &&
                                emaShort.getValue(index - 1).isLessThan(emaLong.getValue(index - 1)) &&
                                emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
         
-        // MACD 상승 신호
+        // 단기 EMA가 장기 EMA보다 높은 상태 (추세 상승)
+        boolean emaTrendUp = emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
+        
+        // MACD 상승 신호 또는 MACD가 양수
         boolean macdRising = index > 0 && 
-                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+                           (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                           macd.getValue(index).isGreaterThan(series.numOf(0));
         
         // 디버깅 로그 추가
         if (index == series.getEndIndex()) {
@@ -338,11 +347,12 @@ public class TradingSignalService {
                 System.out.println("장기 EMA(이전): " + emaLong.getValue(index - 1));
             }
             System.out.println("EMA 골든크로스: " + emaGoldenCross);
+            System.out.println("EMA 추세 상승: " + emaTrendUp);
             System.out.println("MACD 상승: " + macdRising);
-            System.out.println("최종 시그널: " + (emaGoldenCross && macdRising));
+            System.out.println("최종 시그널: " + ((emaGoldenCross || emaTrendUp) && macdRising));
         }
         
-        return emaGoldenCross && macdRising;
+        return (emaGoldenCross || emaTrendUp) && macdRising;
     }
     
     /**
