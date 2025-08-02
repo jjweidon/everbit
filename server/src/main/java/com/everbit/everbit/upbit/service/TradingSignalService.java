@@ -245,6 +245,19 @@ public class TradingSignalService {
                             macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
                             macd.getValue(index).isLessThan(signal.getValue(index));
         
+        // 디버깅 로그 추가
+        if (index == series.getEndIndex()) {
+            System.out.println("=== 볼린저 평균회귀 매도 시그널 디버깅 ===");
+            System.out.println("현재 가격: " + closePrice.getValue(index));
+            System.out.println("중간 밴드: " + bbm.getValue(index));
+            System.out.println("상단 밴드: " + bbu.getValue(index));
+            System.out.println("가격이 중간/상단 밴드 도달: " + priceAtMiddleOrUpperBand);
+            System.out.println("RSI 값: " + rsi.getValue(index));
+            System.out.println("RSI 과매수: " + rsiOverbought);
+            System.out.println("MACD 하락: " + macdFalling);
+            System.out.println("최종 시그널: " + (priceAtMiddleOrUpperBand && (rsiOverbought || macdFalling)));
+        }
+        
         return priceAtMiddleOrUpperBand && (rsiOverbought || macdFalling);
     }
     
@@ -271,18 +284,6 @@ public class TradingSignalService {
                                (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
                                 macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
                                macd.getValue(index).isGreaterThan(series.numOf(0));
-        
-        // 디버깅 로그 추가
-        if (index == series.getEndIndex()) {
-            System.out.println("=== 볼린저 모멘텀 매수 시그널 디버깅 ===");
-            System.out.println("현재 가격: " + closePrice.getValue(index));
-            System.out.println("상단 밴드: " + bbu.getValue(index));
-            System.out.println("중간 밴드: " + bbm.getValue(index));
-            System.out.println("가격 돌파: " + priceBreakout);
-            System.out.println("가격이 중간 밴드 위: " + priceAboveMiddle);
-            System.out.println("모멘텀 상승: " + momentumRising);
-            System.out.println("최종 시그널: " + ((priceBreakout || priceAboveMiddle) && momentumRising));
-        }
         
         return (priceBreakout || priceAboveMiddle) && momentumRising;
     }
@@ -336,21 +337,6 @@ public class TradingSignalService {
                            (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
                             macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
                            macd.getValue(index).isGreaterThan(series.numOf(0));
-        
-        // 디버깅 로그 추가
-        if (index == series.getEndIndex()) {
-            System.out.println("=== EMA 모멘텀 매수 시그널 디버깅 ===");
-            System.out.println("단기 EMA(현재): " + emaShort.getValue(index));
-            System.out.println("장기 EMA(현재): " + emaLong.getValue(index));
-            if (index > 0) {
-                System.out.println("단기 EMA(이전): " + emaShort.getValue(index - 1));
-                System.out.println("장기 EMA(이전): " + emaLong.getValue(index - 1));
-            }
-            System.out.println("EMA 골든크로스: " + emaGoldenCross);
-            System.out.println("EMA 추세 상승: " + emaTrendUp);
-            System.out.println("MACD 상승: " + macdRising);
-            System.out.println("최종 시그널: " + ((emaGoldenCross || emaTrendUp) && macdRising));
-        }
         
         return (emaGoldenCross || emaTrendUp) && macdRising;
     }
