@@ -111,7 +111,8 @@ public class TradingSignalService {
             double rsiStrength = calculateRSIStrength(signal.market(), signal.timestamp());
             return rsiStrength;
         }
-        return 0.0; // 시그널 없음
+        // 시그널이 없어도 기본 강도 부여
+        return calculateMarketBasedSignalStrength(signal.market(), signal.timestamp());
     }
     
     /**
@@ -124,7 +125,8 @@ public class TradingSignalService {
             double macdStrength = calculateMACDStrength(signal.market(), signal.timestamp());
             return (bbStrength + macdStrength) / 2.0; // 두 지표의 평균
         }
-        return 0.0; // 시그널 없음
+        // 시그널이 없어도 기본 강도 부여
+        return calculateMarketBasedSignalStrength(signal.market(), signal.timestamp());
     }
     
     /**
@@ -137,7 +139,8 @@ public class TradingSignalService {
             double macdStrength = calculateMACDStrength(signal.market(), signal.timestamp());
             return (emaStrength + macdStrength) / 2.0; // 두 지표의 평균
         }
-        return 0.0; // 시그널 없음
+        // 시그널이 없어도 기본 강도 부여
+        return calculateMarketBasedSignalStrength(signal.market(), signal.timestamp());
     }
     
     /**
@@ -156,9 +159,10 @@ public class TradingSignalService {
         if (totalSignals >= 2) {
             return 0.9; // 매우 강한 시그널 (여러 전략이 동시에 시그널)
         } else if (totalSignals == 1) {
-            return 0.5; // 약한 시그널
+            return 0.6; // 약한 시그널 (0.5에서 0.6으로 증가)
         }
-        return 0.0; // 시그널 없음
+        // 시그널이 없어도 기본 강도 부여 (시장 상황에 따른 기본 강도)
+        return calculateMarketBasedSignalStrength(signal.market(), signal.timestamp());
     }
     
     /**
@@ -181,9 +185,10 @@ public class TradingSignalService {
         } else if (totalSignals == 2) {
             return 0.8; // 강한 시그널
         } else if (totalSignals == 1) {
-            return 0.4; // 약한 시그널
+            return 0.5; // 약한 시그널 (0.4에서 0.5로 증가)
         }
-        return 0.0; // 시그널 없음
+        // 시그널이 없어도 기본 강도 부여 (시장 상황에 따른 기본 강도)
+        return calculateMarketBasedSignalStrength(signal.market(), signal.timestamp());
     }
     
     /**
@@ -201,16 +206,29 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // 현재 가격이 하단 밴드 터치 또는 하단 아래
-        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index));
+        // 현재 가격이 하단 밴드 터치 또는 하단 아래 (조건 완화)
+        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index).multipliedBy(series.numOf(1.02))); // 2% 여유
         
-        // RSI 과매도 상태
-        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD));
+        // RSI 과매도 상태 (조건 완화)
+        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD + 10)); // 30으로 완화
         
-        // MACD 상승 신호 (MACD가 시그널선을 상향 돌파)
+        // MACD 상승 신호 (MACD가 시그널선을 상향 돌파) 또는 MACD가 양수
         boolean macdRising = index > 0 && 
-                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+                           (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                           macd.getValue(index).isGreaterThan(series.numOf(0)); // MACD가 양수이면 OK
+        
+        // 디버깅 로그 추가
+        if (index == series.getEndIndex()) {
+            System.out.println("=== 볼린저 평균회귀 매수 시그널 디버깅 ===");
+            System.out.println("현재 가격: " + closePrice.getValue(index));
+            System.out.println("하단 밴드: " + bbl.getValue(index));
+            System.out.println("가격이 하단 밴드 터치: " + priceAtLowerBand);
+            System.out.println("RSI 값: " + rsi.getValue(index));
+            System.out.println("RSI 과매도: " + rsiOversold);
+            System.out.println("MACD 상승: " + macdRising);
+            System.out.println("최종 시그널: " + (priceAtLowerBand && rsiOversold && macdRising));
+        }
         
         return priceAtLowerBand && rsiOversold && macdRising;
     }
@@ -259,15 +277,29 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파)
+        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파) 또는 가격이 중간 밴드 위에 있음
         boolean priceBreakout = closePrice.getValue(index).isGreaterThan(bbu.getValue(index));
+        boolean priceAboveMiddle = closePrice.getValue(index).isGreaterThan(bbm.getValue(index));
         
-        // 모멘텀 지표 상승 (MACD 상승 신호)
+        // 모멘텀 지표 상승 (MACD 상승 신호) 또는 MACD가 양수
         boolean momentumRising = index > 0 && 
-                               macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                               macd.getValue(index).isGreaterThan(signal.getValue(index));
+                               (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                                macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                               macd.getValue(index).isGreaterThan(series.numOf(0)); // MACD가 양수이면 OK
         
-        return priceBreakout && momentumRising;
+        // 디버깅 로그 추가
+        if (index == series.getEndIndex()) {
+            System.out.println("=== 볼린저 모멘텀 매수 시그널 디버깅 ===");
+            System.out.println("현재 가격: " + closePrice.getValue(index));
+            System.out.println("상단 밴드: " + bbu.getValue(index));
+            System.out.println("중간 밴드: " + bbm.getValue(index));
+            System.out.println("가격 돌파: " + priceBreakout);
+            System.out.println("가격이 중간 밴드 위: " + priceAboveMiddle);
+            System.out.println("모멘텀 상승: " + momentumRising);
+            System.out.println("최종 시그널: " + ((priceBreakout || priceAboveMiddle) && momentumRising));
+        }
+        
+        return (priceBreakout || priceAboveMiddle) && momentumRising;
     }
     
     /**
@@ -306,17 +338,36 @@ public class TradingSignalService {
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // EMA 골든크로스
+        // EMA 골든크로스 또는 단기 EMA가 장기 EMA보다 높음
         boolean emaGoldenCross = index > 0 &&
                                emaShort.getValue(index - 1).isLessThan(emaLong.getValue(index - 1)) &&
                                emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
         
-        // MACD 상승 신호
-        boolean macdRising = index > 0 && 
-                           macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                           macd.getValue(index).isGreaterThan(signal.getValue(index));
+        // 단기 EMA가 장기 EMA보다 높은 상태 (추세 상승)
+        boolean emaTrendUp = emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
         
-        return emaGoldenCross && macdRising;
+        // MACD 상승 신호 또는 MACD가 양수
+        boolean macdRising = index > 0 && 
+                           (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
+                            macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
+                           macd.getValue(index).isGreaterThan(series.numOf(0)); // MACD가 양수이면 OK
+        
+        // 디버깅 로그 추가
+        if (index == series.getEndIndex()) {
+            System.out.println("=== EMA 모멘텀 매수 시그널 디버깅 ===");
+            System.out.println("단기 EMA(현재): " + emaShort.getValue(index));
+            System.out.println("장기 EMA(현재): " + emaLong.getValue(index));
+            if (index > 0) {
+                System.out.println("단기 EMA(이전): " + emaShort.getValue(index - 1));
+                System.out.println("장기 EMA(이전): " + emaLong.getValue(index - 1));
+            }
+            System.out.println("EMA 골든크로스: " + emaGoldenCross);
+            System.out.println("EMA 추세 상승: " + emaTrendUp);
+            System.out.println("MACD 상승: " + macdRising);
+            System.out.println("최종 시그널: " + ((emaGoldenCross || emaTrendUp) && macdRising));
+        }
+        
+        return (emaGoldenCross || emaTrendUp) && macdRising;
     }
     
     /**
@@ -507,6 +558,28 @@ public class TradingSignalService {
             }
         } catch (Exception e) {
             return 0.5;
+        }
+    }
+    
+    /**
+     * 시장 상황에 따른 기본 시그널 강도 계산 (0.0 ~ 1.0)
+     * 개별 전략의 시그널이 없을 때 사용되는 기본 강도
+     */
+    private double calculateMarketBasedSignalStrength(String market, ZonedDateTime timestamp) {
+        try {
+            // 여러 기술적 지표의 평균을 사용하여 기본 강도 계산
+            double rsiStrength = calculateRSIStrength(market, timestamp);
+            double bbStrength = calculateBollingerBandStrength(market, timestamp);
+            double macdStrength = calculateMACDStrength(market, timestamp);
+            double emaStrength = calculateEMAStrength(market, timestamp);
+            
+            // 가중 평균으로 기본 강도 계산
+            double baseStrength = (rsiStrength * 0.3 + bbStrength * 0.3 + macdStrength * 0.2 + emaStrength * 0.2);
+            
+            // 기본 강도를 0.1 ~ 0.4 범위로 조정 (너무 낮지도 높지도 않게)
+            return Math.max(0.1, Math.min(0.4, baseStrength * 0.5));
+        } catch (Exception e) {
+            return 0.2; // 기본값
         }
     }
 } 
