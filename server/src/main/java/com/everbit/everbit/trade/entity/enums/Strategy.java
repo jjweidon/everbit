@@ -53,6 +53,14 @@ public enum Strategy {
         false,
         10,
         100
+    ),
+
+    PROFIT_TAKING(
+        "이익실현",
+        "이익실현을 위한 전략",
+        false,
+        10,
+        100
     );
 
     private final String value;
