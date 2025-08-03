@@ -29,7 +29,7 @@ public class BotSetting extends BaseTime {
     
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    private Strategy strategy = Strategy.BOLLINGER_MEAN_REVERSION;
+    private Strategy strategy = Strategy.TRIPLE_INDICATOR_MODERATE;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default

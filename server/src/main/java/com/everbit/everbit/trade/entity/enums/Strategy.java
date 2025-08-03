@@ -6,43 +6,51 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Strategy {
-    BOLLINGER_MEAN_REVERSION(
-        "볼린저 평균회귀",
-        "가격이 볼린저 밴드 하단을 터치하고 과매도(RSI) 상태일 때, 반등을 노리는 평균 회귀 전략",
+    TRIPLE_INDICATOR_MODERATE(
+        "3지표 중간전략", 
+        "볼린저밴드, RSI, MACD 3가지 지표 중 2개 이상이 매수/매도 시그널을 보낼 때 거래하는 중간 전략",
         true,
-        15,
+        CandleInterval.TEN,
         100
     ),
 
-    BB_MOMENTUM(
-        "볼린저 + 모멘텀",
-        "가격이 볼린저 밴드 수렴 구간에서 이탈할 때, 모멘텀 지표로 추세 방향을 판단하여 진입하는 전략",
+    TRIPLE_INDICATOR_CONSERVATIVE(
+        "3지표 보수전략",
+        "볼린저밴드, RSI, MACD 3가지 지표가 모두 매수/매도 시그널을 보낼 때만 거래하는 보수적 전략",
         true,
-        10,
-        120
+        CandleInterval.TEN,
+        100
     ),
 
-    EMA_MOMENTUM(
-        "EMA 모멘텀",
-        "단기/중기 이동평균(EMA 9/21)의 교차와 ADX로 추세 강도를 판단해 추세에 진입하는 전략",
+    TRIPLE_INDICATOR_AGGRESSIVE(
+        "3지표 공격전략",
+        "볼린저밴드, RSI, MACD 3가지 지표 중 1개라도 매수/매도 시그널을 보내면 거래하는 공격적 전략", 
         true,
-        5, 
-        150
+        CandleInterval.TEN,
+        100
     ),
 
-    ENSEMBLE(
-        "앙상블",
-        "여러 개별 전략의 매수/매도 시그널을 조합하여 신뢰도 높은 매매 타이밍을 포착하는 전략",
+    BB_RSI_COMBO(
+        "볼린저+RSI 조합",
+        "볼린저밴드와 RSI 지표만을 조합한 전략",
         true,
-        10,
-        120
+        CandleInterval.TEN,
+        100
     ),
 
-    ENHANCED_ENSEMBLE(
-        "강화 앙상블",
-        "볼린저 평균회귀 등 복수 전략을 통합 분석해 더 정교하게 매매 타이밍을 결정하는 전략",
+    RSI_MACD_COMBO(
+        "RSI+MACD 조합",
+        "RSI와 MACD 지표만을 조합한 전략",
         true,
-        15,
+        CandleInterval.TEN,
+        100
+    ),
+
+    BB_MACD_COMBO(
+        "볼린저+MACD 조합", 
+        "볼린저밴드와 MACD 지표만을 조합한 전략",
+        true,
+        CandleInterval.TEN,
         100
     ),
 
@@ -51,7 +59,7 @@ public enum Strategy {
         "손실관리",
         "손실관리를 위한 전략",
         false,
-        10,
+        CandleInterval.TEN,
         100
     ),
 
@@ -59,13 +67,13 @@ public enum Strategy {
         "이익실현",
         "이익실현을 위한 전략",
         false,
-        10,
+        CandleInterval.TEN,
         100
     );
 
     private final String value;
     private final String description;
     private final boolean userConfigurable;
-    private final int candleInterval;
+    private final CandleInterval candleInterval;
     private final int candleCount;
 }

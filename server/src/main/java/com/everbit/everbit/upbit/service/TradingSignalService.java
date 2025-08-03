@@ -2,8 +2,8 @@ package com.everbit.everbit.upbit.service;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
+import org.ta4j.core.num.Num;
 import org.ta4j.core.indicators.SMAIndicator;
-import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
@@ -26,15 +26,15 @@ public class TradingSignalService {
     private final CandleDataService candleDataService;
     
     // 기술적 지표 계산을 위한 상수 정의
-    private static final int SHORT_EMA = 9;  // 단기 EMA 기간
-    private static final int LONG_EMA = 21;  // 장기 EMA 기간
-    private static final int RSI_PERIOD = 14; // RSI 기간
-    private static final int BB_PERIOD = 20; // 볼린저 밴드 기간
-    private static final int MACD_SHORT = 6; // MACD 단기
-    private static final int MACD_LONG = 13; // MACD 장기
+    private static final int RSI_PERIOD = 9;  // RSI 기간
+    private static final int BB_PERIOD = 20;  // 볼린저 밴드 기간
+    private static final int MACD_SHORT = 6;  // MACD 단기
+    private static final int MACD_LONG = 13;  // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
-    private static final int RSI_BASE_OVERSOLD = 35; // RSI 과매도 기준
-    private static final int RSI_BASE_OVERBOUGHT = 65; // RSI 과매수 기준
+    
+    // RSI 기준값
+    private static final int RSI_OVERSOLD = 35;   // RSI 과매도 기준
+    private static final int RSI_OVERBOUGHT = 65; // RSI 과매수 기준
     
     public TradingSignal calculateSignals(String market, User user) {
         BarSeries series = candleDataService.createBarSeries(market, user);
@@ -42,30 +42,45 @@ public class TradingSignalService {
         
         int lastIndex = series.getEndIndex();
         
-        // 전략별 시그널 계산
-        boolean bbMeanReversionBuySignal = calculateBollingerMeanReversionBuySignal(series, lastIndex);
-        boolean bbMeanReversionSellSignal = calculateBollingerMeanReversionSellSignal(series, lastIndex);
-        boolean bbMomentumBuySignal = calculateBollingerMomentumBuySignal(series, lastIndex);
-        boolean bbMomentumSellSignal = calculateBollingerMomentumSellSignal(series, lastIndex);
-        boolean emaMomentumBuySignal = calculateEmaMomentumBuySignal(series, lastIndex);
-        boolean emaMomentumSellSignal = calculateEmaMomentumSellSignal(series, lastIndex);
+        // 개별 지표 시그널 계산
+        boolean bbBuySignal = calculateBollingerBandsBuySignal(series, lastIndex);
+        boolean bbSellSignal = calculateBollingerBandsSellSignal(series, lastIndex);
+        boolean rsiBuySignal = calculateRSIBuySignal(series, lastIndex);
+        boolean rsiSellSignal = calculateRSISellSignal(series, lastIndex);
+        boolean macdBuySignal = calculateMACDBuySignal(series, lastIndex);
+        boolean macdSellSignal = calculateMACDSellSignal(series, lastIndex);
+        
+        // 지표 값들 계산
+        Num bbLowerBand = getBollingerBandsLower(series, lastIndex);
+        Num bbMiddleBand = getBollingerBandsMiddle(series, lastIndex);
+        Num bbUpperBand = getBollingerBandsUpper(series, lastIndex);
+        Num rsiValue = getRSIValue(series, lastIndex);
+        Num macdValue = getMACDValue(series, lastIndex);
+        Num macdSignalValue = getMACDSignalValue(series, lastIndex);
+        Num macdHistogram = getMACDHistogram(series, lastIndex);
 
         return new TradingSignal(
             market,
             series.getLastBar().getEndTime(),
             closePrice.getValue(lastIndex),
-            bbMeanReversionBuySignal,
-            bbMeanReversionSellSignal,
-            bbMomentumBuySignal,
-            bbMomentumSellSignal,
-            emaMomentumBuySignal,
-            emaMomentumSellSignal
+            bbBuySignal,
+            bbSellSignal,
+            rsiBuySignal,
+            rsiSellSignal,
+            macdBuySignal,
+            macdSellSignal,
+            bbLowerBand,
+            bbMiddleBand,
+            bbUpperBand,
+            rsiValue,
+            macdValue,
+            macdSignalValue,
+            macdHistogram
         );
     }
 
     /**
      * 시그널 강도에 따른 주문 금액 계산
-     * 시그널이 강할수록 maxOrderAmount에 가까워지고, 약할수록 baseOrderAmount에 가까워집니다.
      */
     public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy, 
                                                           BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
@@ -86,263 +101,340 @@ public class TradingSignalService {
      */
     public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case BOLLINGER_MEAN_REVERSION:
-                return calculateBollingerMeanReversionSignalStrength(signal);
-            case BB_MOMENTUM:
-                return calculateBollingerMomentumSignalStrength(signal);
-            case EMA_MOMENTUM:
-                return calculateEmaMomentumSignalStrength(signal);
-            case ENSEMBLE:
-                return calculateEnsembleSignalStrength(signal);
-            case ENHANCED_ENSEMBLE:
-                return calculateEnhancedEnsembleSignalStrength(signal);
+            case TRIPLE_INDICATOR_CONSERVATIVE:
+                return calculateTripleIndicatorConservativeSignalStrength(signal);
+            case TRIPLE_INDICATOR_MODERATE:
+                return calculateTripleIndicatorModerateSignalStrength(signal);
+            case TRIPLE_INDICATOR_AGGRESSIVE:
+                return calculateTripleIndicatorAggressiveSignalStrength(signal);
+            case BB_RSI_COMBO:
+                return calculateBbRsiComboSignalStrength(signal);
+            case RSI_MACD_COMBO:
+                return calculateRsiMacdComboSignalStrength(signal);
+            case BB_MACD_COMBO:
+                return calculateBbMacdComboSignalStrength(signal);
             default:
                 return 0.5; // 기본값
         }
     }
     
     /**
-     * 볼린저 평균회귀 전략 시그널 강도 계산
+     * 3지표 보수전략 시그널 강도 계산
      */
-    private double calculateBollingerMeanReversionSignalStrength(TradingSignal signal) {
-        if (signal.isBollingerMeanReversionBuySignal() || signal.isBollingerMeanReversionSellSignal()) {
-            // RSI 기반 강도 계산 (RSI가 극단적일수록 강한 시그널)
-            return 0.8; // 고정 강도
+    private double calculateTripleIndicatorConservativeSignalStrength(TradingSignal signal) {
+        if (signal.isTripleIndicatorConservativeBuySignal() || signal.isTripleIndicatorConservativeSellSignal()) {
+            // 3개 지표 모두 시그널이므로 최대 강도
+            return 1.0;
         }
-        return 0.0; // 시그널이 없으면 0
+        return 0.0;
     }
     
     /**
-     * 볼린저 모멘텀 전략 시그널 강도 계산
+     * 3지표 중간전략 시그널 강도 계산
      */
-    private double calculateBollingerMomentumSignalStrength(TradingSignal signal) {
-        if (signal.isBbMomentumBuySignal() || signal.isBbMomentumSellSignal()) {
-            // 볼린저 밴드 이탈 정도와 MACD 강도 기반 계산
-            return 0.8; // 고정 강도
+    private double calculateTripleIndicatorModerateSignalStrength(TradingSignal signal) {
+        if (signal.isTripleIndicatorModerateBuySignal() || signal.isTripleIndicatorModerateSellSignal()) {
+            int signalCount = signal.isTripleIndicatorModerateBuySignal() ? 
+                signal.getBuySignalCount() : signal.getSellSignalCount();
+            
+            // 기본 강도: 시그널 개수에 따른 강도
+            double baseStrength = signalCount / 3.0;
+            
+            // 지표별 세부 강도 계산
+            double detailedStrength = calculateDetailedSignalStrength(signal, signal.isTripleIndicatorModerateBuySignal());
+            
+            // 기본 강도와 세부 강도의 평균
+            return (baseStrength + detailedStrength) / 2.0;
         }
-        return 0.0; // 시그널이 없으면 0
+        return 0.0;
     }
     
     /**
-     * EMA 모멘텀 전략 시그널 강도 계산
+     * 3지표 공격전략 시그널 강도 계산
      */
-    private double calculateEmaMomentumSignalStrength(TradingSignal signal) {
-        if (signal.isEmaMomentumBuySignal() || signal.isEmaMomentumSellSignal()) {
-            // EMA 교차 각도와 MACD 강도 기반 계산
-            return 0.8; // 고정 강도
+    private double calculateTripleIndicatorAggressiveSignalStrength(TradingSignal signal) {
+        if (signal.isTripleIndicatorAggressiveBuySignal() || signal.isTripleIndicatorAggressiveSellSignal()) {
+            int signalCount = signal.isTripleIndicatorAggressiveBuySignal() ? 
+                signal.getBuySignalCount() : signal.getSellSignalCount();
+            
+            // 기본 강도: 시그널 개수에 따른 강도
+            double baseStrength = signalCount / 3.0;
+            
+            // 지표별 세부 강도 계산
+            double detailedStrength = calculateDetailedSignalStrength(signal, signal.isTripleIndicatorAggressiveBuySignal());
+            
+            // 기본 강도와 세부 강도의 평균
+            return (baseStrength + detailedStrength) / 2.0;
         }
-        return 0.0; // 시그널이 없으면 0
+        return 0.0;
     }
     
     /**
-     * 앙상블 전략 시그널 강도 계산
+     * 볼린저+RSI 조합 시그널 강도 계산
      */
-    private double calculateEnsembleSignalStrength(TradingSignal signal) {
-        int buySignals = 0;
-        int sellSignals = 0;
+    private double calculateBbRsiComboSignalStrength(TradingSignal signal) {
+        if (signal.isBbRsiComboBuySignal() || signal.isBbRsiComboSellSignal()) {
+            return calculateDetailedSignalStrength(signal, signal.isBbRsiComboBuySignal());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * RSI+MACD 조합 시그널 강도 계산
+     */
+    private double calculateRsiMacdComboSignalStrength(TradingSignal signal) {
+        if (signal.isRsiMacdComboBuySignal() || signal.isRsiMacdComboSellSignal()) {
+            return calculateDetailedSignalStrength(signal, signal.isRsiMacdComboBuySignal());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * 볼린저+MACD 조합 시그널 강도 계산
+     */
+    private double calculateBbMacdComboSignalStrength(TradingSignal signal) {
+        if (signal.isBbMacdComboBuySignal() || signal.isBbMacdComboSellSignal()) {
+            return calculateDetailedSignalStrength(signal, signal.isBbMacdComboBuySignal());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * 지표 값들의 차이에 따른 세부 시그널 강도 계산 (0.0 ~ 1.0)
+     */
+    private double calculateDetailedSignalStrength(TradingSignal signal, boolean isBuySignal) {
+        double bbStrength = calculateBollingerBandsStrength(signal, isBuySignal);
+        double rsiStrength = calculateRSIStrength(signal, isBuySignal);
+        double macdStrength = calculateMACDStrength(signal, isBuySignal);
         
-        if (signal.isEmaMomentumBuySignal()) buySignals++;
-        if (signal.isBbMomentumBuySignal()) buySignals++;
-        if (signal.isEmaMomentumSellSignal()) sellSignals++;
-        if (signal.isBbMomentumSellSignal()) sellSignals++;
+        // 활성화된 지표들의 강도 평균 계산
+        int activeIndicators = 0;
+        double totalStrength = 0.0;
         
-        int totalSignals = buySignals + sellSignals;
-        if (totalSignals >= 2) {
-            return 0.9; // 매우 강한 시그널 (여러 전략이 동시에 시그널)
+        if (signal.bbBuySignal() || signal.bbSellSignal()) {
+            totalStrength += bbStrength;
+            activeIndicators++;
         }
-        return 0.0; // 시그널이 없으면 0
+        if (signal.rsiBuySignal() || signal.rsiSellSignal()) {
+            totalStrength += rsiStrength;
+            activeIndicators++;
+        }
+        if (signal.macdBuySignal() || signal.macdSellSignal()) {
+            totalStrength += macdStrength;
+            activeIndicators++;
+        }
+        
+        return activeIndicators > 0 ? totalStrength / activeIndicators : 0.0;
     }
     
     /**
-     * 강화 앙상블 전략 시그널 강도 계산
+     * 볼린저밴드 강도 계산
+     * 매수: 현재가가 하단 밴드에서 얼마나 멀리 떨어져 있는지
+     * 매도: 현재가가 상단 밴드에서 얼마나 멀리 떨어져 있는지
      */
-    private double calculateEnhancedEnsembleSignalStrength(TradingSignal signal) {
-        int buySignals = 0;
-        int sellSignals = 0;
+    private double calculateBollingerBandsStrength(TradingSignal signal, boolean isBuySignal) {
+        double currentPrice = signal.currentPrice().doubleValue();
+        double bbLower = signal.bbLowerBand().doubleValue();
+        double bbMiddle = signal.bbMiddleBand().doubleValue();
+        double bbUpper = signal.bbUpperBand().doubleValue();
         
-        if (signal.isEmaMomentumBuySignal()) buySignals++;
-        if (signal.isBbMomentumBuySignal()) buySignals++;
-        if (signal.isBollingerMeanReversionBuySignal()) buySignals++;
-        if (signal.isEmaMomentumSellSignal()) sellSignals++;
-        if (signal.isBbMomentumSellSignal()) sellSignals++;
-        if (signal.isBollingerMeanReversionSellSignal()) sellSignals++;
-        
-        int totalSignals = buySignals + sellSignals;
-        if (totalSignals >= 3) {
-            return 1.0; // 최대 강도 시그널
-        } else if (totalSignals == 2) {
-            return 0.8; // 강한 시그널
+        if (isBuySignal) {
+            // 매수: 현재가가 하단 밴드 아래에 있을 때
+            if (currentPrice < bbLower) {
+                // 하단 밴드와의 거리를 계산 (0.0 ~ 1.0)
+                double bandWidth = bbMiddle - bbLower;
+                double distance = bbLower - currentPrice;
+                return Math.min(distance / bandWidth, 1.0);
+            }
+        } else {
+            // 매도: 현재가가 상단 밴드 위에 있을 때
+            if (currentPrice > bbUpper) {
+                // 상단 밴드와의 거리를 계산 (0.0 ~ 1.0)
+                double bandWidth = bbUpper - bbMiddle;
+                double distance = currentPrice - bbUpper;
+                return Math.min(distance / bandWidth, 1.0);
+            }
         }
-        return 0.0; // 시그널이 없으면 0
+        
+        return 0.0;
     }
     
     /**
-     * 볼린저 밴드 평균 회귀 매수 시그널 계산
-     * 조건: 가격이 하단 밴드 터치 + RSI 과매도 (MACD 조건 제거 - 지연 신호이므로)
+     * RSI 강도 계산
+     * 매수: RSI가 과매도 기준에서 얼마나 낮은지
+     * 매도: RSI가 과매수 기준에서 얼마나 높은지
      */
-    private boolean calculateBollingerMeanReversionBuySignal(BarSeries series, int index) {
+    private double calculateRSIStrength(TradingSignal signal, boolean isBuySignal) {
+        double rsiValue = signal.rsiValue().doubleValue();
+        
+        if (isBuySignal) {
+            // 매수: RSI가 35 이하일 때
+            if (rsiValue < RSI_OVERSOLD) {
+                // RSI가 0에 가까울수록 강한 시그널 (0.0 ~ 1.0)
+                return (RSI_OVERSOLD - rsiValue) / RSI_OVERSOLD;
+            }
+        } else {
+            // 매도: RSI가 65 이상일 때
+            if (rsiValue > RSI_OVERBOUGHT) {
+                // RSI가 100에 가까울수록 강한 시그널 (0.0 ~ 1.0)
+                return (rsiValue - RSI_OVERBOUGHT) / (100 - RSI_OVERBOUGHT);
+            }
+        }
+        
+        return 0.0;
+    }
+    
+    /**
+     * MACD 히스토그램 강도 계산
+     * 매수: 히스토그램이 얼마나 증가했는지
+     * 매도: 히스토그램이 얼마나 감소했는지
+     */
+    private double calculateMACDStrength(TradingSignal signal, boolean isBuySignal) {
+        double macdValue = signal.macdValue().doubleValue();
+        double histogram = signal.macdHistogram().doubleValue();
+        
+        // MACD 히스토그램의 절대값을 기준으로 강도 계산
+        double absHistogram = Math.abs(histogram);
+        
+        // 히스토그램이 0에 가까우면 약한 시그널, 멀수록 강한 시그널
+        // 일반적으로 MACD 히스토그램의 범위를 0.1% ~ 1%로 가정
+        double maxExpectedHistogram = Math.abs(macdValue) * 0.01; // MACD 값의 1%를 최대값으로 가정
+        
+        if (maxExpectedHistogram > 0) {
+            return Math.min(absHistogram / maxExpectedHistogram, 1.0);
+        }
+        
+        return 0.5; // 기본값
+    }
+    
+    // ==================== 개별 지표 시그널 계산 메서드들 ====================
+    
+    /**
+     * 볼린저밴드 매수 시그널 계산
+     * 조건: 현재가 < BB 하단
+     */
+    private boolean calculateBollingerBandsBuySignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        Num currentPrice = closePrice.getValue(index);
+        Num bbLower = getBollingerBandsLower(series, index);
+        
+        return currentPrice.isLessThan(bbLower);
+    }
+    
+    /**
+     * 볼린저밴드 매도 시그널 계산
+     * 조건: 현재가 > BB 중단선 or 상단선
+     */
+    private boolean calculateBollingerBandsSellSignal(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        Num currentPrice = closePrice.getValue(index);
+        Num bbMiddle = getBollingerBandsMiddle(series, index);
+        Num bbUpper = getBollingerBandsUpper(series, index);
+        
+        return currentPrice.isGreaterThan(bbMiddle) || currentPrice.isGreaterThan(bbUpper);
+    }
+    
+    /**
+     * RSI 매수 시그널 계산
+     * 조건: RSI(9) < 35
+     */
+    private boolean calculateRSIBuySignal(BarSeries series, int index) {
+        RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
+        Num rsiValue = rsi.getValue(index);
+        
+        return rsiValue.isLessThan(series.numOf(RSI_OVERSOLD));
+    }
+    
+    /**
+     * RSI 매도 시그널 계산
+     * 조건: RSI > 65
+     */
+    private boolean calculateRSISellSignal(BarSeries series, int index) {
+        RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
+        Num rsiValue = rsi.getValue(index);
+        
+        return rsiValue.isGreaterThan(series.numOf(RSI_OVERBOUGHT));
+    }
+    
+    /**
+     * MACD 매수 시그널 계산
+     * 조건: MACD 히스토그램 ↑ 전환 (이전보다 증가)
+     */
+    private boolean calculateMACDBuySignal(BarSeries series, int index) {
+        if (index <= 0) return false;
+        
+        Num currentHistogram = getMACDHistogram(series, index);
+        Num previousHistogram = getMACDHistogram(series, index - 1);
+        
+        return currentHistogram.isGreaterThan(previousHistogram);
+    }
+    
+    /**
+     * MACD 매도 시그널 계산
+     * 조건: MACD 히스토그램 하락 전환 (이전보다 감소)
+     */
+    private boolean calculateMACDSellSignal(BarSeries series, int index) {
+        if (index <= 0) return false;
+        
+        Num currentHistogram = getMACDHistogram(series, index);
+        Num previousHistogram = getMACDHistogram(series, index - 1);
+        
+        return currentHistogram.isLessThan(previousHistogram);
+    }
+    
+    // ==================== 지표 값 계산 헬퍼 메서드들 ====================
+    
+    private Num getBollingerBandsLower(BarSeries series, int index) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
         BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
         BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
         
-        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
-        
-        // 현재 가격이 하단 밴드 터치
-        boolean priceAtLowerBand = closePrice.getValue(index).isLessThanOrEqual(bbl.getValue(index));
-        
-        // RSI 과매도 상태 (기준: 30)
-        boolean rsiOversold = rsi.getValue(index).isLessThan(series.numOf(RSI_BASE_OVERSOLD)); // 30 기준
-        
-        // 디버깅 로그 추가
-        if (index == series.getEndIndex()) {
-            System.out.println("=== 볼린저 평균회귀 매수 시그널 디버깅 ===");
-            System.out.println("현재 가격: " + closePrice.getValue(index));
-            System.out.println("하단 밴드: " + bbl.getValue(index));
-            System.out.println("가격이 하단 밴드 터치: " + priceAtLowerBand);
-            System.out.println("RSI 값: " + rsi.getValue(index));
-            System.out.println("RSI 과매도: " + rsiOversold);
-            System.out.println("최종 시그널: " + (priceAtLowerBand && rsiOversold));
-        }
-        
-        return priceAtLowerBand && rsiOversold;
+        return bbl.getValue(index);
     }
     
-    /**
-     * 볼린저 밴드 평균 회귀 매도 시그널 계산
-     * 조건: 가격이 중간 밴드 도달 + RSI 과매수 (MACD 조건 제거 - 지연 신호이므로)
-     */
-    private boolean calculateBollingerMeanReversionSellSignal(BarSeries series, int index) {
+    private Num getBollingerBandsMiddle(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
+        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
+        
+        return bbm.getValue(index);
+    }
+    
+    private Num getBollingerBandsUpper(BarSeries series, int index) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
         BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
         BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
         
-        RSIIndicator rsi = new RSIIndicator(closePrice, RSI_PERIOD);
-        
-        // 현재 가격이 상단 밴드 터치
-        boolean priceAtUpperBand = closePrice.getValue(index).isGreaterThanOrEqual(bbu.getValue(index));
-        
-        // RSI 과매수 상태
-        boolean rsiOverbought = rsi.getValue(index).isGreaterThan(series.numOf(RSI_BASE_OVERBOUGHT));
-        
-        // 디버깅 로그 추가
-        if (index == series.getEndIndex()) {
-            System.out.println("=== 볼린저 평균회귀 매도 시그널 디버깅 ===");
-            System.out.println("현재 가격: " + closePrice.getValue(index));
-            System.out.println("상단 밴드: " + bbu.getValue(index));
-            System.out.println("가격이 상단 밴드 터치: " + priceAtUpperBand);
-            System.out.println("RSI 값: " + rsi.getValue(index));
-            System.out.println("RSI 과매수: " + rsiOverbought);
-            System.out.println("최종 시그널: " + (priceAtUpperBand && rsiOverbought));
-        }
-        
-        return priceAtUpperBand && rsiOverbought;
+        return bbu.getValue(index);
     }
     
-    /**
-     * 볼린저 밴드 + 모멘텀 매수 시그널 계산
-     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈 + 모멘텀 지표 상승
-     */
-    private boolean calculateBollingerMomentumBuySignal(BarSeries series, int index) {
+    private Num getRSIValue(BarSeries series, int index) {
+        RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
+        return rsi.getValue(index);
+    }
+    
+    private Num getMACDValue(BarSeries series, int index) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
-        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
-        BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd);
-        
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        return macd.getValue(index);
+    }
+    
+    private Num getMACDSignalValue(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
+        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
+        return signal.getValue(index);
+    }
+    
+    private Num getMACDHistogram(BarSeries series, int index) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
-        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 상단 밴드를 상향 돌파) 또는 중간 밴드 위
-        boolean priceBreakout = closePrice.getValue(index).isGreaterThan(bbu.getValue(index));
-        boolean priceAboveMiddle = closePrice.getValue(index).isGreaterThan(bbm.getValue(index));
-        
-        // 모멘텀 지표 상승 (MACD 상승 신호) 또는 MACD가 양수
-        boolean momentumRising = index > 0 && 
-                               (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                                macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
-                               macd.getValue(index).isGreaterThan(series.numOf(0));
-        
-        return (priceBreakout || priceAboveMiddle) && momentumRising;
-    }
-    
-    /**
-     * 볼린저 밴드 + 모멘텀 매도 시그널 계산
-     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈 + 모멘텀 지표 하락
-     */
-    private boolean calculateBollingerMomentumSellSignal(BarSeries series, int index) {
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        SMAIndicator smaBB = new SMAIndicator(closePrice, BB_PERIOD);
-        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, BB_PERIOD);
-        BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(smaBB);
-        BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd);
-        
-        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
-        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
-        
-        // 볼린저 밴드 수렴 구간에서 이탈 (가격이 하단 밴드를 하향 돌파)
-        boolean priceBreakdown = closePrice.getValue(index).isLessThan(bbl.getValue(index));
-        
-        // 모멘텀 지표 하락 (MACD 하락 신호)
-        boolean momentumFalling = index > 0 && 
-                                macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
-                                macd.getValue(index).isLessThan(signal.getValue(index));
-        
-        return priceBreakdown && momentumFalling;
-    }
-    
-    /**
-     * EMA 모멘텀 매수 시그널 계산
-     * 조건: 단기/중기 EMA 교차 + MACD 상승 신호
-     */
-    private boolean calculateEmaMomentumBuySignal(BarSeries series, int index) {
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        EMAIndicator emaShort = new EMAIndicator(closePrice, SHORT_EMA);
-        EMAIndicator emaLong = new EMAIndicator(closePrice, LONG_EMA);
-        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
-        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
-        
-        // EMA 골든크로스 또는 단기 EMA가 장기 EMA보다 높음
-        boolean emaGoldenCross = index > 0 &&
-                               emaShort.getValue(index - 1).isLessThan(emaLong.getValue(index - 1)) &&
-                               emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
-        
-        // 단기 EMA가 장기 EMA보다 높은 상태 (추세 상승)
-        boolean emaTrendUp = emaShort.getValue(index).isGreaterThan(emaLong.getValue(index));
-        
-        // MACD 상승 신호 또는 MACD가 양수
-        boolean macdRising = index > 0 && 
-                           (macd.getValue(index - 1).isLessThan(signal.getValue(index - 1)) &&
-                            macd.getValue(index).isGreaterThan(signal.getValue(index))) ||
-                           macd.getValue(index).isGreaterThan(series.numOf(0));
-        
-        return (emaGoldenCross || emaTrendUp) && macdRising;
-    }
-    
-    /**
-     * EMA 모멘텀 매도 시그널 계산
-     * 조건: 단기/중기 EMA 교차 + MACD 하락 신호
-     */
-    private boolean calculateEmaMomentumSellSignal(BarSeries series, int index) {
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        EMAIndicator emaShort = new EMAIndicator(closePrice, SHORT_EMA);
-        EMAIndicator emaLong = new EMAIndicator(closePrice, LONG_EMA);
-        MACDIndicator macd = new MACDIndicator(closePrice, MACD_SHORT, MACD_LONG);
-        SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
-        
-        // EMA 데드크로스
-        boolean emaDeadCross = index > 0 &&
-                             emaShort.getValue(index - 1).isGreaterThan(emaLong.getValue(index - 1)) &&
-                             emaShort.getValue(index).isLessThan(emaLong.getValue(index));
-        
-        // MACD 하락 신호
-        boolean macdFalling = index > 0 && 
-                            macd.getValue(index - 1).isGreaterThan(signal.getValue(index - 1)) &&
-                            macd.getValue(index).isLessThan(signal.getValue(index));
-        
-        return emaDeadCross && macdFalling;
+        return macd.getValue(index).minus(signal.getValue(index));
     }
 } 

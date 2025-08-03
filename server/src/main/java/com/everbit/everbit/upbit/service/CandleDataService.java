@@ -31,7 +31,7 @@ public class CandleDataService {
         
         // 최근 캔들 데이터 조회
         List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
-            strategy.getCandleInterval(), 
+            strategy.getCandleInterval().getMinutes(), 
             market, 
             null, 
             strategy.getCandleCount()
@@ -46,7 +46,7 @@ public class CandleDataService {
     public BarSeries createBarSeries(String market, Strategy strategy) {
         // 최근 캔들 데이터 조회
         List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
-            strategy.getCandleInterval(), 
+            strategy.getCandleInterval().getMinutes(), 
             market, 
             null, 
             strategy.getCandleCount()

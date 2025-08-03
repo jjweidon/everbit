@@ -179,18 +179,20 @@ public class TradingScheduler {
      */
     private boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case BOLLINGER_MEAN_REVERSION:
-                return signal.isBollingerMeanReversionBuySignal();
-            case BB_MOMENTUM:
-                return signal.isBbMomentumBuySignal();
-            case EMA_MOMENTUM:
-                return signal.isEmaMomentumBuySignal();
-            case ENSEMBLE:
-                return signal.isEnsembleBuySignal();
-            case ENHANCED_ENSEMBLE:
-                return signal.isEnhancedEnsembleBuySignal();
+            case TRIPLE_INDICATOR_CONSERVATIVE:
+                return signal.isTripleIndicatorConservativeBuySignal();
+            case TRIPLE_INDICATOR_MODERATE:
+                return signal.isTripleIndicatorModerateBuySignal();
+            case TRIPLE_INDICATOR_AGGRESSIVE:
+                return signal.isTripleIndicatorAggressiveBuySignal();
+            case BB_RSI_COMBO:
+                return signal.isBbRsiComboBuySignal();
+            case RSI_MACD_COMBO:
+                return signal.isRsiMacdComboBuySignal();
+            case BB_MACD_COMBO:
+                return signal.isBbMacdComboBuySignal();
             default:
-                return signal.isBollingerMeanReversionBuySignal();
+                return signal.isTripleIndicatorModerateBuySignal(); // 기본값을 중간전략으로 변경
         }
     }
     
@@ -199,32 +201,44 @@ public class TradingScheduler {
      */
     private boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case BOLLINGER_MEAN_REVERSION:
-                return signal.isBollingerMeanReversionSellSignal();
-            case BB_MOMENTUM:
-                return signal.isBbMomentumSellSignal();
-            case EMA_MOMENTUM:
-                return signal.isEmaMomentumSellSignal();
-            case ENSEMBLE:
-                return signal.isEnsembleSellSignal();
-            case ENHANCED_ENSEMBLE:
-                return signal.isEnhancedEnsembleSellSignal();
+            case TRIPLE_INDICATOR_CONSERVATIVE:
+                return signal.isTripleIndicatorConservativeSellSignal();
+            case TRIPLE_INDICATOR_MODERATE:
+                return signal.isTripleIndicatorModerateSellSignal();
+            case TRIPLE_INDICATOR_AGGRESSIVE:
+                return signal.isTripleIndicatorAggressiveSellSignal();
+            case BB_RSI_COMBO:
+                return signal.isBbRsiComboSellSignal();
+            case RSI_MACD_COMBO:
+                return signal.isRsiMacdComboSellSignal();
+            case BB_MACD_COMBO:
+                return signal.isBbMacdComboSellSignal();
             default:
-                return signal.isBollingerMeanReversionSellSignal();
+                return signal.isTripleIndicatorModerateSellSignal(); // 기본값을 중간전략으로 변경
         }
     }
 
     private SignalType determineSignalType(TradingSignal signal) {
-        if (signal.isBollingerMeanReversionBuySignal()) return SignalType.BOLLINGER_MEAN_REVERSION_BUY;
-        if (signal.isBollingerMeanReversionSellSignal()) return SignalType.BOLLINGER_MEAN_REVERSION_SELL;
-        if (signal.isBbMomentumBuySignal()) return SignalType.BB_MOMENTUM_BUY;
-        if (signal.isBbMomentumSellSignal()) return SignalType.BB_MOMENTUM_SELL;
-        if (signal.isEmaMomentumBuySignal()) return SignalType.EMA_MOMENTUM_BUY;
-        if (signal.isEmaMomentumSellSignal()) return SignalType.EMA_MOMENTUM_SELL;
-        if (signal.isEnsembleBuySignal()) return SignalType.ENSEMBLE_BUY;
-        if (signal.isEnsembleSellSignal()) return SignalType.ENSEMBLE_SELL;
-        if (signal.isEnhancedEnsembleBuySignal()) return SignalType.ENHANCED_ENSEMBLE_BUY;
-        if (signal.isEnhancedEnsembleSellSignal()) return SignalType.ENHANCED_ENSEMBLE_SELL;
+        // 3지표 보수전략
+        if (signal.isTripleIndicatorConservativeBuySignal()) return SignalType.TRIPLE_INDICATOR_CONSERVATIVE_BUY;
+        if (signal.isTripleIndicatorConservativeSellSignal()) return SignalType.TRIPLE_INDICATOR_CONSERVATIVE_SELL;
+        
+        // 3지표 중간전략
+        if (signal.isTripleIndicatorModerateBuySignal()) return SignalType.TRIPLE_INDICATOR_MODERATE_BUY;
+        if (signal.isTripleIndicatorModerateSellSignal()) return SignalType.TRIPLE_INDICATOR_MODERATE_SELL;
+        
+        // 3지표 공격전략
+        if (signal.isTripleIndicatorAggressiveBuySignal()) return SignalType.TRIPLE_INDICATOR_AGGRESSIVE_BUY;
+        if (signal.isTripleIndicatorAggressiveSellSignal()) return SignalType.TRIPLE_INDICATOR_AGGRESSIVE_SELL;
+        
+        // 2지표 조합 전략들
+        if (signal.isBbRsiComboBuySignal()) return SignalType.BB_RSI_COMBO_BUY;
+        if (signal.isBbRsiComboSellSignal()) return SignalType.BB_RSI_COMBO_SELL;
+        if (signal.isRsiMacdComboBuySignal()) return SignalType.RSI_MACD_COMBO_BUY;
+        if (signal.isRsiMacdComboSellSignal()) return SignalType.RSI_MACD_COMBO_SELL;
+        if (signal.isBbMacdComboBuySignal()) return SignalType.BB_MACD_COMBO_BUY;
+        if (signal.isBbMacdComboSellSignal()) return SignalType.BB_MACD_COMBO_SELL;
+        
         return SignalType.UNKNOWN;
     }
 

@@ -7,16 +7,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SignalType {
     LOSS_MANAGEMENT("손실 관리"),
-    BOLLINGER_MEAN_REVERSION_BUY("볼린저 밴드 평균 회귀 매수"),
-    BOLLINGER_MEAN_REVERSION_SELL("볼린저 밴드 평균 회귀 매도"),
-    BB_MOMENTUM_BUY("볼린저 + 모멘텀 매수"),
-    BB_MOMENTUM_SELL("볼린저 + 모멘텀 매도"),
-    EMA_MOMENTUM_BUY("EMA 모멘텀 매수"),
-    EMA_MOMENTUM_SELL("EMA 모멘텀 매도"),
-    ENSEMBLE_BUY("앙상블 매수"),
-    ENSEMBLE_SELL("앙상블 매도"),
-    ENHANCED_ENSEMBLE_BUY("강화 앙상블 매수"),
-    ENHANCED_ENSEMBLE_SELL("강화 앙상블 매도"),
+    PROFIT_TAKING("이익 실현"),
+    
+    // 3지표 보수전략
+    TRIPLE_INDICATOR_CONSERVATIVE_BUY("3지표 보수전략 매수"),
+    TRIPLE_INDICATOR_CONSERVATIVE_SELL("3지표 보수전략 매도"),
+    
+    // 3지표 중간전략
+    TRIPLE_INDICATOR_MODERATE_BUY("3지표 중간전략 매수"),
+    TRIPLE_INDICATOR_MODERATE_SELL("3지표 중간전략 매도"),
+    
+    // 3지표 공격전략
+    TRIPLE_INDICATOR_AGGRESSIVE_BUY("3지표 공격전략 매수"),
+    TRIPLE_INDICATOR_AGGRESSIVE_SELL("3지표 공격전략 매도"),
+    
+    // 2지표 조합 전략들
+    BB_RSI_COMBO_BUY("볼린저+RSI 조합 매수"),
+    BB_RSI_COMBO_SELL("볼린저+RSI 조합 매도"),
+    RSI_MACD_COMBO_BUY("RSI+MACD 조합 매수"),
+    RSI_MACD_COMBO_SELL("RSI+MACD 조합 매도"),
+    BB_MACD_COMBO_BUY("볼린저+MACD 조합 매수"),
+    BB_MACD_COMBO_SELL("볼린저+MACD 조합 매도"),
+    
     UNKNOWN("알 수 없음");
 
     private final String description;

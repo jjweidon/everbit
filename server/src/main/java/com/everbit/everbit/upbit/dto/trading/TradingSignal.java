@@ -7,100 +7,148 @@ public record TradingSignal(
     String market,
     ZonedDateTime timestamp,
     Num currentPrice,
-    boolean bbMeanReversionBuySignal,   // 볼린저 밴드 평균 회귀 매수 시그널
-    boolean bbMeanReversionSellSignal,  // 볼린저 밴드 평균 회귀 매도 시그널
-    boolean bbMomentumBuySignal,        // 볼린저 밴드 + 모멘텀 매수 시그널
-    boolean bbMomentumSellSignal,       // 볼린저 밴드 + 모멘텀 매도 시그널
-    boolean emaMomentumBuySignal,       // EMA 모멘텀 매수 시그널
-    boolean emaMomentumSellSignal       // EMA 모멘텀 매도 시그널
+    
+    // 개별 지표 시그널
+    boolean bbBuySignal,      // 볼린저밴드 매수 시그널
+    boolean bbSellSignal,     // 볼린저밴드 매도 시그널
+    boolean rsiBuySignal,     // RSI 매수 시그널  
+    boolean rsiSellSignal,    // RSI 매도 시그널
+    boolean macdBuySignal,    // MACD 매수 시그널
+    boolean macdSellSignal,   // MACD 매도 시그널
+    
+    // 지표 값들 (디버깅 및 강도 계산용)
+    Num bbLowerBand,          // 볼린저밴드 하단
+    Num bbMiddleBand,         // 볼린저밴드 중간
+    Num bbUpperBand,          // 볼린저밴드 상단
+    Num rsiValue,             // RSI 값
+    Num macdValue,            // MACD 값
+    Num macdSignalValue,      // MACD 시그널 값
+    Num macdHistogram         // MACD 히스토그램
 ) {
     
     /**
-     * 볼린저 평균회귀 전략 매수 시그널
-     * 조건: 가격이 볼린저 밴드 하단을 터치하고 과매도(RSI) 상태일 때, 반등을 노리는 평균 회귀 전략
+     * 3지표 보수전략 매수 시그널
+     * 조건: 3가지 지표가 모두 매수 시그널을 보낼 때
      */
-    public boolean isBollingerMeanReversionBuySignal() {
-        return bbMeanReversionBuySignal;
+    public boolean isTripleIndicatorConservativeBuySignal() {
+        return bbBuySignal && rsiBuySignal && macdBuySignal;
     }
     
     /**
-     * 볼린저 평균회귀 전략 매도 시그널
+     * 3지표 보수전략 매도 시그널
      */
-    public boolean isBollingerMeanReversionSellSignal() {
-        return bbMeanReversionSellSignal;
+    public boolean isTripleIndicatorConservativeSellSignal() {
+        return bbSellSignal && rsiSellSignal && macdSellSignal;
     }
     
     /**
-     * 볼린저 + 모멘텀 전략 매수 시그널
-     * 조건: 가격이 볼린저 밴드 수렴 구간에서 이탈할 때, 모멘텀 지표로 추세 방향을 판단하여 진입하는 전략
+     * 3지표 중간전략 매수 시그널
+     * 조건: 3가지 지표 중 2개 이상이 매수 시그널을 보낼 때
      */
-    public boolean isBbMomentumBuySignal() {
-        return bbMomentumBuySignal;
+    public boolean isTripleIndicatorModerateBuySignal() {
+        int buyCount = 0;
+        if (bbBuySignal) buyCount++;
+        if (rsiBuySignal) buyCount++;
+        if (macdBuySignal) buyCount++;
+        return buyCount >= 2;
     }
     
     /**
-     * 볼린저 + 모멘텀 전략 매도 시그널
+     * 3지표 중간전략 매도 시그널
      */
-    public boolean isBbMomentumSellSignal() {
-        return bbMomentumSellSignal;
+    public boolean isTripleIndicatorModerateSellSignal() {
+        int sellCount = 0;
+        if (bbSellSignal) sellCount++;
+        if (rsiSellSignal) sellCount++;
+        if (macdSellSignal) sellCount++;
+        return sellCount >= 2;
     }
     
     /**
-     * EMA 모멘텀 전략 매수 시그널
-     * 조건: 단기/중기 이동평균(EMA 9/21)의 교차와 MACD로 추세를 판단해 추세에 진입하는 전략
+     * 3지표 공격전략 매수 시그널
+     * 조건: 3가지 지표 중 1개라도 매수 시그널을 보낼 때
      */
-    public boolean isEmaMomentumBuySignal() {
-        return emaMomentumBuySignal;
+    public boolean isTripleIndicatorAggressiveBuySignal() {
+        return bbBuySignal || rsiBuySignal || macdBuySignal;
     }
     
     /**
-     * EMA 모멘텀 전략 매도 시그널
+     * 3지표 공격전략 매도 시그널
      */
-    public boolean isEmaMomentumSellSignal() {
-        return emaMomentumSellSignal;
+    public boolean isTripleIndicatorAggressiveSellSignal() {
+        return bbSellSignal || rsiSellSignal || macdSellSignal;
     }
     
     /**
-     * 앙상블 전략 매수 시그널
-     * 조건: 여러 개별 전략의 매수/매도 시그널을 조합하여 신뢰도 높은 매매 타이밍을 포착하는 전략
+     * 볼린저+RSI 조합 매수 시그널
      */
-    public boolean isEnsembleBuySignal() {
-        int cnt = 0;
-        if (isEmaMomentumBuySignal()) cnt++;
-        if (isBbMomentumBuySignal()) cnt++;
-        return cnt >= 2;
-    }
-
-    /**
-     * 앙상블 전략 매도 시그널
-     */
-    public boolean isEnsembleSellSignal() {
-        int cnt = 0;
-        if (isEmaMomentumSellSignal()) cnt++;
-        if (isBbMomentumSellSignal()) cnt++;
-        return cnt >= 2;
+    public boolean isBbRsiComboBuySignal() {
+        return bbBuySignal && rsiBuySignal;
     }
     
     /**
-     * 강화 앙상블 전략 매수 시그널
-     * 조건: 볼린저 평균회귀 등 복수 전략을 통합 분석해 더 정교하게 매매 타이밍을 결정하는 전략
+     * 볼린저+RSI 조합 매도 시그널
      */
-    public boolean isEnhancedEnsembleBuySignal() {
-        int cnt = 0;
-        if (isEmaMomentumBuySignal()) cnt++;
-        if (isBbMomentumBuySignal()) cnt++;
-        if (isBollingerMeanReversionBuySignal()) cnt++;
-        return cnt >= 2;
+    public boolean isBbRsiComboSellSignal() {
+        return bbSellSignal && rsiSellSignal;
     }
     
     /**
-     * 강화 앙상블 전략 매도 시그널
+     * RSI+MACD 조합 매수 시그널
      */
-    public boolean isEnhancedEnsembleSellSignal() {
-        int cnt = 0;
-        if (isEmaMomentumSellSignal()) cnt++;
-        if (isBbMomentumSellSignal()) cnt++;
-        if (isBollingerMeanReversionSellSignal()) cnt++;
-        return cnt >= 2;
+    public boolean isRsiMacdComboBuySignal() {
+        return rsiBuySignal && macdBuySignal;
+    }
+    
+    /**
+     * RSI+MACD 조합 매도 시그널
+     */
+    public boolean isRsiMacdComboSellSignal() {
+        return rsiSellSignal && macdSellSignal;
+    }
+    
+    /**
+     * 볼린저+MACD 조합 매수 시그널
+     */
+    public boolean isBbMacdComboBuySignal() {
+        return bbBuySignal && macdBuySignal;
+    }
+    
+    /**
+     * 볼린저+MACD 조합 매도 시그널
+     */
+    public boolean isBbMacdComboSellSignal() {
+        return bbSellSignal && macdSellSignal;
+    }
+    
+    /**
+     * 매수 시그널 개수 반환
+     */
+    public int getBuySignalCount() {
+        int count = 0;
+        if (bbBuySignal) count++;
+        if (rsiBuySignal) count++;
+        if (macdBuySignal) count++;
+        return count;
+    }
+    
+    /**
+     * 매도 시그널 개수 반환
+     */
+    public int getSellSignalCount() {
+        int count = 0;
+        if (bbSellSignal) count++;
+        if (rsiSellSignal) count++;
+        if (macdSellSignal) count++;
+        return count;
+    }
+    
+    /**
+     * 시그널 강도 계산 (0.0 ~ 1.0)
+     * 시그널이 많을수록 강도가 높아짐
+     */
+    public double getSignalStrength(boolean isBuy) {
+        int signalCount = isBuy ? getBuySignalCount() : getSellSignalCount();
+        return signalCount / 3.0; // 3개 지표 기준으로 정규화
     }
 }
