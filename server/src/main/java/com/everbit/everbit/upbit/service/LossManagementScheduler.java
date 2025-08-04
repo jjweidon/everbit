@@ -14,6 +14,7 @@ import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.upbit.dto.exchange.AccountResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderRequest;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
+import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.upbit.dto.quotation.TickerResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
@@ -33,7 +34,6 @@ public class LossManagementScheduler {
     
     private static final BigDecimal LOSS_THRESHOLD = new BigDecimal("0.01"); // 1% 손실 임계값
     private static final BigDecimal PROFIT_THRESHOLD = new BigDecimal("0.015"); // 1.5% 이익 임계값
-    private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-DOGE", "KRW-USDT"}; // 거래할 마켓 목록
 
     @Transactional
     @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
@@ -62,11 +62,12 @@ public class LossManagementScheduler {
             // 전체 계좌 잔고 조회
             List<AccountResponse> accounts = upbitExchangeClient.getAccounts(user.getUsername());
             
-            for (String market : MARKETS) {
+            // 사용자의 botSettings에서 마켓 목록 가져오기
+            for (Market market : user.getBotSetting().getMarketList()) {
                 try {
                     processMarketLossAndProfitManagement(user, market, accounts);
                 } catch (Exception e) {
-                    log.error("사용자: {}, 마켓: {} - 손실 및 이익 관리 처리 실패", user.getUsername(), market, e);
+                    log.error("사용자: {}, 마켓: {} - 손실 및 이익 관리 처리 실패", user.getUsername(), market.getCode(), e);
                 }
             }
         } catch (Exception e) {
@@ -74,10 +75,9 @@ public class LossManagementScheduler {
         }
     }
     
-    private void processMarketLossAndProfitManagement(User user, String market, List<AccountResponse> accounts) {
+    private void processMarketLossAndProfitManagement(User user, Market market, List<AccountResponse> accounts) {
         // 해당 마켓의 코인 잔고 찾기
-        String coinCurrency = getCoinCurrency(market);
-        AccountResponse coinAccount = findAccountByCurrency(accounts, coinCurrency);
+        AccountResponse coinAccount = findAccountByCurrency(accounts, market.getCode());
         
         if (coinAccount == null || new BigDecimal(coinAccount.balance()).compareTo(BigDecimal.ZERO) <= 0) {
             log.debug("사용자: {}, 마켓: {} - 보유 수량이 없음", user.getUsername(), market);
@@ -116,11 +116,6 @@ public class LossManagementScheduler {
         }
     }
     
-    private String getCoinCurrency(String market) {
-        // KRW-BTC -> BTC, KRW-ETH -> ETH 등으로 변환
-        return market.substring(4); // "KRW-" 제거
-    }
-    
     private AccountResponse findAccountByCurrency(List<AccountResponse> accounts, String currency) {
         return accounts.stream()
             .filter(account -> account.currency().equals(currency))
@@ -128,8 +123,8 @@ public class LossManagementScheduler {
             .orElse(null);
     }
     
-    private BigDecimal getCurrentPrice(String market) {
-        List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
+    private BigDecimal getCurrentPrice(Market market) {
+        List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market.getCode()));
         TickerResponse ticker = tickers.get(0);
         return new BigDecimal(ticker.tradePrice());
     }
@@ -144,17 +139,17 @@ public class LossManagementScheduler {
         return currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
     }
     
-    private void executeFullSell(User user, String market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
+    private void executeFullSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
         try {
             // 시장가 매도 주문 생성
             String sellQuantityStr = coinBalance.toPlainString();
-            OrderRequest orderRequest = OrderRequest.createSellOrder(market, sellQuantityStr, currentPrice.toString());
+            OrderRequest orderRequest = OrderRequest.createSellOrder(market.getCode(), sellQuantityStr, currentPrice.toString());
             
             // 매도 주문 실행
             OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
             
             // 주문 결과 저장
-            tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
+            tradeService.saveTrade(user, market.getCode(), strategy, orderResponse, currentPrice);
             
             String actionType = strategy == Strategy.LOSS_MANAGEMENT ? "손실 관리" : "이익 실현";
             log.info("사용자: {}, 마켓: {} - {} 전량 매도 주문 완료. 주문ID: {}, 수량: {}, 가격: {}", 

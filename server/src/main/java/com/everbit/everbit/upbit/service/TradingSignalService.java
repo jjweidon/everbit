@@ -34,8 +34,8 @@ public class TradingSignalService {
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     
     // RSI 기준값
-    private static final int RSI_OVERSOLD = 38;   // RSI 과매도 기준
-    private static final int RSI_OVERBOUGHT = 62; // RSI 과매수 기준
+    private static final int RSI_OVERSOLD = 31;   // RSI 과매도 기준
+    private static final int RSI_OVERBOUGHT = 69; // RSI 과매수 기준
     
     // 볼린저밴드 기준값
     private static final double BB_LOWER_THRESHOLD = 0.02; // BB 하단 대비 2% 이내에서 매수
