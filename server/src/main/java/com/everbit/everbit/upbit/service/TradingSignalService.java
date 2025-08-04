@@ -34,8 +34,8 @@ public class TradingSignalService {
     private static final int MACD_SIGNAL = 5; // MACD 시그널
     
     // RSI 기준값
-    private static final int RSI_OVERSOLD = 30;   // RSI 과매도 기준
-    private static final int RSI_OVERBOUGHT = 70; // RSI 과매수 기준
+    private static final int RSI_OVERSOLD = 38;   // RSI 과매도 기준
+    private static final int RSI_OVERBOUGHT = 62; // RSI 과매수 기준
     
     // 볼린저밴드 기준값
     private static final double BB_LOWER_THRESHOLD = 0.02; // BB 하단 대비 2% 이내에서 매수
@@ -387,44 +387,38 @@ public class TradingSignalService {
     
     /**
      * RSI 매수 시그널 계산
-     * 조건: RSI(9) < 30 (과매도 구간에서 반등 시그널)
+     * 조건: RSI(9) < 30 (과매도 구간에서 매수 시그널)
      */
     private boolean calculateRSIBuySignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
         Num currentRsi = rsi.getValue(index);
-        Num previousRsi = rsi.getValue(index - 1);
         
-        // RSI가 과매도 구간이고, 이전보다 상승하고 있을 때 매수 시그널
-        boolean isOversold = currentRsi.isLessThan(series.numOf(RSI_OVERSOLD));
-        boolean isRising = currentRsi.isGreaterThan(previousRsi);
-        boolean buySignal = isOversold && isRising;
+        // RSI가 과매도 구간에 있을 때 매수 시그널 (상승 여부와 관계없이)
+        boolean buySignal = currentRsi.isLessThan(series.numOf(RSI_OVERSOLD));
         
-        log.debug("RSI 매수 시그널 계산 - 현재RSI: {}, 이전RSI: {}, 과매도기준: {}, 과매도: {}, 상승중: {}, 매수시그널: {}", 
-            currentRsi.doubleValue(), previousRsi.doubleValue(), RSI_OVERSOLD, isOversold, isRising, buySignal);
+        log.debug("RSI 매수 시그널 계산 - 현재RSI: {}, 과매도기준: {}, 매수시그널: {}", 
+            currentRsi.doubleValue(), RSI_OVERSOLD, buySignal);
         
         return buySignal;
     }
     
     /**
      * RSI 매도 시그널 계산
-     * 조건: RSI > 70 (과매수 구간에서 하락 시그널)
+     * 조건: RSI > 70 (과매수 구간에서 매도 시그널)
      */
     private boolean calculateRSISellSignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
         Num currentRsi = rsi.getValue(index);
-        Num previousRsi = rsi.getValue(index - 1);
         
-        // RSI가 과매수 구간이고, 이전보다 하락하고 있을 때 매도 시그널
-        boolean isOverbought = currentRsi.isGreaterThan(series.numOf(RSI_OVERBOUGHT));
-        boolean isFalling = currentRsi.isLessThan(previousRsi);
-        boolean sellSignal = isOverbought && isFalling;
+        // RSI가 과매수 구간에 있을 때 매도 시그널
+        boolean sellSignal = currentRsi.isGreaterThan(series.numOf(RSI_OVERBOUGHT));
         
-        log.debug("RSI 매도 시그널 계산 - 현재RSI: {}, 이전RSI: {}, 과매수기준: {}, 과매수: {}, 하락중: {}, 매도시그널: {}", 
-            currentRsi.doubleValue(), previousRsi.doubleValue(), RSI_OVERBOUGHT, isOverbought, isFalling, sellSignal);
+        log.debug("RSI 매도 시그널 계산 - 현재RSI: {}, 과매수기준: {}, 매도시그널: {}", 
+            currentRsi.doubleValue(), RSI_OVERBOUGHT, sellSignal);
         
         return sellSignal;
     }

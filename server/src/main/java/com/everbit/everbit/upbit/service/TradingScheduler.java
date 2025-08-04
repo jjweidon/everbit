@@ -279,6 +279,6 @@ public class TradingScheduler {
     private BigDecimal getCurrentPrice(String market) {
         List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market));
         TickerResponse ticker = tickers.get(0);
-        return new BigDecimal(ticker.tradePrice());
+        return new BigDecimal(ticker.tradePrice()).setScale(8, RoundingMode.HALF_UP);
     }
 } 
