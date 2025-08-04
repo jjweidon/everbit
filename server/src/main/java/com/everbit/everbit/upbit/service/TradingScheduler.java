@@ -16,6 +16,7 @@ import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
 import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.trade.entity.enums.SignalType;
+import com.everbit.everbit.user.entity.BotSetting;
 
 import java.util.List;
 import java.math.BigDecimal;
@@ -56,16 +57,22 @@ public class TradingScheduler {
     @Transactional
     private void processSignal(TradingSignal signal, User user) {
         String market = signal.market();
-        BigDecimal baseOrderAmount = new BigDecimal(user.getBotSetting().getBaseOrderAmount());
-        BigDecimal maxOrderAmount = new BigDecimal(user.getBotSetting().getMaxOrderAmount());
-        Strategy strategy = user.getBotSetting().getStrategy();
+        BotSetting botSetting = user.getBotSetting();
+        Strategy strategy = botSetting.getStrategy();
+        BigDecimal baseOrderAmount = BigDecimal.valueOf(botSetting.getBaseOrderAmount());
+        BigDecimal maxOrderAmount = BigDecimal.valueOf(botSetting.getMaxOrderAmount());
         
-        // 시그널 강도 계산 및 로그 출력
+        // 시그널 강도 계산
         double signalStrength = tradingSignalService.calculateSignalStrength(signal, strategy);
-        log.info("사용자: {}, 마켓: {} - 전략: {}, 시그널 강도: {} (0.0~1.0)", 
-                user.getUsername(), market, strategy.getValue(), String.format("%.2f", signalStrength));
         
-        // 사용자가 선택한 전략에 따라 매수 시그널 결정
+        // 개별 지표 시그널 상태 로깅
+        log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [BB: 매수={}, 매도={}, RSI: 매수={}, 매도={}, MACD: 매수={}, 매도={}]", 
+                user.getUsername(), market, 
+                signal.bbBuySignal(), signal.bbSellSignal(),
+                signal.rsiBuySignal(), signal.rsiSellSignal(),
+                signal.macdBuySignal(), signal.macdSellSignal());
+        
+        // 전략별 매수/매도 시그널 결정
         boolean buySignal = determineBuySignal(signal, strategy);
         boolean sellSignal = determineSellSignal(signal, strategy);
         
