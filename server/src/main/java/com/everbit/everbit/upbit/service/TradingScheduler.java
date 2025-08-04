@@ -65,12 +65,39 @@ public class TradingScheduler {
         // 시그널 강도 계산
         double signalStrength = tradingSignalService.calculateSignalStrength(signal, strategy);
         
+        // 지표값 상세 로깅
+        log.info("사용자: {}, 마켓: {} - 지표값 [\n" +
+                "  현재가: {}\n" +
+                "  BB하단: {}\n" +
+                "  BB중간: {}\n" +
+                "  BB상단: {}\n" +
+                "  RSI: {}\n" +
+                "  MACD: {}\n" +
+                "  MACD시그널: {}\n" +
+                "  MACD히스토그램: {}\n" +
+                "]", 
+                user.getUsername(), market,
+                signal.currentPrice().doubleValue(),
+                signal.bbLowerBand().doubleValue(),
+                signal.bbMiddleBand().doubleValue(),
+                signal.bbUpperBand().doubleValue(),
+                signal.rsiValue().doubleValue(),
+                signal.macdValue().doubleValue(),
+                signal.macdSignalValue().doubleValue(),
+                signal.macdHistogram().doubleValue());
+
         // 개별 지표 시그널 상태 로깅
-        log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [BB: 매수={}, 매도={}, RSI: 매수={}, 매도={}, MACD: 매수={}, 매도={}]", 
-                user.getUsername(), market, 
-                signal.bbBuySignal(), signal.bbSellSignal(),
-                signal.rsiBuySignal(), signal.rsiSellSignal(),
-                signal.macdBuySignal(), signal.macdSellSignal());
+        log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [\n" +
+                "  BB: 매수={}, 매도={},\n" +
+                "  RSI: 매수={}, 매도={},\n" +
+                "  MACD: 매수={}, 매도={},\n" +
+                "  최종 시그널: 매수={}, 매도={}\n" +
+                "]", 
+        user.getUsername(), market, 
+        signal.bbBuySignal(), signal.bbSellSignal(),
+        signal.rsiBuySignal(), signal.rsiSellSignal(),
+        signal.macdBuySignal(), signal.macdSellSignal(),
+        signal.isTripleIndicatorConservativeBuySignal(), signal.isTripleIndicatorConservativeSellSignal());
         
         // 전략별 매수/매도 시그널 결정
         boolean buySignal = determineBuySignal(signal, strategy);

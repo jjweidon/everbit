@@ -106,9 +106,6 @@ public class TradingSignalService {
             macdHistogram
         );
         
-        // 시그널 생성 결과 로깅
-        log.debug("마켓: {} - 시그널 생성 완료 [BB: 매수={}, 매도={}, RSI: 매수={}, 매도={}, MACD: 매수={}, 매도={}]", 
-            market, bbBuySignal, bbSellSignal, rsiBuySignal, rsiSellSignal, macdBuySignal, macdSellSignal);
         return signal;
     }
 
@@ -354,7 +351,15 @@ public class TradingSignalService {
         
         // 현재가가 BB 하단 근처에 있고, 중간선보다 낮을 때 매수 시그널
         double lowerThreshold = bbLower.doubleValue() * (1 + BB_LOWER_THRESHOLD);
-        return currentPrice.doubleValue() <= lowerThreshold && currentPrice.isLessThan(bbMiddle);
+        boolean isNearLower = currentPrice.doubleValue() <= lowerThreshold;
+        boolean isBelowMiddle = currentPrice.isLessThan(bbMiddle);
+        boolean buySignal = isNearLower && isBelowMiddle;
+        
+        log.debug("볼린저밴드 매수 시그널 계산 - 현재가: {}, BB하단: {}, BB중간: {}, 하단임계값: {}, 하단근처: {}, 중간선아래: {}, 매수시그널: {}", 
+            currentPrice.doubleValue(), bbLower.doubleValue(), bbMiddle.doubleValue(), 
+            lowerThreshold, isNearLower, isBelowMiddle, buySignal);
+        
+        return buySignal;
     }
     
     /**
@@ -369,7 +374,15 @@ public class TradingSignalService {
         
         // 현재가가 BB 상단 근처에 있고, 중간선보다 높을 때 매도 시그널
         double upperThreshold = bbUpper.doubleValue() * BB_UPPER_THRESHOLD;
-        return currentPrice.doubleValue() >= upperThreshold && currentPrice.isGreaterThan(bbMiddle);
+        boolean isNearUpper = currentPrice.doubleValue() >= upperThreshold;
+        boolean isAboveMiddle = currentPrice.isGreaterThan(bbMiddle);
+        boolean sellSignal = isNearUpper && isAboveMiddle;
+        
+        log.debug("볼린저밴드 매도 시그널 계산 - 현재가: {}, BB상단: {}, BB중간: {}, 상단임계값: {}, 상단근처: {}, 중간선위: {}, 매도시그널: {}", 
+            currentPrice.doubleValue(), bbUpper.doubleValue(), bbMiddle.doubleValue(), 
+            upperThreshold, isNearUpper, isAboveMiddle, sellSignal);
+        
+        return sellSignal;
     }
     
     /**
@@ -384,8 +397,14 @@ public class TradingSignalService {
         Num previousRsi = rsi.getValue(index - 1);
         
         // RSI가 과매도 구간이고, 이전보다 상승하고 있을 때 매수 시그널
-        return currentRsi.isLessThan(series.numOf(RSI_OVERSOLD)) && 
-               currentRsi.isGreaterThan(previousRsi);
+        boolean isOversold = currentRsi.isLessThan(series.numOf(RSI_OVERSOLD));
+        boolean isRising = currentRsi.isGreaterThan(previousRsi);
+        boolean buySignal = isOversold && isRising;
+        
+        log.debug("RSI 매수 시그널 계산 - 현재RSI: {}, 이전RSI: {}, 과매도기준: {}, 과매도: {}, 상승중: {}, 매수시그널: {}", 
+            currentRsi.doubleValue(), previousRsi.doubleValue(), RSI_OVERSOLD, isOversold, isRising, buySignal);
+        
+        return buySignal;
     }
     
     /**
@@ -400,8 +419,14 @@ public class TradingSignalService {
         Num previousRsi = rsi.getValue(index - 1);
         
         // RSI가 과매수 구간이고, 이전보다 하락하고 있을 때 매도 시그널
-        return currentRsi.isGreaterThan(series.numOf(RSI_OVERBOUGHT)) && 
-               currentRsi.isLessThan(previousRsi);
+        boolean isOverbought = currentRsi.isGreaterThan(series.numOf(RSI_OVERBOUGHT));
+        boolean isFalling = currentRsi.isLessThan(previousRsi);
+        boolean sellSignal = isOverbought && isFalling;
+        
+        log.debug("RSI 매도 시그널 계산 - 현재RSI: {}, 이전RSI: {}, 과매수기준: {}, 과매수: {}, 하락중: {}, 매도시그널: {}", 
+            currentRsi.doubleValue(), previousRsi.doubleValue(), RSI_OVERBOUGHT, isOverbought, isFalling, sellSignal);
+        
+        return sellSignal;
     }
     
     /**
@@ -427,7 +452,14 @@ public class TradingSignalService {
         boolean histogramIncrease = currentHistogram.isGreaterThan(previousHistogram) && 
                                    currentMacd.isGreaterThan(series.numOf(0));
         
-        return macdCrossUp || histogramIncrease;
+        boolean buySignal = macdCrossUp || histogramIncrease;
+        
+        log.debug("MACD 매수 시그널 계산 - 현재MACD: {}, 현재시그널: {}, 현재히스토그램: {}, 이전MACD: {}, 이전시그널: {}, 이전히스토그램: {}, 상향돌파: {}, 히스토그램증가: {}, 매수시그널: {}", 
+            currentMacd.doubleValue(), currentSignal.doubleValue(), currentHistogram.doubleValue(),
+            previousMacd.doubleValue(), previousSignal.doubleValue(), previousHistogram.doubleValue(),
+            macdCrossUp, histogramIncrease, buySignal);
+        
+        return buySignal;
     }
     
     /**
@@ -453,7 +485,14 @@ public class TradingSignalService {
         boolean histogramDecrease = currentHistogram.isLessThan(previousHistogram) && 
                                    currentMacd.isLessThan(series.numOf(0));
         
-        return macdCrossDown || histogramDecrease;
+        boolean sellSignal = macdCrossDown || histogramDecrease;
+        
+        log.debug("MACD 매도 시그널 계산 - 현재MACD: {}, 현재시그널: {}, 현재히스토그램: {}, 이전MACD: {}, 이전시그널: {}, 이전히스토그램: {}, 하향돌파: {}, 히스토그램감소: {}, 매도시그널: {}", 
+            currentMacd.doubleValue(), currentSignal.doubleValue(), currentHistogram.doubleValue(),
+            previousMacd.doubleValue(), previousSignal.doubleValue(), previousHistogram.doubleValue(),
+            macdCrossDown, histogramDecrease, sellSignal);
+        
+        return sellSignal;
     }
     
     // ==================== 지표 값 계산 헬퍼 메서드들 ====================

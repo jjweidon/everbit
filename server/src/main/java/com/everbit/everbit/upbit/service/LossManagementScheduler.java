@@ -36,7 +36,7 @@ public class LossManagementScheduler {
     private static final String[] MARKETS = {"KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-DOGE", "KRW-USDT"}; // 거래할 마켓 목록
 
     @Transactional
-    @Scheduled(cron = "0 */20 * * * *") // 20분마다 실행
+    @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
     public void checkLossAndProfitManagement() {
         log.info("손실 및 이익 관리 스케줄러 실행");
         
