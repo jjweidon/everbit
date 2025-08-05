@@ -16,8 +16,8 @@ const kimmBold = localFont({
 });
 
 export const metadata: Metadata = {
-    title: 'everbit - 비트코인 자동 트레이딩 시스템',
-    description: 'Upbit API 기반 비트코인 자동 트레이딩 시스템',
+    title: 'everbit - 코인 퀀트 트레이딩 시스템',
+    description: 'Upbit API 기반 코인 퀀트 트레이딩 시스템',
     icons: {
         icon: '/favicon.ico',
     },

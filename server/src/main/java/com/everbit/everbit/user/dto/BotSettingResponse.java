@@ -14,7 +14,8 @@ import lombok.Builder;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record BotSettingResponse(
     String botSettingId,
-    String strategy,
+    String buyStrategy,
+    String sellStrategy,
     List<Market> marketList,
     Long baseOrderAmount,
     Long maxOrderAmount
@@ -22,7 +23,8 @@ public record BotSettingResponse(
     public static BotSettingResponse from(BotSetting botSetting) {
         return BotSettingResponse.builder()
             .botSettingId(botSetting.getId())
-            .strategy(botSetting.getStrategy().name())
+            .buyStrategy(botSetting.getBuyStrategy().name())
+            .sellStrategy(botSetting.getSellStrategy().name())
             .marketList(botSetting.getMarketList())
             .baseOrderAmount(botSetting.getBaseOrderAmount())
             .maxOrderAmount(botSetting.getMaxOrderAmount())

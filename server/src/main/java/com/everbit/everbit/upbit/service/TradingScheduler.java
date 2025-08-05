@@ -58,12 +58,14 @@ public class TradingScheduler {
     private void processSignal(TradingSignal signal, User user) {
         String market = signal.market();
         BotSetting botSetting = user.getBotSetting();
-        Strategy strategy = botSetting.getStrategy();
+        Strategy buyStrategy = botSetting.getBuyStrategy();
+        Strategy sellStrategy = botSetting.getSellStrategy();
         BigDecimal baseOrderAmount = BigDecimal.valueOf(botSetting.getBaseOrderAmount());
         BigDecimal maxOrderAmount = BigDecimal.valueOf(botSetting.getMaxOrderAmount());
         
-        // 시그널 강도 계산
-        double signalStrength = tradingSignalService.calculateSignalStrength(signal, strategy);
+        // 매수/매도 시그널 강도 계산
+        double buySignalStrength = tradingSignalService.calculateSignalStrength(signal, buyStrategy);
+        double sellSignalStrength = tradingSignalService.calculateSignalStrength(signal, sellStrategy);
         
         // 지표값 상세 로깅
         log.info("사용자: {}, 마켓: {} - 지표값 [\n" +
@@ -97,21 +99,22 @@ public class TradingScheduler {
         signal.bbBuySignal(), signal.bbSellSignal(),
         signal.rsiBuySignal(), signal.rsiSellSignal(),
         signal.macdBuySignal(), signal.macdSellSignal(),
-        signal.isTripleIndicatorConservativeBuySignal(), signal.isTripleIndicatorConservativeSellSignal());
+        determineBuySignal(signal, buyStrategy), determineSellSignal(signal, sellStrategy));
         
         // 전략별 매수/매도 시그널 결정
-        boolean buySignal = determineBuySignal(signal, strategy);
-        boolean sellSignal = determineSellSignal(signal, strategy);
+        boolean buySignal = determineBuySignal(signal, buyStrategy);
+        boolean sellSignal = determineSellSignal(signal, sellStrategy);
         
         // 시그널 상태 로그 출력
         if (!buySignal && !sellSignal) {
-            log.info("사용자: {}, 마켓: {} - 전략: {}, 시그널 없음 (시그널 강도: {})", 
-                    user.getUsername(), market, strategy.getValue(), String.format("%.2f", signalStrength));
+            log.info("사용자: {}, 마켓: {} - 매수전략: {}, 매도전략: {}, 시그널 없음 (매수강도: {}, 매도강도: {})", 
+                    user.getUsername(), market, buyStrategy.getValue(), sellStrategy.getValue(), 
+                    String.format("%.2f", buySignalStrength), String.format("%.2f", sellSignalStrength));
         }
         
         // 매수 주문 로직
         if (buySignal) {
-            log.info("마켓: {} - 매수 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, strategy, String.format("%.2f", signalStrength));
+            log.info("마켓: {} - 매수 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, buyStrategy, String.format("%.2f", buySignalStrength));
             try {
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -125,7 +128,7 @@ public class TradingScheduler {
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal buyAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, strategy, baseOrderAmount, maxOrderAmount);
+                BigDecimal buyAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, buyStrategy, baseOrderAmount, maxOrderAmount);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -144,9 +147,9 @@ public class TradingScheduler {
 
                 // 4. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
-                tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
+                tradeService.saveTrade(user, market, buyStrategy, orderResponse, currentPrice);
                 log.info("마켓: {} - 매수 주문 실행 및 저장 완료 (전략: {}). 주문 정보: [상태: {}, 수량: {}, 가격: {}, 주문금액: {}, 시그널: {}]", 
-                    market, strategy.getValue(),
+                    market, buyStrategy.getValue(),
                     orderResponse.state(), orderResponse.volume(), 
                     orderResponse.price(), orderResponse.executedFunds(), 
                     signalType.getDescription());
@@ -157,7 +160,7 @@ public class TradingScheduler {
         
         // 매도 주문 로직
         if (sellSignal) {
-            log.info("마켓: {} - 매도 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, strategy, String.format("%.2f", signalStrength));
+            log.info("마켓: {} - 매도 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, sellStrategy, String.format("%.2f", sellSignalStrength));
             try {
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
@@ -171,7 +174,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal sellAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, strategy, baseOrderAmount, maxOrderAmount);
+                BigDecimal sellAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, sellStrategy, baseOrderAmount, maxOrderAmount);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행
@@ -196,9 +199,9 @@ public class TradingScheduler {
 
                 // 6. 주문 결과 저장
                 SignalType signalType = determineSignalType(signal);
-                tradeService.saveTrade(user, market, strategy, orderResponse, currentPrice);
+                tradeService.saveTrade(user, market, sellStrategy, orderResponse, currentPrice);
                 log.info("마켓: {} - 매도 주문 실행 및 저장 완료 (전략: {}). 주문 정보: [상태: {}, 수량: {}, 가격: {}, 주문금액: {}, 시그널: {}]", 
-                    market, strategy.getValue(),
+                    market, sellStrategy.getValue(),
                     orderResponse.state(), orderResponse.volume(), 
                     orderResponse.price(), orderResponse.executedFunds(), 
                     signalType.getDescription());

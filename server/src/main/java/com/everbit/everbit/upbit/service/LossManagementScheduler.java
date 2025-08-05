@@ -56,8 +56,6 @@ public class LossManagementScheduler {
     }
     
     private void processUserLossAndProfitManagement(User user) {
-        log.info("사용자: {} - 손실 및 이익 관리 처리 시작", user.getUsername());
-        
         try {
             // 전체 계좌 잔고 조회
             List<AccountResponse> accounts = upbitExchangeClient.getAccounts(user.getUsername());
@@ -65,7 +63,23 @@ public class LossManagementScheduler {
             // 사용자의 botSettings에서 마켓 목록 가져오기
             for (Market market : user.getBotSetting().getMarketList()) {
                 try {
-                    processMarketLossAndProfitManagement(user, market, accounts);
+                    // 디버깅을 위한 로그 추가
+                    log.debug("사용자: {}, 마켓: {} - 전체 계좌 목록: {}", user.getUsername(), market.getCode(), 
+                        accounts.stream().map(a -> a.currency()).toList());
+                    
+                    AccountResponse account = accounts.stream()
+                        .filter(a -> a.currency().equals(market.name()))
+                        .findFirst()
+                        .orElse(null);
+        
+                    if (account == null) {
+                        log.debug("사용자: {}, 마켓: {} - 해당 마켓의 계좌 정보를 찾을 수 없음 (찾는 currency: {})", 
+                            user.getUsername(), market.getCode(), market.name());
+                        continue;
+                    }
+        
+                    log.info("사용자: {}, 마켓: {}, 코인: {} - 손실 및 이익 관리 처리 시작", user.getUsername(), market.getCode(), account.currency());
+                    processMarketLossAndProfitManagement(user, market, account);
                 } catch (Exception e) {
                     log.error("사용자: {}, 마켓: {} - 손실 및 이익 관리 처리 실패", user.getUsername(), market.getCode(), e);
                 }
@@ -75,17 +89,14 @@ public class LossManagementScheduler {
         }
     }
     
-    private void processMarketLossAndProfitManagement(User user, Market market, List<AccountResponse> accounts) {
-        // 해당 마켓의 코인 잔고 찾기
-        AccountResponse coinAccount = findAccountByCurrency(accounts, market.getCode());
-        
-        if (coinAccount == null || new BigDecimal(coinAccount.balance()).compareTo(BigDecimal.ZERO) <= 0) {
+    private void processMarketLossAndProfitManagement(User user, Market market, AccountResponse account) {
+        if (account == null || new BigDecimal(account.balance()).compareTo(BigDecimal.ZERO) <= 0) {
             log.debug("사용자: {}, 마켓: {} - 보유 수량이 없음", user.getUsername(), market);
             return;
         }
         
-        BigDecimal coinBalance = new BigDecimal(coinAccount.balance());
-        BigDecimal avgBuyPrice = new BigDecimal(coinAccount.avgBuyPrice());
+        BigDecimal coinBalance = new BigDecimal(account.balance());
+        BigDecimal avgBuyPrice = new BigDecimal(account.avgBuyPrice());
         
         if (avgBuyPrice.compareTo(BigDecimal.ZERO) <= 0) {
             log.debug("사용자: {}, 마켓: {} - 매수 평균가가 0 이하", user.getUsername(), market);
@@ -94,10 +105,13 @@ public class LossManagementScheduler {
         
         // 현재 가격 조회
         BigDecimal currentPrice = getCurrentPrice(market);
+        log.info("코인: {}, 현재가: {}", market.getCode(), currentPrice);
         
         // 손실률 및 이익률 계산
         BigDecimal lossRate = calculateLossRate(avgBuyPrice, currentPrice);
+        log.info("코인: {}, 손실률: {}", market.getCode(), lossRate);
         BigDecimal profitRate = calculateProfitRate(avgBuyPrice, currentPrice);
+        log.info("코인: {}, 이익률: {}", market.getCode(), profitRate);
         
         log.info("사용자: {}, 마켓: {} - 보유수량: {}, 평균매수가: {}, 현재가: {}, 손실률: {}%, 이익률: {}%", 
             user.getUsername(), market, coinBalance, avgBuyPrice, currentPrice, 
@@ -114,13 +128,6 @@ public class LossManagementScheduler {
             log.info("사용자: {}, 마켓: {} - 1.5% 이상 이익 감지! 전량 매도 실행", user.getUsername(), market);
             executeFullSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING);
         }
-    }
-    
-    private AccountResponse findAccountByCurrency(List<AccountResponse> accounts, String currency) {
-        return accounts.stream()
-            .filter(account -> account.currency().equals(currency))
-            .findFirst()
-            .orElse(null);
     }
     
     private BigDecimal getCurrentPrice(Market market) {

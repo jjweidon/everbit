@@ -86,7 +86,8 @@ export const MOCK_DATA = {
         ],
         currentSettings: {
             botSettingId: '1',
-            strategy: 'BOLLINGER_MEAN_REVERSION',
+            buyStrategy: 'TRIPLE_INDICATOR_MODERATE',
+            sellStrategy: 'TRIPLE_INDICATOR_MODERATE',
             marketList: ['KRW-BTC', 'KRW-ETH'],
             baseOrderAmount: 100000,
             maxOrderAmount: 1000000,

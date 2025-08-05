@@ -47,7 +47,8 @@ export interface Algorithm {
 
 export interface BotSettings {
     readonly botSettingId: string;
-    readonly strategy: string;
+    readonly buyStrategy: string;
+    readonly sellStrategy: string;
     readonly marketList: ReadonlyArray<string>;
     readonly baseOrderAmount: number;
     readonly maxOrderAmount: number;

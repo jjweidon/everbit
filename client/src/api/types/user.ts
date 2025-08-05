@@ -23,7 +23,8 @@ export type UpbitApiKeysRequest = z.infer<typeof UpbitApiKeys>;
 
 export const BotSetting = z.object({
     botSettingId: z.string(),
-    strategy: z.string(),
+    buyStrategy: z.string(),
+    sellStrategy: z.string(),
     marketList: z.array(z.string()),
     baseOrderAmount: z.number(),
     maxOrderAmount: z.number(),

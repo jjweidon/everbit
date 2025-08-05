@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
-import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.quotation.MinuteCandleResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,25 +20,7 @@ import java.util.List;
 public class CandleDataService {
     private final UpbitQuotationClient upbitQuotationClient;
     private static final ZoneId UTC = ZoneId.of("UTC");
-    
-    /**
-     * 사용자의 전략에 맞는 최적화된 캔들 설정으로 BarSeries를 생성합니다.
-     */
-    public BarSeries createBarSeries(String market, User user) {
-        // 전략에서 직접 캔들 설정 가져오기
-        Strategy strategy = user.getBotSetting().getStrategy();
-        
-        // 최근 캔들 데이터 조회
-        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
-            strategy.getCandleInterval().getMinutes(), 
-            market, 
-            null, 
-            strategy.getCandleCount()
-        );
-        
-        return buildBarSeries(market, candles);
-    }
-    
+
     /**
      * 지정된 전략으로 BarSeries를 생성합니다.
      */

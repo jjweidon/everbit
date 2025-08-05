@@ -29,7 +29,13 @@ public class BotSetting extends BaseTime {
     
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    private Strategy strategy = Strategy.TRIPLE_INDICATOR_MODERATE;
+    @Column(name = "buy_strategy")
+    private Strategy buyStrategy = Strategy.TRIPLE_INDICATOR_MODERATE;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sell_strategy")
+    private Strategy sellStrategy = Strategy.TRIPLE_INDICATOR_MODERATE;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default
@@ -56,7 +62,8 @@ public class BotSetting extends BaseTime {
     }
 
     public void update(BotSettingRequest request) {
-        this.strategy = request.strategy();
+        this.buyStrategy = request.buyStrategy();
+        this.sellStrategy = request.sellStrategy();
         this.marketList = request.marketList();
         this.baseOrderAmount = request.baseOrderAmount();
         this.maxOrderAmount = request.maxOrderAmount();

@@ -9,7 +9,8 @@ import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record BotSettingRequest(
-    Strategy strategy,
+    Strategy buyStrategy,
+    Strategy sellStrategy,
     List<Market> marketList,
     Long baseOrderAmount,
     Long maxOrderAmount
