@@ -33,7 +33,7 @@ public class LossManagementScheduler {
     private final TradeService tradeService;
     
     private static final BigDecimal LOSS_THRESHOLD = new BigDecimal("0.01"); // 1% 손실 임계값
-    private static final BigDecimal PROFIT_THRESHOLD = new BigDecimal("0.015"); // 1.5% 이익 임계값
+    private static final BigDecimal PROFIT_THRESHOLD = new BigDecimal("0.018"); // 1.8% 이익 임계값
 
     @Transactional
     @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
@@ -63,20 +63,11 @@ public class LossManagementScheduler {
             // 사용자의 botSettings에서 마켓 목록 가져오기
             for (Market market : user.getBotSetting().getMarketList()) {
                 try {
-                    // 디버깅을 위한 로그 추가
-                    log.debug("사용자: {}, 마켓: {} - 전체 계좌 목록: {}", user.getUsername(), market.getCode(), 
-                        accounts.stream().map(a -> a.currency()).toList());
-                    
                     AccountResponse account = accounts.stream()
                         .filter(a -> a.currency().equals(market.name()))
                         .findFirst()
                         .orElse(null);
-        
-                    if (account == null) {
-                        log.debug("사용자: {}, 마켓: {} - 해당 마켓의 계좌 정보를 찾을 수 없음 (찾는 currency: {})", 
-                            user.getUsername(), market.getCode(), market.name());
-                        continue;
-                    }
+                    if (account == null || new BigDecimal(account.balance()).compareTo(BigDecimal.ZERO) <= 0) continue;
         
                     log.info("사용자: {}, 마켓: {}, 코인: {} - 손실 및 이익 관리 처리 시작", user.getUsername(), market.getCode(), account.currency());
                     processMarketLossAndProfitManagement(user, market, account);
@@ -90,11 +81,6 @@ public class LossManagementScheduler {
     }
     
     private void processMarketLossAndProfitManagement(User user, Market market, AccountResponse account) {
-        if (account == null || new BigDecimal(account.balance()).compareTo(BigDecimal.ZERO) <= 0) {
-            log.debug("사용자: {}, 마켓: {} - 보유 수량이 없음", user.getUsername(), market);
-            return;
-        }
-        
         BigDecimal coinBalance = new BigDecimal(account.balance());
         BigDecimal avgBuyPrice = new BigDecimal(account.avgBuyPrice());
         
@@ -105,27 +91,21 @@ public class LossManagementScheduler {
         
         // 현재 가격 조회
         BigDecimal currentPrice = getCurrentPrice(market);
-        log.info("코인: {}, 현재가: {}", market.getCode(), currentPrice);
         
-        // 손실률 및 이익률 계산
-        BigDecimal lossRate = calculateLossRate(avgBuyPrice, currentPrice);
-        log.info("코인: {}, 손실률: {}", market.getCode(), lossRate);
-        BigDecimal profitRate = calculateProfitRate(avgBuyPrice, currentPrice);
-        log.info("코인: {}, 이익률: {}", market.getCode(), profitRate);
-        
-        log.info("사용자: {}, 마켓: {} - 보유수량: {}, 평균매수가: {}, 현재가: {}, 손실률: {}%, 이익률: {}%", 
+        // 수익률 계산 (양수: 이익, 음수: 손실)
+        BigDecimal profitRate = currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
+        log.info("사용자: {}, 마켓: {} - 보유수량: {}, 평균매수가: {}, 현재가: {}, 수익률: {}%", 
             user.getUsername(), market, coinBalance, avgBuyPrice, currentPrice, 
-            lossRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
             profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
         
         // 1% 이상 손실인 경우 전량 매도
-        if (lossRate.compareTo(LOSS_THRESHOLD) >= 0) {
+        if (profitRate.compareTo(LOSS_THRESHOLD.negate()) <= 0) {
             log.warn("사용자: {}, 마켓: {} - 1% 이상 손실 감지! 전량 매도 실행", user.getUsername(), market);
             executeFullSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT);
         }
-        // 1.5% 이상 이익인 경우 전량 매도
+        // 1.8% 이상 이익인 경우 전량 매도
         else if (profitRate.compareTo(PROFIT_THRESHOLD) >= 0) {
-            log.info("사용자: {}, 마켓: {} - 1.5% 이상 이익 감지! 전량 매도 실행", user.getUsername(), market);
+            log.info("사용자: {}, 마켓: {} - 1.8% 이상 이익 감지! 전량 매도 실행", user.getUsername(), market);
             executeFullSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING);
         }
     }
@@ -136,15 +116,7 @@ public class LossManagementScheduler {
         return new BigDecimal(ticker.tradePrice());
     }
     
-    private BigDecimal calculateLossRate(BigDecimal avgBuyPrice, BigDecimal currentPrice) {
-        // 손실률 = (평균매수가 - 현재가) / 평균매수가
-        return avgBuyPrice.subtract(currentPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
-    }
-    
-    private BigDecimal calculateProfitRate(BigDecimal avgBuyPrice, BigDecimal currentPrice) {
-        // 이익률 = (현재가 - 평균매수가) / 평균매수가
-        return currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
-    }
+
     
     private void executeFullSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
         try {
@@ -157,11 +129,6 @@ public class LossManagementScheduler {
             
             // 주문 결과 저장
             tradeService.saveTrade(user, market.getCode(), strategy, orderResponse, currentPrice);
-            
-            String actionType = strategy == Strategy.LOSS_MANAGEMENT ? "손실 관리" : "이익 실현";
-            log.info("사용자: {}, 마켓: {} - {} 전량 매도 주문 완료. 주문ID: {}, 수량: {}, 가격: {}", 
-                user.getUsername(), market, actionType, orderResponse.uuid(), sellQuantityStr, currentPrice);
-                
         } catch (Exception e) {
             log.error("사용자: {}, 마켓: {} - 전량 매도 주문 실패", user.getUsername(), market, e);
         }
