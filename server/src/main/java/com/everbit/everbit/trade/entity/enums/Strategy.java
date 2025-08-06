@@ -10,7 +10,7 @@ public enum Strategy {
         "3지표 중간전략", 
         "볼린저밴드, RSI, MACD 3가지 지표 중 2개 이상이 매수/매도 시그널을 보낼 때 거래하는 중간 전략",
         true,
-        CandleInterval.ONE,
+        CandleInterval.FIVE,
         200
     ),
 
@@ -18,7 +18,7 @@ public enum Strategy {
         "3지표 보수전략",
         "볼린저밴드, RSI, MACD 3가지 지표가 모두 매수/매도 시그널을 보낼 때만 거래하는 보수적 전략",
         true,
-        CandleInterval.ONE,
+        CandleInterval.FIVE,
         200
     ),
 
@@ -26,7 +26,7 @@ public enum Strategy {
         "3지표 공격전략",
         "볼린저밴드, RSI, MACD 3가지 지표 중 1개라도 매수/매도 시그널을 보내면 거래하는 공격적 전략", 
         true,
-        CandleInterval.ONE,
+        CandleInterval.FIVE,
         200
     ),
 
