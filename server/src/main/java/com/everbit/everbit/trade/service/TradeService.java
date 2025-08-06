@@ -22,18 +22,22 @@ import lombok.extern.slf4j.Slf4j;
 public class TradeService {
     private final TradeRepository tradeRepository;
 
-    public List<Trade> getTrades(User user) {
+    public List<Trade> findTradesByUser(User user) {
         return tradeRepository.findByUser(user);
+    }
+
+    public List<Trade> findDoneTradesByUser(User user) {
+        return tradeRepository.findByUserAndStatus(user, TradeStatus.DONE);
+    }
+
+    public List<Trade> findWaitingTrades() {
+        return tradeRepository.findByStatus(TradeStatus.WAIT);
     }
 
     @Transactional
     public Trade saveTrade(User user, String market, Strategy strategy, OrderResponse orderResponse, BigDecimal price) {
         Trade trade = Trade.of(user, market, strategy, orderResponse, price);
         return tradeRepository.save(trade);
-    }
-
-    public List<Trade> findWaitingTrades() {
-        return tradeRepository.findByStatus(TradeStatus.WAIT);
     }
 
     @Transactional

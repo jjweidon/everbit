@@ -17,9 +17,9 @@ public class TradeManager {
     private final TradeService tradeService;
     private final UserService userService;
 
-    public List<TradeResponse> getTrades(String username) {
+    public List<TradeResponse> getDoneTrades(String username) {
         User user = userService.findUserByUsername(username);
-        return TradeResponse.from(tradeService.getTrades(user));
+        return TradeResponse.from(tradeService.findDoneTradesByUser(user));
     }
 
     public List<StrategyResponse> getStrategies() {

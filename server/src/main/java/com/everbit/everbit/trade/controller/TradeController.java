@@ -24,10 +24,10 @@ public class TradeController {
     private final TradeManager tradeManager;
 
     @GetMapping
-    public ApiResponse<List<TradeResponse>> getTrades(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+    public ApiResponse<List<TradeResponse>> getDoneTrades(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("GET 거래 내역 조회: {}", username);
-        return ApiResponse.success(tradeManager.getTrades(username), "거래 내역 조회 성공");
+        return ApiResponse.success(tradeManager.getDoneTrades(username), "거래 내역 조회 성공");
     }
 
     @GetMapping("/strategies")
