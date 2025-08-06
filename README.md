@@ -1,49 +1,74 @@
-# everbit
+## 🚀 프로젝트 소개
 
-비트코인 자동 트레이딩 시스템으로, Upbit API를 기반으로 퀀트 전략을 활용하여 최적의 매매 타이밍을 자동으로 판단하고 실행합니다.
+everbit는 업비트 거래소의 API를 활용한 자동화된 암호화폐 트레이딩 시스템입니다. 다양한 퀀트 전략을 통해 시장 데이터를 분석하고, 최적의 매매 시점을 자동으로 판단하여 거래를 실행합니다.
 
-## 프로젝트 구조
+## ✨ 주요 기능
 
-- `algorithm/`: Python 기반 퀀트 알고리즘 및 백테스팅 모듈
-- `server/`: Spring Boot 기반 백엔드 API 서버
-- `client/`: Next.js 기반 프론트엔드
-- `common/`: 공통 유틸리티 및 라이브러리
-- `docs/`: 프로젝트 문서
-- `shared/`: 백엔드와 프론트엔드 간 공유 타입 및 상수
+- 🔄 실시간 비트코인 시세 수집 및 분석
+- 🤖 퀀트 알고리즘 기반 자동 매매
+- 📊 백테스팅 기능 제공
+- 💼 포트폴리오 및 리스크 관리
+- 📈 트레이딩 성과 대시보드 제공
+- 🔐 OAuth2 소셜 로그인 (카카오)
+- 📱 반응형 웹 인터페이스
 
-## 주요 기능
+## 🛠 기술 스택
 
-- 실시간 비트코인 시세 수집 및 분석
-- 퀀트 알고리즘 기반 자동 매매
-- 백테스팅 기능 제공
-- 포트폴리오 및 리스크 관리
-- 트레이딩 성과 대시보드 제공
+### 백엔드
+- **Framework**: Spring Boot
+- **Language**: Java
+- **Database**: MySQL, Redis
+- **API**: Upbit API
+- **Security**: OAuth2, JWT
 
-## 기술 스택
+### 프론트엔드
+- **Framework**: Next.js
+- **Language**: TypeScript
+- **Styling**: TailwindCSS
+- **Chart**: TradingView API
 
-- **백엔드**: Spring Boot 3.x, WebFlux, Kafka, PostgreSQL, TimescaleDB, Redis
-- **알고리즘**: Python, TensorFlow, scikit-learn, PyTorch, Backtrader, Zipline
-- **프론트엔드**: Next.js, TypeScript, TailwindCSS, Chakra UI, TradingView API, SWR
-- **인프라**: Docker, Github Actions, AWS
+### 인프라
+- **Container**: Docker
+- **Web Server**: Nginx
+- **Cloud**: AWS EC2
+
+## 📖 사용법
+
+### 1. 회원가입 및 로그인
+- 카카오 소셜 로그인을 통해 서비스 이용
+
+### 2. Upbit API 키 등록
+- 마이페이지에서 Upbit 계정의 API 키 등록
+- 거래 권한이 있는 API 키 필요
+
+### 3. 트레이딩 봇 설정
+- 대시보드에서 트레이딩 전략 선택
+- 거래할 마켓 선택
+- 최소/최대 주문 금액 설정
+
+### 4. 모니터링
+- 실시간 포트폴리오 현황 확인
+- 거래 내역 및 수익률 추적
 
 
-### 실행
-```sh
+## 🐳 도커 명령어
+```bash
+# 프로덕션 환경 실행
 docker compose -f docker-compose.yaml up -d --build --force-recreate
-```
-```sh
+
+# 개발 환경 실행
 docker compose -f docker-compose.dev.yaml up -d --build --force-recreate
 ```
 
-### 종료
-```sh
+```bash
+# 프로덕션 환경 종료
 docker compose -f docker-compose.yaml down
-```
-```sh
+
+# 개발 환경 종료
 docker compose -f docker-compose.dev.yaml down
 ```
 
-### 로그
-```sh
-docker compose logs -f server  
+```bash
+# 서버 로그 실시간 확인
+docker compose logs -f server
 ```
