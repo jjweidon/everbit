@@ -12,6 +12,59 @@ interface FilterState {
     status: string;
 }
 
+// CSV 내보내기 함수
+const exportToCSV = (data: TradeResponse[], filename: string = 'trade_history.csv') => {
+    // CSV 헤더 정의
+    const headers = [
+        '시간',
+        '코인',
+        '종류',
+        '수량',
+        '단가',
+        '주문금액',
+        '상태'
+    ];
+
+    // 데이터를 CSV 형식으로 변환
+    const csvData = data.map(trade => [
+        new Date(trade.updatedAt).toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }),
+        trade.market,
+        trade.type,
+        trade.amount,
+        trade.price,
+        trade.totalPrice,
+        trade.status
+    ]);
+
+    // CSV 문자열 생성 (BOM 추가로 한글 깨짐 방지)
+    const csvContent = [
+        '\uFEFF', // BOM (Byte Order Mark) - 한글 깨짐 방지
+        headers.join(','),
+        ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    // Blob 생성 및 다운로드
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};
+
 export default function History() {
     const [tradeHistoryData, setTradeHistoryData] = useState<TradeResponse[]>([]);
     const [activeView, setActiveView] = useState<'history' | 'chart' | 'technical'>('history');
@@ -80,6 +133,21 @@ export default function History() {
             ...prev,
             [key]: value
         }));
+    };
+
+    // CSV 내보내기 핸들러
+    const handleExportCSV = () => {
+        if (filteredData.length === 0) {
+            alert('내보낼 거래 내역이 없습니다.');
+            return;
+        }
+
+        // 현재 날짜를 파일명에 포함
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+        const filename = `trade_history_${dateStr}.csv`;
+        
+        exportToCSV(filteredData, filename);
     };
 
     // 활성 필터 개수 계산
@@ -466,7 +534,10 @@ export default function History() {
 
                             {/* CSV 내보내기 버튼 */}
                             <div className="flex flex-row justify-end items-center">
-                                <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white text-[0.7rem] rounded-md transition-colors duration-200 shadow-lg shadow-navy-500/30">
+                                <button 
+                                    onClick={handleExportCSV}
+                                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-navy-500 hover:bg-navy-600 text-white text-[0.7rem] rounded-md transition-colors duration-200 shadow-lg shadow-navy-500/30"
+                                >
                                     <FaFileExport />
                                     <span>CSV 내보내기</span>
                                 </button>

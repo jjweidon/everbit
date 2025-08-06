@@ -154,7 +154,7 @@ export default function Settings() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4">
+            <div className="flex gap-4">
                 {/* 매수 전략 선택 */}
                 <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                     <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
@@ -179,7 +179,7 @@ export default function Settings() {
                                 <h4 className="text-base font-medium text-navy-900 dark:text-white mb-2">
                                     {strategy.value}
                                 </h4>
-                                <p className="text-sm text-navy-600 dark:text-navy-300">
+                                <p className="text-[0.6rem] text-navy-600 dark:text-navy-300">
                                     {strategy.description}
                                 </p>
                             </button>
@@ -211,7 +211,7 @@ export default function Settings() {
                                 <h4 className="text-base font-medium text-navy-900 dark:text-white mb-2">
                                     {strategy.value}
                                 </h4>
-                                <p className="text-sm text-navy-600 dark:text-navy-300">
+                                <p className="text-[0.6rem] text-navy-600 dark:text-navy-300">
                                     {strategy.description}
                                 </p>
                             </button>
