@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { FaFileExport, FaChartLine, FaHistory, FaChartArea, FaFilter, FaTimes } from 'react-icons/fa';
+import { FaFileExport, FaChartLine, FaHistory, FaChartArea, FaFilter, FaTimes, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { formatNumber } from '../utils/format';
 import { TradeResponse } from '@/api/types/trade';
 import { TradingViewWidget, TechnicalAnalysis } from './index';
@@ -10,6 +10,15 @@ interface FilterState {
     market: string;
     type: string;
     status: string;
+}
+
+// 정렬 타입 정의
+type SortField = 'updatedAt' | 'market' | 'type' | 'amount' | 'price' | 'totalPrice' | 'status';
+type SortDirection = 'asc' | 'desc' | null;
+
+interface SortState {
+    field: SortField | null;
+    direction: SortDirection;
 }
 
 // CSV 내보내기 함수
@@ -74,6 +83,10 @@ export default function History() {
         type: '',
         status: ''
     });
+    const [sortState, setSortState] = useState<SortState>({
+        field: null,
+        direction: null
+    });
 
     useEffect(() => {
         console.log('activeView', activeView);
@@ -91,9 +104,56 @@ export default function History() {
         }
     };
 
+    // 정렬 함수
+    const sortData = (data: TradeResponse[], field: SortField, direction: SortDirection) => {
+        if (!direction) return data;
+        
+        return [...data].sort((a, b) => {
+            let aValue: string | number;
+            let bValue: string | number;
+            
+            switch (field) {
+                case 'updatedAt':
+                    aValue = new Date(a.updatedAt).getTime();
+                    bValue = new Date(b.updatedAt).getTime();
+                    break;
+                case 'market':
+                    aValue = a.market;
+                    bValue = b.market;
+                    break;
+                case 'type':
+                    aValue = a.type;
+                    bValue = b.type;
+                    break;
+                case 'amount':
+                    aValue = a.amount;
+                    bValue = b.amount;
+                    break;
+                case 'price':
+                    aValue = a.price;
+                    bValue = b.price;
+                    break;
+                case 'totalPrice':
+                    aValue = a.totalPrice;
+                    bValue = b.totalPrice;
+                    break;
+                case 'status':
+                    aValue = a.status;
+                    bValue = b.status;
+                    break;
+                default:
+                    return 0;
+            }
+            
+            if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    };
+
     // 필터링된 데이터 계산
     const filteredData = useMemo(() => {
-        return tradeHistoryData.filter(trade => {
+        let data = tradeHistoryData.filter(trade => {
             // 코인 필터
             if (filters.market && trade.market !== filters.market) return false;
             
@@ -105,7 +165,14 @@ export default function History() {
             
             return true;
         });
-    }, [tradeHistoryData, filters]);
+        
+        // 정렬 적용
+        if (sortState.field && sortState.direction) {
+            data = sortData(data, sortState.field, sortState.direction);
+        }
+        
+        return data;
+    }, [tradeHistoryData, filters, sortState]);
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleString('ko-KR', {
@@ -125,6 +192,11 @@ export default function History() {
             type: '',
             status: ''
         });
+        // 정렬 상태도 초기화
+        setSortState({
+            field: null,
+            direction: null
+        });
     };
 
     // 필터 변경 핸들러
@@ -133,6 +205,39 @@ export default function History() {
             ...prev,
             [key]: value
         }));
+    };
+
+    // 정렬 핸들러
+    const handleSort = (field: SortField) => {
+        setSortState(prev => {
+            if (prev.field === field) {
+                // 같은 필드를 클릭한 경우: asc -> desc -> null 순서로 변경
+                if (prev.direction === 'asc') {
+                    return { field, direction: 'desc' };
+                } else if (prev.direction === 'desc') {
+                    return { field: null, direction: null };
+                }
+            }
+            // 새로운 필드를 클릭한 경우: asc로 시작
+            return { field, direction: 'asc' };
+        });
+    };
+
+    // 정렬 아이콘 렌더링 함수
+    const renderSortIcon = (field: SortField) => {
+        if (sortState.field !== field) {
+            return <FaSort className="w-3 h-3 text-navy-400" />;
+        }
+        
+        if (sortState.direction === 'asc') {
+            return <FaSortUp className="w-3 h-3 text-navy-600 dark:text-navy-300" />;
+        }
+        
+        if (sortState.direction === 'desc') {
+            return <FaSortDown className="w-3 h-3 text-navy-600 dark:text-navy-300" />;
+        }
+        
+        return <FaSort className="w-3 h-3 text-navy-400" />;
     };
 
     // CSV 내보내기 핸들러
@@ -277,8 +382,27 @@ export default function History() {
                                     </button>
                                 )}
                             </div>
-                            <div className="text-sm text-navy-600 dark:text-navy-400 font-medium">
-                                총 {filteredData.length}건의 거래 내역
+                            <div className="flex items-center space-x-4">
+                                {sortState.field && sortState.direction && (
+                                    <div className="flex items-center space-x-1 text-xs text-navy-600 dark:text-navy-400">
+                                        <span>정렬:</span>
+                                        <span className="font-medium">
+                                            {sortState.field === 'updatedAt' && '시간'}
+                                            {sortState.field === 'market' && '코인'}
+                                            {sortState.field === 'type' && '종류'}
+                                            {sortState.field === 'amount' && '수량'}
+                                            {sortState.field === 'price' && '단가'}
+                                            {sortState.field === 'totalPrice' && '주문금액'}
+                                            {sortState.field === 'status' && '상태'}
+                                        </span>
+                                        <span className="text-navy-500">
+                                            ({sortState.direction === 'asc' ? '오름차순' : '내림차순'})
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="text-sm text-navy-600 dark:text-navy-400 font-medium">
+                                    총 {filteredData.length}건의 거래 내역
+                                </div>
                             </div>
                         </div>
 
@@ -421,26 +545,68 @@ export default function History() {
                                 <table className="min-w-full divide-y divide-navy-200 dark:divide-navy-700">
                                     <thead>
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                시간
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('updatedAt')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>시간</span>
+                                                    {renderSortIcon('updatedAt')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                코인
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('market')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>코인</span>
+                                                    {renderSortIcon('market')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                종류
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('type')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>종류</span>
+                                                    {renderSortIcon('type')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                수량
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('amount')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>수량</span>
+                                                    {renderSortIcon('amount')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                단가
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('price')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>단가</span>
+                                                    {renderSortIcon('price')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                주문금액
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('totalPrice')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>주문금액</span>
+                                                    {renderSortIcon('totalPrice')}
+                                                </div>
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider">
-                                                상태
+                                            <th 
+                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
+                                                onClick={() => handleSort('status')}
+                                            >
+                                                <div className="flex items-center space-x-1">
+                                                    <span>상태</span>
+                                                    {renderSortIcon('status')}
+                                                </div>
                                             </th>
                                         </tr>
                                     </thead>
