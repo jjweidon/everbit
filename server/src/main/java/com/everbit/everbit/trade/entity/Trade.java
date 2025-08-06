@@ -4,7 +4,6 @@ import com.everbit.everbit.global.entity.BaseTime;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
 import com.everbit.everbit.trade.entity.enums.TradeType;
-import com.everbit.everbit.trade.entity.enums.SignalType;
 import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
