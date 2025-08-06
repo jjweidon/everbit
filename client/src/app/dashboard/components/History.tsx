@@ -9,11 +9,10 @@ import { tradeApi } from '@/api/services/tradeApi';
 interface FilterState {
     market: string;
     type: string;
-    status: string;
 }
 
 // 정렬 타입 정의
-type SortField = 'updatedAt' | 'market' | 'type' | 'amount' | 'price' | 'totalPrice' | 'status';
+type SortField = 'updatedAt' | 'market' | 'type' | 'amount' | 'price' | 'totalPrice';
 type SortDirection = 'asc' | 'desc' | null;
 
 interface SortState {
@@ -30,8 +29,7 @@ const exportToCSV = (data: TradeResponse[], filename: string = 'trade_history.cs
         '종류',
         '수량',
         '단가',
-        '주문금액',
-        '상태'
+        '주문금액'
     ];
 
     // 데이터를 CSV 형식으로 변환
@@ -48,8 +46,7 @@ const exportToCSV = (data: TradeResponse[], filename: string = 'trade_history.cs
         trade.type,
         trade.amount,
         trade.price,
-        trade.totalPrice,
-        trade.status
+        trade.totalPrice
     ]);
 
     // CSV 문자열 생성 (BOM 추가로 한글 깨짐 방지)
@@ -80,8 +77,7 @@ export default function History() {
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState<FilterState>({
         market: '',
-        type: '',
-        status: ''
+        type: ''
     });
     const [sortState, setSortState] = useState<SortState>({
         field: null,
@@ -137,10 +133,7 @@ export default function History() {
                     aValue = a.totalPrice;
                     bValue = b.totalPrice;
                     break;
-                case 'status':
-                    aValue = a.status;
-                    bValue = b.status;
-                    break;
+
                 default:
                     return 0;
             }
@@ -160,8 +153,7 @@ export default function History() {
             // 종류 필터
             if (filters.type && trade.type !== filters.type) return false;
             
-            // 상태 필터
-            if (filters.status && trade.status !== filters.status) return false;
+
             
             return true;
         });
@@ -189,8 +181,7 @@ export default function History() {
     const clearFilters = () => {
         setFilters({
             market: '',
-            type: '',
-            status: ''
+            type: ''
         });
         // 정렬 상태도 초기화
         setSortState({
@@ -264,32 +255,26 @@ export default function History() {
     // 고유한 값들 추출 (필터 옵션용)
     const uniqueMarkets = Array.from(new Set(tradeHistoryData.map(trade => trade.market)));
     const uniqueTypes = Array.from(new Set(tradeHistoryData.map(trade => trade.type)));
-    const uniqueStatuses = Array.from(new Set(tradeHistoryData.map(trade => trade.status)));
 
-    // 완료된 거래만 필터링
-    const completedTrades = useMemo(() => {
-        return filteredData.filter(trade => trade.status === '완료');
-    }, [filteredData]);
-
-    // 매수 총액 계산 (완료된 거래만)
+    // 매수 총액 계산
     const totalBuyAmount = useMemo(() => {
-        return completedTrades.reduce((total, trade) => {
+        return filteredData.reduce((total, trade) => {
             if (trade.type === '매수') {
                 return total + trade.totalPrice;
             }
             return total;
         }, 0);
-    }, [completedTrades]);
+    }, [filteredData]);
 
-    // 매도 총액 계산 (완료된 거래만)
+    // 매도 총액 계산
     const totalSellAmount = useMemo(() => {
-        return completedTrades.reduce((total, trade) => {
+        return filteredData.reduce((total, trade) => {
             if (trade.type === '매도') {
                 return total + trade.totalPrice;
             }
             return total;
         }, 0);
-    }, [completedTrades]);
+    }, [filteredData]);
 
     // 총 수익 계산 (매도 총액 - 매수 총액)
     const totalProfit = totalSellAmount - totalBuyAmount;
@@ -393,7 +378,6 @@ export default function History() {
                                             {sortState.field === 'amount' && '수량'}
                                             {sortState.field === 'price' && '단가'}
                                             {sortState.field === 'totalPrice' && '주문금액'}
-                                            {sortState.field === 'status' && '상태'}
                                         </span>
                                         <span className="text-navy-500">
                                             ({sortState.direction === 'asc' ? '오름차순' : '내림차순'})
@@ -409,7 +393,7 @@ export default function History() {
                         {/* 필터 패널 */}
                         {showFilters && (
                             <div className="bg-navy-50 dark:bg-navy-800 rounded-md p-4 mb-4">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* 코인 필터 */}
                                     <div>
                                         <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
@@ -444,22 +428,7 @@ export default function History() {
                                         </select>
                                     </div>
 
-                                    {/* 상태 필터 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                                            상태
-                                        </label>
-                                        <select
-                                            value={filters.status}
-                                            onChange={(e) => handleFilterChange('status', e.target.value)}
-                                            className="w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md bg-white dark:bg-navy-700 text-navy-900 dark:text-white text-sm focus:ring-2 focus:ring-navy-500 focus:border-transparent"
-                                        >
-                                            <option value="">전체</option>
-                                            {uniqueStatuses.map(status => (
-                                                <option key={status} value={status}>{status}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+
                                 </div>
                             </div>
                         )}
@@ -529,12 +498,7 @@ export default function History() {
                                                     {formatNumber(trade.totalPrice)}원
                                                 </p>
                                             </div>
-                                            <div className="col-span-2">
-                                                <p className="text-navy-500 dark:text-navy-400">상태</p>
-                                                <p className="text-navy-600 dark:text-navy-300">
-                                                    {trade.status}
-                                                </p>
-                                            </div>
+
                                         </div>
                                     </div>
                                 ))}
@@ -599,15 +563,7 @@ export default function History() {
                                                     {renderSortIcon('totalPrice')}
                                                 </div>
                                             </th>
-                                            <th 
-                                                className="px-6 py-3 text-left text-xs font-medium text-navy-500 dark:text-navy-400 uppercase tracking-wider cursor-pointer hover:bg-navy-50 dark:hover:bg-navy-700/50 transition-colors duration-150"
-                                                onClick={() => handleSort('status')}
-                                            >
-                                                <div className="flex items-center space-x-1">
-                                                    <span>상태</span>
-                                                    {renderSortIcon('status')}
-                                                </div>
-                                            </th>
+
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-navy-200 dark:divide-navy-700">
@@ -642,9 +598,7 @@ export default function History() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600 dark:text-navy-300">
                                                     {formatNumber(trade.totalPrice)}원
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600 dark:text-navy-300">
-                                                    {trade.status}
-                                                </td>
+
                                             </tr>
                                         ))}
                                     </tbody>
