@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record BotSettingRequest(
@@ -15,5 +16,9 @@ public record BotSettingRequest(
     Long buyBaseOrderAmount,
     Long buyMaxOrderAmount,
     Long sellBaseOrderAmount,
-    Long sellMaxOrderAmount
+    Long sellMaxOrderAmount,
+    BigDecimal lossThreshold,
+    BigDecimal profitThreshold,
+    BigDecimal lossSellRatio,
+    BigDecimal profitSellRatio
 ) {}

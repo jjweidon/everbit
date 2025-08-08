@@ -31,12 +31,6 @@ public class LossAndProfitManagementScheduler {
     private final UpbitExchangeClient upbitExchangeClient;
     private final UpbitQuotationClient upbitQuotationClient;
     private final TradeService tradeService;
-    
-    private static final BigDecimal LOSS_THRESHOLD = new BigDecimal("0.01"); // 1% 손실 임계값
-    private static final BigDecimal PROFIT_THRESHOLD = new BigDecimal("0.018"); // 1.8% 이익 임계값
-
-    private static final BigDecimal LOSS_SELL_RATIO = new BigDecimal("0.9"); // 손실 매도 비율
-    private static final BigDecimal PROFIT_SELL_RATIO = new BigDecimal("0.5"); // 이익 매도 비율
 
     @Transactional
     @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
@@ -101,15 +95,21 @@ public class LossAndProfitManagementScheduler {
             user.getUsername(), market, coinBalance, avgBuyPrice, currentPrice, 
             profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
         
-        // LOSS_THRESHOLD 이상 손실인 경우 LOSS_SELL_RATIO 비율로 매도
-        if (profitRate.compareTo(LOSS_THRESHOLD.negate()) <= 0) {
-            log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, LOSS_THRESHOLD.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
-            executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, LOSS_SELL_RATIO);
+        // BotSetting에서 손실/이익 임계값과 비율 가져오기
+        BigDecimal lossThreshold = user.getBotSetting().getLossThreshold();
+        BigDecimal profitThreshold = user.getBotSetting().getProfitThreshold();
+        BigDecimal lossSellRatio = user.getBotSetting().getLossSellRatio();
+        BigDecimal profitSellRatio = user.getBotSetting().getProfitSellRatio();
+        
+        // 손실 임계값 이상 손실인 경우 손실 매도 비율로 매도
+        if (profitRate.compareTo(lossThreshold.negate()) <= 0) {
+            log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, lossThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+            executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, lossSellRatio);
         }
-        // PROFIT_THRESHOLD 이상 이익인 경우 PROFIT_SELL_RATIO 비율로 매도
-        else if (profitRate.compareTo(PROFIT_THRESHOLD) >= 0) {
-            log.info("사용자: {}, 마켓: {} - {}% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market, PROFIT_THRESHOLD.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
-            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING, PROFIT_SELL_RATIO);
+        // 이익 임계값 이상 이익인 경우 이익 매도 비율로 매도
+        else if (profitRate.compareTo(profitThreshold) >= 0) {
+            log.info("사용자: {}, 마켓: {} - {}% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market, profitThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING, profitSellRatio);
         }
     }
     

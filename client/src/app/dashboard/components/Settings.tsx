@@ -65,6 +65,10 @@ export default function Settings() {
         buyMaxOrderAmount: MAX_ORDER_AMOUNT,
         sellBaseOrderAmount: BASE_ORDER_AMOUNT,
         sellMaxOrderAmount: MAX_ORDER_AMOUNT,
+        lossThreshold: 0.01,
+        profitThreshold: 0.018,
+        lossSellRatio: 0.9,
+        profitSellRatio: 0.5,
     });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +102,10 @@ export default function Settings() {
                 buyMaxOrderAmount: response.buyMaxOrderAmount,
                 sellBaseOrderAmount: response.sellBaseOrderAmount,
                 sellMaxOrderAmount: response.sellMaxOrderAmount,
+                lossThreshold: response.lossThreshold,
+                profitThreshold: response.profitThreshold,
+                lossSellRatio: response.lossSellRatio,
+                profitSellRatio: response.profitSellRatio,
             });
         } catch (err) {
             console.error('Failed to load bot settings:', err);
@@ -402,7 +410,7 @@ export default function Settings() {
                 </div>
 
                 {/* 매도 설정 */}
-                <div>
+                <div className="mb-6">
                     <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 mb-3 border-b border-navy-200 dark:border-navy-600 pb-2">
                         매도 설정
                     </h4>
@@ -547,6 +555,231 @@ export default function Settings() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 손실/이익 관리 설정 */}
+            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
+                    손실/이익 관리 설정
+                </h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* 손실 임계값 */}
+                    <div>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            손실 임계값 (%)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                value={(botSetting.lossThreshold * 100).toFixed(1)}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value) / 100 || 0;
+                                    setBotSetting((prev) => ({
+                                        ...prev,
+                                        lossThreshold: value,
+                                    }));
+                                }}
+                                className={`${inputStyle} pr-12`}
+                                placeholder="1.0"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.min(botSetting.lossThreshold + 0.001, 1);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            lossThreshold: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.max(botSetting.lossThreshold - 0.001, 0);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            lossThreshold: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            이 비율 이상 손실 시 자동 매도 실행
+                        </p>
+                    </div>
+
+                    {/* 이익 임계값 */}
+                    <div>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            이익 임계값 (%)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                value={(botSetting.profitThreshold * 100).toFixed(1)}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value) / 100 || 0;
+                                    setBotSetting((prev) => ({
+                                        ...prev,
+                                        profitThreshold: value,
+                                    }));
+                                }}
+                                className={`${inputStyle} pr-12`}
+                                placeholder="1.8"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.min(botSetting.profitThreshold + 0.001, 1);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            profitThreshold: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.max(botSetting.profitThreshold - 0.001, 0);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            profitThreshold: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            이 비율 이상 이익 시 자동 매도 실행
+                        </p>
+                    </div>
+
+                    {/* 손실 매도 비율 */}
+                    <div>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            손실 매도 비율 (%)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="1"
+                                min="0"
+                                max="100"
+                                value={(botSetting.lossSellRatio * 100).toFixed(0)}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value) / 100 || 0;
+                                    setBotSetting((prev) => ({
+                                        ...prev,
+                                        lossSellRatio: value,
+                                    }));
+                                }}
+                                className={`${inputStyle} pr-12`}
+                                placeholder="90"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.min(botSetting.lossSellRatio + 0.01, 1);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            lossSellRatio: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.max(botSetting.lossSellRatio - 0.01, 0);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            lossSellRatio: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            손실 시 보유량의 몇 %를 매도할지 설정
+                        </p>
+                    </div>
+
+                    {/* 이익 매도 비율 */}
+                    <div>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            이익 매도 비율 (%)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="1"
+                                min="0"
+                                max="100"
+                                value={(botSetting.profitSellRatio * 100).toFixed(0)}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value) / 100 || 0;
+                                    setBotSetting((prev) => ({
+                                        ...prev,
+                                        profitSellRatio: value,
+                                    }));
+                                }}
+                                className={`${inputStyle} pr-12`}
+                                placeholder="50"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.min(botSetting.profitSellRatio + 0.01, 1);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            profitSellRatio: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.max(botSetting.profitSellRatio - 0.01, 0);
+                                        setBotSetting((prev) => ({
+                                            ...prev,
+                                            profitSellRatio: newValue,
+                                        }));
+                                    }}
+                                    className={spinButtonStyle}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            이익 시 보유량의 몇 %를 매도할지 설정
+                        </p>
                     </div>
                 </div>
             </div>

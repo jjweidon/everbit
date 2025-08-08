@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.everbit.everbit.trade.entity.enums.Market;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 import lombok.Builder;
 
@@ -20,7 +21,11 @@ public record BotSettingResponse(
     Long buyBaseOrderAmount,
     Long buyMaxOrderAmount,
     Long sellBaseOrderAmount,
-    Long sellMaxOrderAmount
+    Long sellMaxOrderAmount,
+    BigDecimal lossThreshold,
+    BigDecimal profitThreshold,
+    BigDecimal lossSellRatio,
+    BigDecimal profitSellRatio
 ) implements Response {
     public static BotSettingResponse from(BotSetting botSetting) {
         return BotSettingResponse.builder()
@@ -32,6 +37,10 @@ public record BotSettingResponse(
             .buyMaxOrderAmount(botSetting.getBuyMaxOrderAmount())
             .sellBaseOrderAmount(botSetting.getSellBaseOrderAmount())
             .sellMaxOrderAmount(botSetting.getSellMaxOrderAmount())
+            .lossThreshold(botSetting.getLossThreshold())
+            .profitThreshold(botSetting.getProfitThreshold())
+            .lossSellRatio(botSetting.getLossSellRatio())
+            .profitSellRatio(botSetting.getProfitSellRatio())
             .build();
     }
 }

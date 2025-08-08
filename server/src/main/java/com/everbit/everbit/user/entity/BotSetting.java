@@ -11,6 +11,7 @@ import de.huxhorn.sulky.ulid.ULID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -65,6 +66,26 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false)
     private Long sellMaxOrderAmount = 10000L; // 매도 최대 주문 금액 (KRW)
 
+    // 손실 임계값
+    @Builder.Default
+    @Column(nullable = false)
+    private BigDecimal lossThreshold = new BigDecimal("0.01"); // 1% 손실 임계값
+
+    // 이익 임계값
+    @Builder.Default
+    @Column(nullable = false)
+    private BigDecimal profitThreshold = new BigDecimal("0.018"); // 1.8% 이익 임계값
+
+    // 손실 매도 비율
+    @Builder.Default
+    @Column(nullable = false)
+    private BigDecimal lossSellRatio = new BigDecimal("0.9"); // 손실 매도 비율
+
+    // 이익 매도 비율
+    @Builder.Default
+    @Column(nullable = false)
+    private BigDecimal profitSellRatio = new BigDecimal("0.5"); // 이익 매도 비율
+
     public static BotSetting init(User user) {
         return BotSetting.builder()
                 .user(user)
@@ -79,5 +100,9 @@ public class BotSetting extends BaseTime {
         this.buyMaxOrderAmount = request.buyMaxOrderAmount();
         this.sellBaseOrderAmount = request.sellBaseOrderAmount();
         this.sellMaxOrderAmount = request.sellMaxOrderAmount();
+        this.lossThreshold = request.lossThreshold();
+        this.profitThreshold = request.profitThreshold();
+        this.lossSellRatio = request.lossSellRatio();
+        this.profitSellRatio = request.profitSellRatio();
     }
 }
