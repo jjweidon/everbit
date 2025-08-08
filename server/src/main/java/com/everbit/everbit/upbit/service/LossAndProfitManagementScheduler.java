@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Profile("prod")  // prod 프로필에서만 활성화
-public class LossManagementScheduler {
+public class LossAndProfitManagementScheduler {
     private final UserService userService;
     private final UpbitExchangeClient upbitExchangeClient;
     private final UpbitQuotationClient upbitQuotationClient;
@@ -103,10 +103,10 @@ public class LossManagementScheduler {
             log.warn("사용자: {}, 마켓: {} - 1% 이상 손실 감지! 전량 매도 실행", user.getUsername(), market);
             executeFullSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT);
         }
-        // 1.8% 이상 이익인 경우 전량 매도
+        // 1.8% 이상 이익인 경우 잔량의 80% 또는 최소주문금액 중 최댓값으로 매도
         else if (profitRate.compareTo(PROFIT_THRESHOLD) >= 0) {
-            log.info("사용자: {}, 마켓: {} - 1.8% 이상 이익 감지! 전량 매도 실행", user.getUsername(), market);
-            executeFullSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING);
+            log.info("사용자: {}, 마켓: {} - 1.8% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market);
+            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING);
         }
     }
     
@@ -115,8 +115,6 @@ public class LossManagementScheduler {
         TickerResponse ticker = tickers.get(0);
         return new BigDecimal(ticker.tradePrice());
     }
-    
-
     
     private void executeFullSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
         try {
@@ -131,6 +129,51 @@ public class LossManagementScheduler {
             tradeService.saveTrade(user, market.getCode(), strategy, orderResponse, currentPrice);
         } catch (Exception e) {
             log.error("사용자: {}, 마켓: {} - 전량 매도 주문 실패", user.getUsername(), market, e);
+        }
+    }
+    
+    private void executePartialSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
+        try {
+            // 사용자의 최소주문금액 가져오기
+            BigDecimal baseOrderAmount = BigDecimal.valueOf(user.getBotSetting().getBaseOrderAmount());
+            
+            // 잔량의 80% 계산
+            BigDecimal eightyPercentQuantity = coinBalance.multiply(new BigDecimal("0.5"));
+            BigDecimal eightyPercentAmount = eightyPercentQuantity.multiply(currentPrice);
+            
+            // 최소주문금액으로 매도 가능한 수량 계산
+            BigDecimal minOrderQuantity = baseOrderAmount.divide(currentPrice, 8, RoundingMode.HALF_UP);
+            
+            // 80% 수량과 최소주문금액 수량 중 최댓값 선택
+            BigDecimal sellQuantity;
+            if (eightyPercentAmount.compareTo(baseOrderAmount) >= 0) {
+                sellQuantity = eightyPercentQuantity;
+                log.info("사용자: {}, 마켓: {} - 잔량의 50% 매도: {} (금액: {})", 
+                    user.getUsername(), market, sellQuantity, eightyPercentAmount);
+            } else {
+                sellQuantity = minOrderQuantity;
+                log.info("사용자: {}, 마켓: {} - 최소주문금액 기준 매도: {} (금액: {})", 
+                    user.getUsername(), market, sellQuantity, baseOrderAmount);
+            }
+            
+            // 매도 수량이 보유 수량보다 크면 전체 수량 매도
+            if (sellQuantity.compareTo(coinBalance) > 0) {
+                sellQuantity = coinBalance;
+                log.info("사용자: {}, 마켓: {} - 매도 수량이 보유 수량보다 커서 전체 수량 매도: {}", 
+                    user.getUsername(), market, sellQuantity);
+            }
+            
+            // 시장가 매도 주문 생성
+            String sellQuantityStr = sellQuantity.toPlainString();
+            OrderRequest orderRequest = OrderRequest.createSellOrder(market.getCode(), sellQuantityStr, currentPrice.toString());
+            
+            // 매도 주문 실행
+            OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
+            
+            // 주문 결과 저장
+            tradeService.saveTrade(user, market.getCode(), strategy, orderResponse, currentPrice);
+        } catch (Exception e) {
+            log.error("사용자: {}, 마켓: {} - 부분 매도 주문 실패", user.getUsername(), market, e);
         }
     }
 } 
