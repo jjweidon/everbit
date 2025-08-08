@@ -10,11 +10,11 @@ import {
     FaSave,
     FaSpinner,
 } from 'react-icons/fa';
-import { MOCK_DATA, BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT, MARKETS } from '../constants';
+import { MOCK_DATA, BASE_ORDER_AMOUNT, MAX_ORDER_AMOUNT } from '../constants';
 import { userApi } from '@/api/services/userApi';
 import { BotSettingRequest } from '@/api/types/user';
 import { tradeApi } from '@/api/services/tradeApi';
-import { StrategyResponse } from '@/api/types/trade';
+import { StrategyResponse, MarketResponse } from '@/api/types/trade';
 
 const inputStyle = `
     w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md 
@@ -54,6 +54,7 @@ const selectInputStyle = `
 export default function Settings() {
     const [backtestData] = useState<BacktestData>(MOCK_DATA.backtest);
     const [strategies, setStrategies] = useState<StrategyResponse[]>([]);
+    const [markets, setMarkets] = useState<MarketResponse[]>([]);
 
     // Bot settings state
     const [botSetting, setBotSetting] = useState<BotSettingRequest>({
@@ -80,11 +81,17 @@ export default function Settings() {
     useEffect(() => {
         loadBotSettings();
         loadStrategies();
+        loadMarkets();
     }, []);
 
     const loadStrategies = async () => {
         const response = await tradeApi.getStrategies();
         setStrategies(response);
+    };
+
+    const loadMarkets = async () => {
+        const response = await tradeApi.getMarkets();
+        setMarkets(response);
     };
 
     const loadBotSettings = async () => {
@@ -238,17 +245,17 @@ export default function Settings() {
                     거래소 마켓 선택
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {MARKETS.map((market) => (
+                    {markets.map((market) => (
                         <button
-                            key={market}
-                            onClick={() => handleMarketToggle(market)}
+                            key={market.market}
+                            onClick={() => handleMarketToggle(market.market)}
                             className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                botSetting.marketList.includes(market)
+                                botSetting.marketList.includes(market.market)
                                     ? 'bg-navy-500 text-white'
                                     : 'bg-navy-50 dark:bg-navy-800 text-navy-700 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700'
                             }`}
                         >
-                            {market}
+                            {market.market}
                         </button>
                     ))}
                 </div>

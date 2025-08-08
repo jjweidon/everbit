@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.global.dto.ApiResponse;
+import com.everbit.everbit.trade.dto.MarketResponse;
 import com.everbit.everbit.trade.dto.StrategyResponse;
 import com.everbit.everbit.trade.dto.TradeResponse;
 import com.everbit.everbit.trade.service.TradeManager;
@@ -34,5 +35,11 @@ public class TradeController {
     public ApiResponse<List<StrategyResponse>> getStrategies() {
         log.info("GET 전략 목록 조회");
         return ApiResponse.success(tradeManager.getStrategies(), "전략 목록 조회 성공");
+    }
+
+    @GetMapping("/markets")
+    public ApiResponse<List<MarketResponse>> getMarkets() {
+        log.info("GET 마켓 목록 조회");
+        return ApiResponse.success(tradeManager.getMarkets(), "마켓 목록 조회 성공");
     }
 }

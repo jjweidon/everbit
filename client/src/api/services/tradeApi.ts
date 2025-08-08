@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { TradeResponse, StrategyResponse } from "../types/trade";
+import { TradeResponse, StrategyResponse, MarketResponse } from "../types/trade";
 
 export const tradeApi = {
     getTrades: async (): Promise<TradeResponse[]> => {
@@ -8,5 +8,9 @@ export const tradeApi = {
     
     getStrategies: async (): Promise<StrategyResponse[]> => {
         return apiClient.get<StrategyResponse[]>("/trades/strategies");
+    },
+
+    getMarkets: async (): Promise<MarketResponse[]> => {
+        return apiClient.get<MarketResponse[]>("/trades/markets");
     },
 };
