@@ -35,6 +35,9 @@ public class LossAndProfitManagementScheduler {
     private static final BigDecimal LOSS_THRESHOLD = new BigDecimal("0.01"); // 1% 손실 임계값
     private static final BigDecimal PROFIT_THRESHOLD = new BigDecimal("0.018"); // 1.8% 이익 임계값
 
+    private static final BigDecimal LOSS_SELL_RATIO = new BigDecimal("0.9"); // 손실 매도 비율
+    private static final BigDecimal PROFIT_SELL_RATIO = new BigDecimal("0.5"); // 이익 매도 비율
+
     @Transactional
     @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
     public void checkLossAndProfitManagement() {
@@ -98,15 +101,15 @@ public class LossAndProfitManagementScheduler {
             user.getUsername(), market, coinBalance, avgBuyPrice, currentPrice, 
             profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
         
-        // 1% 이상 손실인 경우 전량 매도
+        // LOSS_THRESHOLD 이상 손실인 경우 LOSS_SELL_RATIO 비율로 매도
         if (profitRate.compareTo(LOSS_THRESHOLD.negate()) <= 0) {
-            log.warn("사용자: {}, 마켓: {} - 1% 이상 손실 감지! 전량 매도 실행", user.getUsername(), market);
-            executeFullSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT);
+            log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, LOSS_THRESHOLD.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+            executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, LOSS_SELL_RATIO);
         }
-        // 1.8% 이상 이익인 경우 잔량의 80% 또는 최소주문금액 중 최댓값으로 매도
+        // PROFIT_THRESHOLD 이상 이익인 경우 PROFIT_SELL_RATIO 비율로 매도
         else if (profitRate.compareTo(PROFIT_THRESHOLD) >= 0) {
-            log.info("사용자: {}, 마켓: {} - 1.8% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market);
-            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING);
+            log.info("사용자: {}, 마켓: {} - {}% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market, PROFIT_THRESHOLD.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING, PROFIT_SELL_RATIO);
         }
     }
     
@@ -116,44 +119,26 @@ public class LossAndProfitManagementScheduler {
         return new BigDecimal(ticker.tradePrice());
     }
     
-    private void executeFullSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
+    private void executePartialSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy, BigDecimal sellRatio) {
         try {
-            // 시장가 매도 주문 생성
-            String sellQuantityStr = coinBalance.toPlainString();
-            OrderRequest orderRequest = OrderRequest.createSellOrder(market.getCode(), sellQuantityStr, currentPrice.toString());
+            // 사용자의 sellBaseOrderAmount 가져오기
+            BigDecimal baseOrderAmount = BigDecimal.valueOf(user.getBotSetting().getSellBaseOrderAmount());
             
-            // 매도 주문 실행
-            OrderResponse orderResponse = upbitExchangeClient.createOrder(user.getUsername(), orderRequest);
-            
-            // 주문 결과 저장
-            tradeService.saveTrade(user, market.getCode(), strategy, orderResponse, currentPrice);
-        } catch (Exception e) {
-            log.error("사용자: {}, 마켓: {} - 전량 매도 주문 실패", user.getUsername(), market, e);
-        }
-    }
-    
-    private void executePartialSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy) {
-        try {
-            // 사용자의 최소주문금액 가져오기
-            BigDecimal baseOrderAmount = BigDecimal.valueOf(user.getBotSetting().getBaseOrderAmount());
-            
-            // 잔량의 80% 계산
-            BigDecimal eightyPercentQuantity = coinBalance.multiply(new BigDecimal("0.5"));
-            BigDecimal eightyPercentAmount = eightyPercentQuantity.multiply(currentPrice);
+            // 지정된 비율로 매도할 수량 계산
+            BigDecimal sellQuantity = coinBalance.multiply(sellRatio);
+            BigDecimal sellAmount = sellQuantity.multiply(currentPrice);
             
             // 최소주문금액으로 매도 가능한 수량 계산
             BigDecimal minOrderQuantity = baseOrderAmount.divide(currentPrice, 8, RoundingMode.HALF_UP);
             
-            // 80% 수량과 최소주문금액 수량 중 최댓값 선택
-            BigDecimal sellQuantity;
-            if (eightyPercentAmount.compareTo(baseOrderAmount) >= 0) {
-                sellQuantity = eightyPercentQuantity;
-                log.info("사용자: {}, 마켓: {} - 잔량의 50% 매도: {} (금액: {})", 
-                    user.getUsername(), market, sellQuantity, eightyPercentAmount);
-            } else {
+            // 지정된 비율 수량과 최소주문금액 수량 중 최댓값 선택
+            if (sellAmount.compareTo(baseOrderAmount) < 0) {
                 sellQuantity = minOrderQuantity;
                 log.info("사용자: {}, 마켓: {} - 최소주문금액 기준 매도: {} (금액: {})", 
                     user.getUsername(), market, sellQuantity, baseOrderAmount);
+            } else {
+                log.info("사용자: {}, 마켓: {} - 잔량의 {}% 매도: {} (금액: {})", 
+                    user.getUsername(), market, sellRatio.multiply(new BigDecimal("100")), sellQuantity, sellAmount);
             }
             
             // 매도 수량이 보유 수량보다 크면 전체 수량 매도

@@ -12,6 +12,8 @@ public record BotSettingRequest(
     Strategy buyStrategy,
     Strategy sellStrategy,
     List<Market> marketList,
-    Long baseOrderAmount,
-    Long maxOrderAmount
+    Long buyBaseOrderAmount,
+    Long buyMaxOrderAmount,
+    Long sellBaseOrderAmount,
+    Long sellMaxOrderAmount
 ) {}

@@ -61,8 +61,10 @@ export default function Settings() {
         buyStrategy: 'TRIPLE_INDICATOR_MODERATE',
         sellStrategy: 'TRIPLE_INDICATOR_MODERATE',
         marketList: ['BTC'],
-        baseOrderAmount: BASE_ORDER_AMOUNT,
-        maxOrderAmount: MAX_ORDER_AMOUNT,
+        buyBaseOrderAmount: BASE_ORDER_AMOUNT,
+        buyMaxOrderAmount: MAX_ORDER_AMOUNT,
+        sellBaseOrderAmount: BASE_ORDER_AMOUNT,
+        sellMaxOrderAmount: MAX_ORDER_AMOUNT,
     });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -92,8 +94,10 @@ export default function Settings() {
                 buyStrategy: response.buyStrategy,
                 sellStrategy: response.sellStrategy,
                 marketList: response.marketList,
-                baseOrderAmount: response.baseOrderAmount,
-                maxOrderAmount: response.maxOrderAmount,
+                buyBaseOrderAmount: response.buyBaseOrderAmount,
+                buyMaxOrderAmount: response.buyMaxOrderAmount,
+                sellBaseOrderAmount: response.sellBaseOrderAmount,
+                sellMaxOrderAmount: response.sellMaxOrderAmount,
             });
         } catch (err) {
             console.error('Failed to load bot settings:', err);
@@ -247,144 +251,300 @@ export default function Settings() {
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
                     거래 설정
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            기본 주문 금액 (원)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={botSetting.baseOrderAmount.toLocaleString()}
-                                onChange={(e) => {
-                                    const rawValue =
-                                        parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                    setBotSetting((prev) => ({
-                                        ...prev,
-                                        baseOrderAmount: rawValue,
-                                    }));
-                                }}
-                                onBlur={(e) => {
-                                    const rawValue =
-                                        parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                    if (rawValue < BASE_ORDER_AMOUNT) {
+                
+                {/* 매수 설정 */}
+                <div className="mb-6">
+                    <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 mb-3 border-b border-navy-200 dark:border-navy-600 pb-2">
+                        매수 설정
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                매수 최소 주문 금액 (원)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={botSetting.buyBaseOrderAmount.toLocaleString()}
+                                    onChange={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                                         setBotSetting((prev) => ({
                                             ...prev,
-                                            baseOrderAmount: BASE_ORDER_AMOUNT,
+                                            buyBaseOrderAmount: rawValue,
                                         }));
-                                    } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                    }}
+                                    onBlur={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                                        if (rawValue < BASE_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                buyBaseOrderAmount: BASE_ORDER_AMOUNT,
+                                            }));
+                                        } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                buyBaseOrderAmount: MAX_ORDER_AMOUNT,
+                                            }));
+                                        }
+                                    }}
+                                    className={`${inputStyle} pr-12`}
+                                    placeholder={BASE_ORDER_AMOUNT.toLocaleString()}
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() =>
+                                            handleIncrement(
+                                                botSetting.buyBaseOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        buyBaseOrderAmount: value,
+                                                    })),
+                                                MAX_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleDecrement(
+                                                botSetting.buyBaseOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        buyBaseOrderAmount: value,
+                                                    })),
+                                                BASE_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                매수 최대 주문 금액 (원)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={botSetting.buyMaxOrderAmount.toLocaleString()}
+                                    onChange={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                                         setBotSetting((prev) => ({
                                             ...prev,
-                                            baseOrderAmount: MAX_ORDER_AMOUNT,
+                                            buyMaxOrderAmount: rawValue,
                                         }));
-                                    }
-                                }}
-                                className={`${inputStyle} pr-12`}
-                                placeholder={BASE_ORDER_AMOUNT.toLocaleString()}
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() =>
-                                        handleIncrement(
-                                            botSetting.baseOrderAmount,
-                                            (value) =>
-                                                setBotSetting((prev) => ({
-                                                    ...prev,
-                                                    baseOrderAmount: value,
-                                                })),
-                                            MAX_ORDER_AMOUNT
-                                        )
-                                    }
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        handleDecrement(
-                                            botSetting.baseOrderAmount,
-                                            (value) =>
-                                                setBotSetting((prev) => ({
-                                                    ...prev,
-                                                    baseOrderAmount: value,
-                                                })),
-                                            BASE_ORDER_AMOUNT
-                                        )
-                                    }
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
+                                    }}
+                                    onBlur={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                                        if (rawValue < BASE_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                buyMaxOrderAmount: BASE_ORDER_AMOUNT,
+                                            }));
+                                        } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                buyMaxOrderAmount: MAX_ORDER_AMOUNT,
+                                            }));
+                                        }
+                                    }}
+                                    className={`${inputStyle} pr-12`}
+                                    placeholder={MAX_ORDER_AMOUNT.toLocaleString()}
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() =>
+                                            handleIncrement(
+                                                botSetting.buyMaxOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        buyMaxOrderAmount: value,
+                                                    })),
+                                                MAX_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleDecrement(
+                                                botSetting.buyMaxOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        buyMaxOrderAmount: value,
+                                                    })),
+                                                BASE_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            최대 주문 금액 (원)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={botSetting.maxOrderAmount.toLocaleString()}
-                                onChange={(e) => {
-                                    const rawValue =
-                                        parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                    setBotSetting((prev) => ({
-                                        ...prev,
-                                        maxOrderAmount: rawValue,
-                                    }));
-                                }}
-                                onBlur={(e) => {
-                                    const rawValue =
-                                        parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                    if (rawValue < BASE_ORDER_AMOUNT) {
+                </div>
+
+                {/* 매도 설정 */}
+                <div>
+                    <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 mb-3 border-b border-navy-200 dark:border-navy-600 pb-2">
+                        매도 설정
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                매도 최소 주문 금액 (원)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={botSetting.sellBaseOrderAmount.toLocaleString()}
+                                    onChange={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                                         setBotSetting((prev) => ({
                                             ...prev,
-                                            maxOrderAmount: BASE_ORDER_AMOUNT,
+                                            sellBaseOrderAmount: rawValue,
                                         }));
-                                    } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                    }}
+                                    onBlur={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                                        if (rawValue < BASE_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                sellBaseOrderAmount: BASE_ORDER_AMOUNT,
+                                            }));
+                                        } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                sellBaseOrderAmount: MAX_ORDER_AMOUNT,
+                                            }));
+                                        }
+                                    }}
+                                    className={`${inputStyle} pr-12`}
+                                    placeholder={BASE_ORDER_AMOUNT.toLocaleString()}
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() =>
+                                            handleIncrement(
+                                                botSetting.sellBaseOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        sellBaseOrderAmount: value,
+                                                    })),
+                                                MAX_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleDecrement(
+                                                botSetting.sellBaseOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        sellBaseOrderAmount: value,
+                                                    })),
+                                                BASE_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                매도 최대 주문 금액 (원)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={botSetting.sellMaxOrderAmount.toLocaleString()}
+                                    onChange={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                                         setBotSetting((prev) => ({
                                             ...prev,
-                                            maxOrderAmount: MAX_ORDER_AMOUNT,
+                                            sellMaxOrderAmount: rawValue,
                                         }));
-                                    }
-                                }}
-                                className={`${inputStyle} pr-12`}
-                                placeholder={MAX_ORDER_AMOUNT.toLocaleString()}
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() =>
-                                        handleIncrement(
-                                            botSetting.maxOrderAmount,
-                                            (value) =>
-                                                setBotSetting((prev) => ({
-                                                    ...prev,
-                                                    maxOrderAmount: value,
-                                                })),
-                                            MAX_ORDER_AMOUNT
-                                        )
-                                    }
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        handleDecrement(
-                                            botSetting.maxOrderAmount,
-                                            (value) =>
-                                                setBotSetting((prev) => ({
-                                                    ...prev,
-                                                    maxOrderAmount: value,
-                                                })),
-                                            BASE_ORDER_AMOUNT
-                                        )
-                                    }
-                                    className={spinButtonStyle}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
+                                    }}
+                                    onBlur={(e) => {
+                                        const rawValue =
+                                            parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                                        if (rawValue < BASE_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                sellMaxOrderAmount: BASE_ORDER_AMOUNT,
+                                            }));
+                                        } else if (rawValue > MAX_ORDER_AMOUNT) {
+                                            setBotSetting((prev) => ({
+                                                ...prev,
+                                                sellMaxOrderAmount: MAX_ORDER_AMOUNT,
+                                            }));
+                                        }
+                                    }}
+                                    className={`${inputStyle} pr-12`}
+                                    placeholder={MAX_ORDER_AMOUNT.toLocaleString()}
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() =>
+                                            handleIncrement(
+                                                botSetting.sellMaxOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        sellMaxOrderAmount: value,
+                                                    })),
+                                                MAX_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleDecrement(
+                                                botSetting.sellMaxOrderAmount,
+                                                (value) =>
+                                                    setBotSetting((prev) => ({
+                                                        ...prev,
+                                                        sellMaxOrderAmount: value,
+                                                    })),
+                                                BASE_ORDER_AMOUNT
+                                            )
+                                        }
+                                        className={spinButtonStyle}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

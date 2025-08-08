@@ -60,8 +60,6 @@ public class TradingScheduler {
         BotSetting botSetting = user.getBotSetting();
         Strategy buyStrategy = botSetting.getBuyStrategy();
         Strategy sellStrategy = botSetting.getSellStrategy();
-        BigDecimal baseOrderAmount = BigDecimal.valueOf(botSetting.getBaseOrderAmount());
-        BigDecimal maxOrderAmount = BigDecimal.valueOf(botSetting.getMaxOrderAmount());
         
         // 매수/매도 시그널 강도 계산
         double buySignalStrength = tradingSignalService.calculateSignalStrength(signal, buyStrategy);
@@ -116,19 +114,23 @@ public class TradingScheduler {
         if (buySignal) {
             log.info("마켓: {} - 매수 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, buyStrategy, String.format("%.2f", buySignalStrength));
             try {
+                // 매수용 최소/최대 주문금액 가져오기
+                BigDecimal buyBaseOrderAmount = BigDecimal.valueOf(botSetting.getBuyBaseOrderAmount());
+                BigDecimal buyMaxOrderAmount = BigDecimal.valueOf(botSetting.getBuyMaxOrderAmount());
+                
                 // 1. 계좌 잔고 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableBalance = new BigDecimal(orderChance.bidAccount().balance());
                 log.info("마켓: {} - 계좌 잔고: {}", market, availableBalance);
 
-                if (availableBalance.compareTo(baseOrderAmount) < 0) {
-                    log.info("마켓: {} - 계좌 잔고가 최소 주문 금액({}) 이하이므로 매수 건너뜀", market, baseOrderAmount);
+                if (availableBalance.compareTo(buyBaseOrderAmount) < 0) {
+                    log.info("마켓: {} - 계좌 잔고가 최소 주문 금액({}) 이하이므로 매수 건너뜀", market, buyBaseOrderAmount);
                     return;
                 }
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal buyAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, buyStrategy, baseOrderAmount, maxOrderAmount);
+                BigDecimal buyAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, buyStrategy, buyBaseOrderAmount, buyMaxOrderAmount);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -162,6 +164,10 @@ public class TradingScheduler {
         if (sellSignal) {
             log.info("마켓: {} - 매도 시그널 감지됨 (전략: {}, 시그널 강도: {})", market, sellStrategy, String.format("%.2f", sellSignalStrength));
             try {
+                // 매도용 최소/최대 주문금액 가져오기
+                BigDecimal sellBaseOrderAmount = BigDecimal.valueOf(botSetting.getSellBaseOrderAmount());
+                BigDecimal sellMaxOrderAmount = BigDecimal.valueOf(botSetting.getSellMaxOrderAmount());
+                
                 // 1. 보유 수량 확인
                 OrderChanceResponse orderChance = upbitExchangeClient.getOrderChance(user.getUsername(), market);
                 BigDecimal availableQuantity = new BigDecimal(orderChance.askAccount().balance());
@@ -174,7 +180,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal sellAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, sellStrategy, baseOrderAmount, maxOrderAmount);
+                BigDecimal sellAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, sellStrategy, sellBaseOrderAmount, sellMaxOrderAmount);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행
@@ -183,10 +189,10 @@ public class TradingScheduler {
                 // 4. 매도 후 남을 수량 계산
                 BigDecimal remainingQuantity = availableQuantity.subtract(sellQuantity);
                 BigDecimal remainingAmount = remainingQuantity.multiply(currentPrice);
-                if (remainingAmount.compareTo(baseOrderAmount) <= 0) {
+                if (remainingAmount.compareTo(sellBaseOrderAmount) <= 0) {
                     sellQuantity = availableQuantity;
-                    log.info("마켓: {} - 남은 주문 가능 금액 {}이 BASE_ORDER_AMOUNT({})이하이므로 전체 보유 수량 매도: {}", 
-                        market, remainingAmount, baseOrderAmount, sellQuantity.multiply(currentPrice));
+                    log.info("마켓: {} - 남은 주문 가능 금액 {}이 SELL_BASE_ORDER_AMOUNT({})이하이므로 전체 보유 수량 매도: {}", 
+                        market, remainingAmount, sellBaseOrderAmount, sellQuantity.multiply(currentPrice));
                 }
 
                 // 5. 매도 주문 금액 계산 및 주문 실행

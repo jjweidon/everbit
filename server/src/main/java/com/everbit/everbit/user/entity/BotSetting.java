@@ -45,15 +45,25 @@ public class BotSetting extends BaseTime {
     @CollectionTable(name = "bot_market_list", joinColumns = @JoinColumn(name = "bot_setting_id"))
     private List<Market> marketList = new ArrayList<>(List.of(Market.BTC));
 
-    // 최소 주문 금액
+    // 매수 최소 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long baseOrderAmount = 6000L; // 최소 주문 금액 (KRW)
+    private Long buyBaseOrderAmount = 6000L; // 매수 최소 주문 금액 (KRW)
 
-    // 최대 주문 금액
+    // 매수 최대 주문 금액
     @Builder.Default
     @Column(nullable = false)
-    private Long maxOrderAmount = 10000L; // 최대 주문 금액 (KRW)
+    private Long buyMaxOrderAmount = 10000L; // 매수 최대 주문 금액 (KRW)
+
+    // 매도 최소 주문 금액
+    @Builder.Default
+    @Column(nullable = false)
+    private Long sellBaseOrderAmount = 6000L; // 매도 최소 주문 금액 (KRW)
+
+    // 매도 최대 주문 금액
+    @Builder.Default
+    @Column(nullable = false)
+    private Long sellMaxOrderAmount = 10000L; // 매도 최대 주문 금액 (KRW)
 
     public static BotSetting init(User user) {
         return BotSetting.builder()
@@ -65,7 +75,9 @@ public class BotSetting extends BaseTime {
         this.buyStrategy = request.buyStrategy();
         this.sellStrategy = request.sellStrategy();
         this.marketList = request.marketList();
-        this.baseOrderAmount = request.baseOrderAmount();
-        this.maxOrderAmount = request.maxOrderAmount();
+        this.buyBaseOrderAmount = request.buyBaseOrderAmount();
+        this.buyMaxOrderAmount = request.buyMaxOrderAmount();
+        this.sellBaseOrderAmount = request.sellBaseOrderAmount();
+        this.sellMaxOrderAmount = request.sellMaxOrderAmount();
     }
 }

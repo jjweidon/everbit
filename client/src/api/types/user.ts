@@ -26,8 +26,10 @@ export const BotSetting = z.object({
     buyStrategy: z.string(),
     sellStrategy: z.string(),
     marketList: z.array(z.string()),
-    baseOrderAmount: z.number(),
-    maxOrderAmount: z.number(),
+    buyBaseOrderAmount: z.number(),
+    buyMaxOrderAmount: z.number(),
+    sellBaseOrderAmount: z.number(),
+    sellMaxOrderAmount: z.number(),
 });
 export type BotSettingResponse = z.infer<typeof BotSetting>;
 export type BotSettingRequest = z.infer<typeof BotSetting>;

@@ -17,8 +17,10 @@ public record BotSettingResponse(
     String buyStrategy,
     String sellStrategy,
     List<Market> marketList,
-    Long baseOrderAmount,
-    Long maxOrderAmount
+    Long buyBaseOrderAmount,
+    Long buyMaxOrderAmount,
+    Long sellBaseOrderAmount,
+    Long sellMaxOrderAmount
 ) implements Response {
     public static BotSettingResponse from(BotSetting botSetting) {
         return BotSettingResponse.builder()
@@ -26,8 +28,10 @@ public record BotSettingResponse(
             .buyStrategy(botSetting.getBuyStrategy().name())
             .sellStrategy(botSetting.getSellStrategy().name())
             .marketList(botSetting.getMarketList())
-            .baseOrderAmount(botSetting.getBaseOrderAmount())
-            .maxOrderAmount(botSetting.getMaxOrderAmount())
+            .buyBaseOrderAmount(botSetting.getBuyBaseOrderAmount())
+            .buyMaxOrderAmount(botSetting.getBuyMaxOrderAmount())
+            .sellBaseOrderAmount(botSetting.getSellBaseOrderAmount())
+            .sellMaxOrderAmount(botSetting.getSellMaxOrderAmount())
             .build();
     }
 }
