@@ -141,11 +141,15 @@ public class LossAndProfitManagementScheduler {
                     user.getUsername(), market, sellRatio.multiply(new BigDecimal("100")), sellQuantity, sellAmount);
             }
             
-            // 매도 수량이 보유 수량보다 크면 전체 수량 매도
-            if (sellQuantity.compareTo(coinBalance) > 0) {
+            // 매도 수량이 보유 수량보다 크거나, 매도 후 남은 수량의 가치가 최소 주문 금액보다 작으면 전체 수량 매도
+            BigDecimal remainingQuantity = coinBalance.subtract(sellQuantity);
+            BigDecimal remainingValue = remainingQuantity.multiply(currentPrice);
+            
+            if (sellQuantity.compareTo(coinBalance) > 0 || remainingValue.compareTo(baseOrderAmount) < 0) {
                 sellQuantity = coinBalance;
-                log.info("사용자: {}, 마켓: {} - 매도 수량이 보유 수량보다 커서 전체 수량 매도: {}", 
-                    user.getUsername(), market, sellQuantity);
+                log.info("사용자: {}, 마켓: {} - 전체 수량 매도: {} (사유: {})", 
+                    user.getUsername(), market, sellQuantity,
+                    sellQuantity.compareTo(coinBalance) > 0 ? "매도 수량이 보유 수량보다 큼" : "남은 수량의 가치가 최소 주문 금액보다 작음");
             }
             
             // 시장가 매도 주문 생성
