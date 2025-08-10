@@ -3,6 +3,8 @@ package com.everbit.everbit.upbit.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.core.annotation.Order;
 
+import com.everbit.everbit.trade.entity.Trade;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.service.TradeService;
 import com.everbit.everbit.upbit.dto.exchange.AccountResponse;
@@ -33,6 +36,9 @@ public class LossAndProfitManagementScheduler {
     private final UpbitExchangeClient upbitExchangeClient;
     private final UpbitQuotationClient upbitQuotationClient;
     private final TradeService tradeService;
+
+    private final int TIMEOUT_SELL_MINUTES = 45;
+    private final BigDecimal TIMEOUT_SELL_PROFIT_RATE = new BigDecimal("0.001");
 
     @Transactional
     @Scheduled(cron = "1 */3 * * * *") // 3분마다 실행
@@ -92,7 +98,7 @@ public class LossAndProfitManagementScheduler {
         BigDecimal currentPrice = getCurrentPrice(market);
         
         // 수익률 계산 (양수: 이익, 음수: 손실)
-        BigDecimal profitRate = currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
+        BigDecimal profitRate = calculateProfitRate(currentPrice, avgBuyPrice);
         log.info("사용자: {}, 마켓: {} - 보유수량: {}, 평균매수가: {}, 현재가: {}, 수익률: {}%", 
             user.getUsername(), market, coinBalance, avgBuyPrice, currentPrice, 
             profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
@@ -102,6 +108,9 @@ public class LossAndProfitManagementScheduler {
         BigDecimal profitThreshold = user.getBotSetting().getProfitThreshold();
         BigDecimal lossSellRatio = user.getBotSetting().getLossSellRatio();
         BigDecimal profitSellRatio = user.getBotSetting().getProfitSellRatio();
+
+        // 30분 경과 후 0.1% 이익도 못 내면 전량 매도 체크
+        checkAndExecuteFullSellIfNeeded(user, market, coinBalance, currentPrice, avgBuyPrice, profitSellRatio);
         
         // 손실 임계값 이상 손실인 경우 손실 매도 비율로 매도
         if (profitRate.compareTo(lossThreshold.negate()) <= 0) {
@@ -119,6 +128,50 @@ public class LossAndProfitManagementScheduler {
         List<TickerResponse> tickers = upbitQuotationClient.getTickers(List.of(market.getCode()));
         TickerResponse ticker = tickers.get(0);
         return new BigDecimal(ticker.tradePrice());
+    }
+    
+    /**
+     * TIMEOUT_SELL_MINUTES분 경과 후 TIMEOUT_SELL_PROFIT_RATE 이익도 못 내면 전량 매도하는 메서드
+     */
+    private void checkAndExecuteFullSellIfNeeded(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, BigDecimal avgBuyPrice, BigDecimal sellRatio) {
+        try {
+            // 마지막 매수 거래 정보 조회
+            Trade lastBuyTrade = tradeService.findLastBuyByUserAndMarket(user, market);
+            
+            // 마지막 매수 거래로부터 경과 시간 계산 (분 단위)
+            LocalDateTime lastBuyTime = lastBuyTrade.getUpdatedAt();
+            LocalDateTime now = LocalDateTime.now();
+            long minutesElapsed = ChronoUnit.MINUTES.between(lastBuyTime, now);
+            
+            // TIMEOUT_SELL_MINUTES분이 지났는지 확인
+            if (minutesElapsed >= TIMEOUT_SELL_MINUTES) {
+                // 수익률 계산
+                BigDecimal profitRate = calculateProfitRate(currentPrice, avgBuyPrice);
+                
+                // TIMEOUT_SELL_PROFIT_RATE 이익도 못 낸 경우 부분 매도
+                 if (profitRate.compareTo(TIMEOUT_SELL_PROFIT_RATE) < 0) {
+                     log.warn("사용자: {}, 마켓: {} - {}분 경과 후 {}% 이익도 못 내서 부분 매도 실행! 경과시간: {}분, 수익률: {}%", 
+                         user.getUsername(), market, TIMEOUT_SELL_MINUTES, 
+                         TIMEOUT_SELL_PROFIT_RATE.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
+                         minutesElapsed, 
+                         profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+                     
+                     // TIMEOUT_SELL_MINUTES분 경과 후 이익도 못 내면 보유량의 sellRatio 매도
+                     executePartialSell(user, market, coinBalance, currentPrice, Strategy.TIMEOUT_SELL, sellRatio);
+                 } else {
+                    log.info("사용자: {}, 마켓: {} - {}분 경과했지만 {}% 이상 이익이 있어 전량 매도 건너뜀. 경과시간: {}분, 수익률: {}%", 
+                        user.getUsername(), market, TIMEOUT_SELL_MINUTES, 
+                        TIMEOUT_SELL_PROFIT_RATE.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
+                        minutesElapsed, 
+                        profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+                }
+            } else {
+                log.debug("사용자: {}, 마켓: {} - 마지막 매수로부터 {}분 경과 ({}분 미만)", 
+                    user.getUsername(), market, minutesElapsed, TIMEOUT_SELL_MINUTES);
+            }
+        } catch (Exception e) {
+            log.error("사용자: {}, 마켓: {} - {}분 경과 체크 중 오류 발생", user.getUsername(), market, TIMEOUT_SELL_MINUTES, e);
+        }
     }
     
     private void executePartialSell(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, Strategy strategy, BigDecimal sellRatio) {
@@ -166,5 +219,9 @@ public class LossAndProfitManagementScheduler {
         } catch (Exception e) {
             log.error("사용자: {}, 마켓: {} - 부분 매도 주문 실패", user.getUsername(), market, e);
         }
+    }
+
+    private BigDecimal calculateProfitRate(BigDecimal currentPrice, BigDecimal avgBuyPrice) {
+        return currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
     }
 } 

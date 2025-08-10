@@ -69,6 +69,14 @@ public enum Strategy {
         false,
         CandleInterval.TEN,
         100
+    ),
+    
+    TIMEOUT_SELL(
+        "시간초과매도",
+        "30분 경과 후 0.1% 이익도 못 내면 전량 매도하는 전략",
+        false,
+        CandleInterval.TEN,
+        100
     );
 
     private final String value;

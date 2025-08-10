@@ -8,10 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.everbit.everbit.trade.entity.Trade;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
+import com.everbit.everbit.trade.entity.enums.TradeType;
 import com.everbit.everbit.trade.repository.TradeRepository;
 import com.everbit.everbit.upbit.dto.exchange.OrderResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.trade.entity.enums.Strategy;
+import com.everbit.everbit.trade.entity.enums.Market;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,5 +47,10 @@ public class TradeService {
         trade.updateStatus(newStatus);
         tradeRepository.save(trade);
         log.info("Trade status updated - ID: {}, New Status: {}", trade.getId(), newStatus);
+    }
+
+    public Trade findLastBuyByUserAndMarket(User user, Market market) {
+        return tradeRepository.findFirstByUserAndMarketAndTypeOrderByCreatedAtDesc(user, market, TradeType.BID)
+            .orElseThrow(() -> new RuntimeException("마지막 매수 거래를 찾을 수 없습니다. user: " + user.getUsername() + ", market: " + market));
     }
 }
