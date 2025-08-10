@@ -35,7 +35,7 @@ public class LossAndProfitManagementScheduler {
     private final TradeService tradeService;
 
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
+    @Scheduled(cron = "0 */3 * * * *", initialDelay = 2000) // 3분마다 실행
     public void checkLossAndProfitManagement() {
         log.info("손실 및 이익 관리 스케줄러 실행");
         

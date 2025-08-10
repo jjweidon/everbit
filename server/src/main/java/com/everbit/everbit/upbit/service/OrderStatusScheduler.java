@@ -26,7 +26,7 @@ public class OrderStatusScheduler {
     private final UpbitExchangeClient upbitExchangeClient;
 
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
+    @Scheduled(cron = "0 */3 * * * *", initialDelay = 1000) // 3분마다 실행
     public void checkOrderStatus() {
         log.info("주문 상태 확인 스케줄러 실행");
         

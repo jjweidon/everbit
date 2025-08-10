@@ -39,7 +39,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *")
+    @Scheduled(cron = "0 */3 * * * *", initialDelay = 3000)
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         
