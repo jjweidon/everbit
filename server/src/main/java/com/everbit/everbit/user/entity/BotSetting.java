@@ -68,22 +68,22 @@ public class BotSetting extends BaseTime {
 
     // 손실 임계값
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 4, scale = 3)
     private BigDecimal lossThreshold = new BigDecimal("0.01"); // 1% 손실 임계값
 
     // 이익 임계값
     @Builder.Default
-    @Column(nullable = false)
-    private BigDecimal profitThreshold = new BigDecimal("0.018"); // 1.8% 이익 임계값
+    @Column(nullable = false, precision = 4, scale = 3)
+    private BigDecimal profitThreshold = new BigDecimal("0.02"); // 2% 이익 임계값
 
     // 손실 매도 비율
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 3, scale = 2)
     private BigDecimal lossSellRatio = new BigDecimal("0.9"); // 손실 매도 비율
 
     // 이익 매도 비율
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 3, scale = 2)
     private BigDecimal profitSellRatio = new BigDecimal("0.5"); // 이익 매도 비율
 
     public static BotSetting init(User user) {
