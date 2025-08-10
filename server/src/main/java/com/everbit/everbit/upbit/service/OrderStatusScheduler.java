@@ -19,14 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("prod")  // prod 프로필에서만 활성화
-@Order(1)  // 1순위
+@Profile("prod")
+@Order(1)
 public class OrderStatusScheduler {
     private final TradeService tradeService;
     private final UpbitExchangeClient upbitExchangeClient;
 
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *", initialDelay = 1000) // 3분마다 실행
+    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
     public void checkOrderStatus() {
         log.info("주문 상태 확인 스케줄러 실행");
         

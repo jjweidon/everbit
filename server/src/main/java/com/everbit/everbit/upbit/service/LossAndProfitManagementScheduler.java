@@ -26,8 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("prod")  // prod 프로필에서만 활성화
-@Order(2)  // 2순위
+@Profile("prod")
+@Order(2)
 public class LossAndProfitManagementScheduler {
     private final UserService userService;
     private final UpbitExchangeClient upbitExchangeClient;
@@ -35,7 +35,7 @@ public class LossAndProfitManagementScheduler {
     private final TradeService tradeService;
 
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *", initialDelay = 2000) // 3분마다 실행
+    @Scheduled(cron = "1 */3 * * * *") // 3분마다 실행
     public void checkLossAndProfitManagement() {
         log.info("손실 및 이익 관리 스케줄러 실행");
         

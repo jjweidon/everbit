@@ -29,8 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("prod")  // prod 프로필에서만 활성화
-@Order(3)  // 3순위
+@Profile("prod")
+@Order(3)
 public class TradingScheduler {
     private final TradingSignalService tradingSignalService;
     private final UpbitExchangeClient upbitExchangeClient;
@@ -39,7 +39,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     @Transactional
-    @Scheduled(cron = "0 */3 * * * *", initialDelay = 3000)
+    @Scheduled(cron = "2 */3 * * * *")
     public void checkTradingSignals() {
         List<User> activeUsers = userService.findUsersWithActiveBots();
         
