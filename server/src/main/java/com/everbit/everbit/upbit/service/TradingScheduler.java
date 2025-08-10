@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 import com.everbit.everbit.upbit.dto.quotation.TickerResponse;
 import com.everbit.everbit.upbit.dto.exchange.OrderChanceResponse;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Profile("prod")  // prod 프로필에서만 활성화
+@Order(3)  // 3순위
 public class TradingScheduler {
     private final TradingSignalService tradingSignalService;
     private final UpbitExchangeClient upbitExchangeClient;

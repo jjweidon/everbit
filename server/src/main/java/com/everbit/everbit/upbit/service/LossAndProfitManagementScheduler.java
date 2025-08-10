@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.trade.service.TradeService;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Profile("prod")  // prod 프로필에서만 활성화
+@Order(2)  // 2순위
 public class LossAndProfitManagementScheduler {
     private final UserService userService;
     private final UpbitExchangeClient upbitExchangeClient;
@@ -33,7 +35,7 @@ public class LossAndProfitManagementScheduler {
     private final TradeService tradeService;
 
     @Transactional
-    @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
+    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
     public void checkLossAndProfitManagement() {
         log.info("손실 및 이익 관리 스케줄러 실행");
         

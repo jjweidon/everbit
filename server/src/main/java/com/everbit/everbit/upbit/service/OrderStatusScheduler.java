@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 import com.everbit.everbit.trade.entity.Trade;
 import com.everbit.everbit.trade.entity.enums.TradeStatus;
@@ -19,12 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Profile("prod")  // prod 프로필에서만 활성화
+@Order(1)  // 1순위
 public class OrderStatusScheduler {
     private final TradeService tradeService;
     private final UpbitExchangeClient upbitExchangeClient;
 
     @Transactional
-    @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
+    @Scheduled(cron = "0 */3 * * * *") // 3분마다 실행
     public void checkOrderStatus() {
         log.info("주문 상태 확인 스케줄러 실행");
         
