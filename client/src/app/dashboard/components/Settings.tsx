@@ -34,23 +34,6 @@ const spinButtonStyle = `
     rounded text-xs
 `;
 
-const timeInputStyle = `
-    w-full px-3 py-2 border border-navy-300 dark:border-navy-600 rounded-md 
-    focus:outline-none focus:ring-2 focus:ring-navy-500 
-    dark:bg-navy-800 dark:text-white
-    [&::-webkit-calendar-picker-indicator]:filter
-    [&::-webkit-calendar-picker-indicator]:dark:invert
-    [&::-webkit-calendar-picker-indicator]:dark:brightness-0
-    [&::-webkit-calendar-picker-indicator]:dark:contrast-200
-`;
-
-const selectInputStyle = `
-    w-full px-3 py-2 pr-8 border border-navy-300 dark:border-navy-600 rounded-md 
-    focus:outline-none focus:ring-2 focus:ring-navy-500 
-    dark:bg-navy-800 dark:text-white
-    appearance-none
-`;
-
 export default function Settings() {
     const [backtestData] = useState<BacktestData>(MOCK_DATA.backtest);
     const [strategies, setStrategies] = useState<StrategyResponse[]>([]);
@@ -67,7 +50,7 @@ export default function Settings() {
         sellBaseOrderAmount: BASE_ORDER_AMOUNT,
         sellMaxOrderAmount: MAX_ORDER_AMOUNT,
         lossThreshold: 0.01,
-        profitThreshold: 0.018,
+        profitThreshold: 0.02,
         lossSellRatio: 0.9,
         profitSellRatio: 0.5,
     });
@@ -132,7 +115,24 @@ export default function Settings() {
                 ...botSetting,
             };
 
-            await userApi.updateBotSetting(requestData);
+            const response = await userApi.updateBotSetting(requestData);
+            
+            // 응답으로 받은 새로운 설정으로 상태 업데이트
+            setBotSetting({
+                botSettingId: response.botSettingId,
+                buyStrategy: response.buyStrategy,
+                sellStrategy: response.sellStrategy,
+                marketList: response.marketList,
+                buyBaseOrderAmount: response.buyBaseOrderAmount,
+                buyMaxOrderAmount: response.buyMaxOrderAmount,
+                sellBaseOrderAmount: response.sellBaseOrderAmount,
+                sellMaxOrderAmount: response.sellMaxOrderAmount,
+                lossThreshold: response.lossThreshold,
+                profitThreshold: response.profitThreshold,
+                lossSellRatio: response.lossSellRatio,
+                profitSellRatio: response.profitSellRatio,
+            });
+
             setSuccess('SUCCESS SAVE');
             alert('봇 설정이 성공적으로 저장되었습니다!');
         } catch (err) {
