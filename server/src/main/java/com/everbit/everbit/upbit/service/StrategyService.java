@@ -22,7 +22,7 @@ public class StrategyService {
     public boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
             case STANDARD:
-                return signal.isTripleIndicatorModerateBuySignal();
+                return signal.dropNFlipBuySignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeBuySignal();
             case TRIPLE_INDICATOR_MODERATE:
@@ -46,7 +46,7 @@ public class StrategyService {
     public boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
             case STANDARD:
-                return signal.isTripleIndicatorModerateSellSignal();
+                return signal.popNFlipSellSignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeSellSignal();
             case TRIPLE_INDICATOR_MODERATE:
@@ -67,7 +67,7 @@ public class StrategyService {
     /**
      * 시그널 강도에 따른 주문 금액 계산
      */
-    public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy, 
+    public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy,
                                                           BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
         // 시그널 강도 계산 (0.0 ~ 1.0)
         double signalStrength = calculateSignalStrength(signal, strategy);
@@ -86,6 +86,8 @@ public class StrategyService {
      */
     public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
+            case STANDARD:
+                return calculateStandardSignalStrength(signal);
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return calculateTripleIndicatorConservativeSignalStrength(signal);
             case TRIPLE_INDICATOR_MODERATE:
@@ -101,6 +103,20 @@ public class StrategyService {
             default:
                 return 0.5; // 기본값
         }
+    }
+
+    /**
+     * STANDARD 전략 (DROP_N_FLIP / POP_N_FLIP) 시그널 강도 계산
+     */
+    private double calculateStandardSignalStrength(TradingSignal signal) {
+        // 매수 시그널인지 매도 시그널인지 확인
+        if (signal.dropNFlipBuySignal()) {
+            return signal.dropNFlipStrength();
+        } else if (signal.popNFlipSellSignal()) {
+            return signal.popNFlipStrength();
+        }
+        
+        return 0.0; // 시그널이 없는 경우
     }
 
     /**

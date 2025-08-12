@@ -14,7 +14,7 @@ import de.huxhorn.sulky.ulid.ULID;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MarketSignal extends BaseTime {
+public class CustomSignal extends BaseTime {
     @Id
     @Column(name = "market_signal_id")
     @Builder.Default

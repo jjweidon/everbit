@@ -16,6 +16,12 @@ public record TradingSignal(
     boolean macdBuySignal,    // MACD 매수 시그널
     boolean macdSellSignal,   // MACD 매도 시그널
     
+    // DROP_N_FLIP과 POP_N_FLIP 시그널
+    boolean dropNFlipBuySignal,   // DROP_N_FLIP 매수 시그널
+    boolean popNFlipSellSignal,   // POP_N_FLIP 매도 시그널
+    double dropNFlipStrength,     // DROP_N_FLIP 시그널 강도
+    double popNFlipStrength,      // POP_N_FLIP 시그널 강도
+    
     // 지표 값들 (디버깅 및 강도 계산용)
     Num bbLowerBand,          // 볼린저밴드 하단
     Num bbMiddleBand,         // 볼린저밴드 중간

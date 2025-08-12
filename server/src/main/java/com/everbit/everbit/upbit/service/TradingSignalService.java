@@ -1,6 +1,7 @@
 package com.everbit.everbit.upbit.service;
 
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
+import com.everbit.everbit.trade.entity.enums.Market;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.ta4j.core.num.Num;
 @Slf4j
 public class TradingSignalService {
     private final CandleDataService candleDataService;
+    private final CustomSignalService customSignalService;
     
     // 기술적 지표 계산을 위한 상수 정의
     private static final int RSI_PERIOD = 9;  // RSI 기간
@@ -72,7 +74,8 @@ public class TradingSignalService {
         Num macdSignalValue = getMACDSignalValue(series, lastIndex);
         Num macdHistogram = getMACDHistogram(series, lastIndex);
 
-        TradingSignal signal = new TradingSignal(
+        // 기본 시그널 생성
+        TradingSignal baseSignal = new TradingSignal(
             market,
             series.getLastBar().getEndTime(),
             closePrice.getValue(lastIndex),
@@ -82,6 +85,10 @@ public class TradingSignalService {
             rsiSellSignal,
             macdBuySignal,
             macdSellSignal,
+            false, // dropNFlipBuySignal - 초기값
+            false, // popNFlipSellSignal - 초기값
+            0.0,   // dropNFlipStrength - 초기값
+            0.0,   // popNFlipStrength - 초기값
             bbLowerBand,
             bbMiddleBand,
             bbUpperBand,
@@ -91,7 +98,46 @@ public class TradingSignalService {
             macdHistogram
         );
         
-        return signal;
+        // DROP_N_FLIP과 POP_N_FLIP 로직 적용하여 최종 시그널 생성
+        return applyCustomSignalLogic(baseSignal, market);
+    }
+    
+    /**
+     * DROP_N_FLIP과 POP_N_FLIP 커스텀 시그널 로직을 적용합니다.
+     */
+    private TradingSignal applyCustomSignalLogic(TradingSignal baseSignal, String market) {
+        // DROP_N_FLIP과 POP_N_FLIP 로직 처리
+        Market marketEnum = Market.fromCode(market);
+        boolean dropNFlipBuy = customSignalService.processDropNFlipSignal(baseSignal, marketEnum);
+        boolean popNFlipSell = customSignalService.processPopNFlipSignal(baseSignal, marketEnum);
+        
+        // 시그널 강도 계산
+        double dropNFlipStrength = customSignalService.calculateDropNFlipSignalStrength(marketEnum);
+        double popNFlipStrength = customSignalService.calculatePopNFlipSignalStrength(marketEnum);
+        
+        // DROP_N_FLIP과 POP_N_FLIP 결과가 포함된 새로운 TradingSignal 생성
+        return new TradingSignal(
+            baseSignal.market(),
+            baseSignal.timestamp(),
+            baseSignal.currentPrice(),
+            baseSignal.bbBuySignal(),
+            baseSignal.bbSellSignal(),
+            baseSignal.rsiBuySignal(),
+            baseSignal.rsiSellSignal(),
+            baseSignal.macdBuySignal(),
+            baseSignal.macdSellSignal(),
+            dropNFlipBuy,
+            popNFlipSell,
+            dropNFlipStrength,
+            popNFlipStrength,
+            baseSignal.bbLowerBand(),
+            baseSignal.bbMiddleBand(),
+            baseSignal.bbUpperBand(),
+            baseSignal.rsiValue(),
+            baseSignal.macdValue(),
+            baseSignal.macdSignalValue(),
+            baseSignal.macdHistogram()
+        );
     }
     
     /**
