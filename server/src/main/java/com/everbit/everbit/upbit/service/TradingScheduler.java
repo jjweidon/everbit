@@ -154,7 +154,7 @@ public class TradingScheduler {
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(marketCode);
-                BigDecimal buyAmount = strategyService.calculateOrderAmountBySignalStrength(signal, buyStrategy, buyBaseOrderAmount, buyMaxOrderAmount);
+                BigDecimal buyAmount = strategyService.calculateOrderAmountBySignalStrength(buySignalStrength, buyBaseOrderAmount, buyMaxOrderAmount);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -202,7 +202,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(marketCode);
-                BigDecimal sellAmount = strategyService.calculateOrderAmountBySignalStrength(signal, sellStrategy, sellBaseOrderAmount, sellMaxOrderAmount);
+                BigDecimal sellAmount = strategyService.calculateOrderAmountBySignalStrength(sellSignalStrength, sellBaseOrderAmount, sellMaxOrderAmount);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행

@@ -67,10 +67,7 @@ public class StrategyService {
     /**
      * 시그널 강도에 따른 주문 금액 계산
      */
-    public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy,
-                                                          BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
-        // 시그널 강도 계산 (0.0 ~ 1.0)
-        double signalStrength = calculateSignalStrength(signal, strategy);
+    public BigDecimal calculateOrderAmountBySignalStrength(double signalStrength, BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
         
         // 시그널 강도에 따른 주문 금액 계산
         BigDecimal strengthMultiplier = BigDecimal.valueOf(signalStrength);

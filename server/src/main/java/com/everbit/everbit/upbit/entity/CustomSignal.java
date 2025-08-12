@@ -16,7 +16,7 @@ import de.huxhorn.sulky.ulid.ULID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CustomSignal extends BaseTime {
     @Id
-    @Column(name = "market_signal_id")
+    @Column(name = "custom_signal_id")
     @Builder.Default
     private final String id = new ULID().nextULID();
 

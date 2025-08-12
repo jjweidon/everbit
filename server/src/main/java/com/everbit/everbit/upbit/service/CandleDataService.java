@@ -21,7 +21,7 @@ public class CandleDataService {
     private final UpbitQuotationClient upbitQuotationClient;
     private static final ZoneId UTC = ZoneId.of("UTC");
 
-    private static final int CANDLE_COUNT = 200;
+    private static final int CANDLE_COUNT = 100;
     private static final int CANDLE_INTERVAL = 5;
 
     /**

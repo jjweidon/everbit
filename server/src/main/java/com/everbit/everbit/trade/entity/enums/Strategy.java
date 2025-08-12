@@ -11,7 +11,7 @@ public enum Strategy {
         "연속 상승 / 연속 하락 후 추세 전환 신호가 오면 거래하는 전략",
         true,
         CandleInterval.FIVE,
-        200
+        100
     ),
 
     TRIPLE_INDICATOR_MODERATE(
