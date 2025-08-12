@@ -23,18 +23,33 @@ public class MarketSignal extends BaseTime {
     @Enumerated(EnumType.STRING)
     private Market market;
 
-    private LocalDateTime lastOversoldAt;
+    private LocalDateTime lastDropAt;
+
+    private LocalDateTime lastPopAt;
 
     @Builder.Default
-    private int consecutiveOversoldCount = 0;
+    private int consecutiveDropCount = 0;
 
-    public void countUpConsecutiveOversoldCount() {
-        this.lastOversoldAt = LocalDateTime.now();
-        this.consecutiveOversoldCount += 1;
+    @Builder.Default
+    private int consecutivePopCount = 0;
+
+    public void countUpConsecutiveDrop() {
+        this.lastDropAt = LocalDateTime.now();
+        this.consecutiveDropCount += 1;
     }
 
-    public void resetConsecutiveOversoldCount() {
-        this.lastOversoldAt = null;
-        this.consecutiveOversoldCount = 0;
+    public void resetConsecutiveDrop() {
+        this.lastDropAt = null;
+        this.consecutiveDropCount = 0;
+    }
+
+    public void countUpConsecutivePop() {
+        this.lastPopAt = LocalDateTime.now();
+        this.consecutivePopCount += 1;
+    }
+
+    public void resetConsecutivePop() {
+        this.lastPopAt = null;
+        this.consecutivePopCount = 0;
     }
 }

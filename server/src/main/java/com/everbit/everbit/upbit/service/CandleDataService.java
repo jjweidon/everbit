@@ -21,6 +21,24 @@ public class CandleDataService {
     private final UpbitQuotationClient upbitQuotationClient;
     private static final ZoneId UTC = ZoneId.of("UTC");
 
+    private static final int CANDLE_COUNT = 200;
+    private static final int CANDLE_INTERVAL = 5;
+
+    /**
+     * 고정된 값으로 BarSeries를 생성합니다.
+     */
+    public BarSeries createBarSeries(String market) {
+        // 최근 캔들 데이터 조회
+        List<MinuteCandleResponse> candles = upbitQuotationClient.getMinuteCandles(
+            CANDLE_INTERVAL, 
+            market, 
+            null, 
+            CANDLE_COUNT
+        );
+        
+        return buildBarSeries(market, candles);
+    }
+
     /**
      * 지정된 전략으로 BarSeries를 생성합니다.
      */

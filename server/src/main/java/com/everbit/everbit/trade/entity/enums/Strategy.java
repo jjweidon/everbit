@@ -8,9 +8,9 @@ import lombok.RequiredArgsConstructor;
 public enum Strategy {
     STANDARD(
         "에버비트 스탠다드",
-        "DROP_N_FLIP 시그널이 오면 매수, TRIPLE_INDICATOR_MODERATE 시그널이 오면 매도하는 전략",
+        "연속 상승 / 연속 하락 후 추세 전환 신호가 오면 거래하는 전략",
         true,
-        CandleInterval.THREE,
+        CandleInterval.FIVE,
         200
     ),
 

@@ -31,6 +31,7 @@ public enum SignalType {
 
     // 커스텀 시그널
     DROP_N_FLIP("연속 하락 후 추세 전환 신호"),
+    POP_N_FLIP("연속 상승 후 추세 전환 신호"),
     
     UNKNOWN("알 수 없음");
 

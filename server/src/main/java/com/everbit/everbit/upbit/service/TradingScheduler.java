@@ -20,6 +20,8 @@ import com.everbit.everbit.trade.entity.enums.SignalType;
 import com.everbit.everbit.user.entity.BotSetting;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -33,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Order(3)
 public class TradingScheduler {
     private final TradingSignalService tradingSignalService;
+    private final StrategyService strategyService;
     private final UpbitExchangeClient upbitExchangeClient;
     private final UpbitQuotationClient upbitQuotationClient;
     private final UserService userService;
@@ -41,16 +44,30 @@ public class TradingScheduler {
     @Transactional
     @Scheduled(cron = "2 */3 * * * *")
     public void checkTradingSignals() {
-        List<User> activeUsers = userService.findUsersWithActiveBots();
+        // 1. 모든 마켓에 대한 시그널을 먼저 계산
+        Map<Market, TradingSignal> marketSignals = new HashMap<>();
+        for (Market market : Market.values()) {
+            try {
+                log.info("마켓: {} - 기본 시그널 계산 중", market.getCode());
+                TradingSignal signal = tradingSignalService.calculateBasicSignals(market.getCode());
+                marketSignals.put(market, signal);
+            } catch (Exception e) {
+                log.error("마켓: {} - 기본 시그널 계산 실패", market.getCode(), e);
+            }
+        }
         
+        // 2. 활성 사용자별로 시그널 처리
+        List<User> activeUsers = userService.findUsersWithActiveBots();
         for (User user : activeUsers) {
             for (Market market : user.getBotSetting().getMarketList()) {
-                try {
-                    log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 확인 중", user.getUsername(), market);
-                    TradingSignal signal = tradingSignalService.calculateSignals(market.getCode(), user);
-                    processSignal(signal, user);
-                } catch (Exception e) {
-                    log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
+                TradingSignal signal = marketSignals.get(market);
+                if (signal != null) {
+                    try {
+                        log.info("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 중", user.getUsername(), market);
+                        processSignal(signal, user);
+                    } catch (Exception e) {
+                        log.error("사용자: {}, 마켓: {} - 트레이딩 시그널 처리 실패", user.getUsername(), market, e);
+                    }
                 }
             }
         }
@@ -64,8 +81,8 @@ public class TradingScheduler {
         Strategy sellStrategy = botSetting.getSellStrategy();
         
         // 매수/매도 시그널 강도 계산
-        double buySignalStrength = tradingSignalService.calculateSignalStrength(signal, buyStrategy);
-        double sellSignalStrength = tradingSignalService.calculateSignalStrength(signal, sellStrategy);
+        double buySignalStrength = strategyService.calculateSignalStrength(signal, buyStrategy);
+        double sellSignalStrength = strategyService.calculateSignalStrength(signal, sellStrategy);
         
         // 지표값 상세 로깅
         log.info("사용자: {}, 마켓: {} - 지표값 [\n" +
@@ -77,7 +94,6 @@ public class TradingScheduler {
                 "  MACD: {}\n" +
                 "  MACD시그널: {}\n" +
                 "  MACD히스토그램: {}\n" +
-                "  DROP_N_FLIP: {}\n" +
                 "]", 
                 user.getUsername(), market,
                 signal.currentPrice().doubleValue(),
@@ -87,12 +103,11 @@ public class TradingScheduler {
                 signal.rsiValue().doubleValue(),
                 signal.macdValue().doubleValue(),
                 signal.macdSignalValue().doubleValue(),
-                signal.macdHistogram().doubleValue(),
-                signal.dropNFlipSignal());
+                signal.macdHistogram().doubleValue());
         
         // 전략별 매수/매도 시그널 결정
-        boolean buySignal = determineBuySignal(signal, buyStrategy);
-        boolean sellSignal = determineSellSignal(signal, sellStrategy);
+        boolean buySignal = strategyService.determineBuySignal(signal, buyStrategy);
+        boolean sellSignal = strategyService.determineSellSignal(signal, sellStrategy);
 
          // 개별 지표 시그널 상태 로깅
          log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [\n" +
@@ -134,7 +149,7 @@ public class TradingScheduler {
                 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal buyAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, buyStrategy, buyBaseOrderAmount, buyMaxOrderAmount);
+                BigDecimal buyAmount = strategyService.calculateOrderAmountBySignalStrength(signal, buyStrategy, buyBaseOrderAmount, buyMaxOrderAmount);
                 buyAmount = buyAmount.min(availableBalance);
 
                 if (availableBalance.compareTo(buyAmount) < 0) {
@@ -184,7 +199,7 @@ public class TradingScheduler {
 
                 // 2. 주문 금액 계산
                 BigDecimal currentPrice = getCurrentPrice(market);
-                BigDecimal sellAmount = tradingSignalService.calculateOrderAmountBySignalStrength(signal, sellStrategy, sellBaseOrderAmount, sellMaxOrderAmount);
+                BigDecimal sellAmount = strategyService.calculateOrderAmountBySignalStrength(signal, sellStrategy, sellBaseOrderAmount, sellMaxOrderAmount);
                 sellAmount = sellAmount.min(availableQuantity.multiply(currentPrice));
 
                 // 3. 주문 수량 계산 및 주문 실행
@@ -221,53 +236,7 @@ public class TradingScheduler {
         }
     }
 
-    /**
-     * 사용자가 선택한 전략에 따라 매수 시그널을 결정합니다.
-     */
-    private boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
-        switch (strategy) {
-            case STANDARD:
-                return signal.dropNFlipSignal();
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return signal.isTripleIndicatorConservativeBuySignal();
-            case TRIPLE_INDICATOR_MODERATE:
-                return signal.isTripleIndicatorModerateBuySignal();
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return signal.isTripleIndicatorAggressiveBuySignal();
-            case BB_RSI_COMBO:
-                return signal.isBbRsiComboBuySignal();
-            case RSI_MACD_COMBO:
-                return signal.isRsiMacdComboBuySignal();
-            case BB_MACD_COMBO:
-                return signal.isBbMacdComboBuySignal();
-            default:
-                return signal.dropNFlipSignal();
-        }
-    }
-    
-    /**
-     * 사용자가 선택한 전략에 따라 매도 시그널을 결정합니다.
-     */
-    private boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
-        switch (strategy) {
-            case STANDARD:
-                return signal.isTripleIndicatorModerateSellSignal();
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return signal.isTripleIndicatorConservativeSellSignal();
-            case TRIPLE_INDICATOR_MODERATE:
-                return signal.isTripleIndicatorModerateSellSignal();
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return signal.isTripleIndicatorAggressiveSellSignal();
-            case BB_RSI_COMBO:
-                return signal.isBbRsiComboSellSignal();
-            case RSI_MACD_COMBO:
-                return signal.isRsiMacdComboSellSignal();
-            case BB_MACD_COMBO:
-                return signal.isBbMacdComboSellSignal();
-            default:
-                return signal.isTripleIndicatorModerateSellSignal();
-        }
-    }
+
 
     private SignalType determineSignalType(TradingSignal signal) {
         // 3지표 보수전략
@@ -290,8 +259,6 @@ public class TradingScheduler {
         if (signal.isBbMacdComboBuySignal()) return SignalType.BB_MACD_COMBO_BUY;
         if (signal.isBbMacdComboSellSignal()) return SignalType.BB_MACD_COMBO_SELL;
 
-        if (signal.dropNFlipSignal()) return SignalType.DROP_N_FLIP;
-        
         return SignalType.UNKNOWN;
     }
 

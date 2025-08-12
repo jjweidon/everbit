@@ -1,10 +1,6 @@
 package com.everbit.everbit.upbit.service;
 
-import com.everbit.everbit.trade.entity.enums.Market;
-import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
-import com.everbit.everbit.upbit.entity.MarketSignal;
-import com.everbit.everbit.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,16 +16,11 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 import org.ta4j.core.num.Num;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TradingSignalService {
     private final CandleDataService candleDataService;
-    private final MarketSignalService marketSignalService;
     
     // 기술적 지표 계산을 위한 상수 정의
     private static final int RSI_PERIOD = 9;  // RSI 기간
@@ -47,55 +38,17 @@ public class TradingSignalService {
     private static final double BB_UPPER_THRESHOLD = 0.98; // BB 상단 대비 98% 이상에서 매도
     
     /**
-     * 매수/매도 전략을 분리하여 시그널을 계산합니다.
-     * 매수전략과 매도전략이 다를 수 있는 경우를 고려합니다.
+     * 모든 마켓에 대한 기본 기술적 지표 시그널을 계산합니다.
      */
-    public TradingSignal calculateSignals(String market, User user) {
-        Strategy buyStrategy = user.getBotSetting().getBuyStrategy();
-        Strategy sellStrategy = user.getBotSetting().getSellStrategy();
-        
-        // 매수/매도 전략이 같은 경우와 다른 경우를 구분하여 처리
-        if (buyStrategy == sellStrategy) {
-            return calculateSignalsWithSameStrategy(market, user, buyStrategy);
-        } else {
-            return calculateSignalsWithDifferentStrategies(market, user, buyStrategy, sellStrategy);
-        }
+    public TradingSignal calculateBasicSignals(String market) {
+        BarSeries series = candleDataService.createBarSeries(market);
+        return calculateSignalsFromSeries(series, market);
     }
     
     /**
-     * 매수/매도 전략이 같은 경우의 시그널 계산
+     * 시리즈로부터 기본 기술적 지표 시그널을 계산합니다.
      */
-    private TradingSignal calculateSignalsWithSameStrategy(String market, User user, Strategy strategy) {
-        BarSeries series = candleDataService.createBarSeries(market, strategy);
-        return calculateSignalsFromSeries(series, market, strategy, strategy);
-    }
-    
-    /**
-     * 매수/매도 전략이 다른 경우의 시그널 계산
-     */
-    private TradingSignal calculateSignalsWithDifferentStrategies(String market, User user, Strategy buyStrategy, Strategy sellStrategy) {
-        // 매수 전략으로 시리즈 생성 (더 보수적인 전략 기준)
-        Strategy baseStrategy = getMoreConservativeStrategy(buyStrategy, sellStrategy);
-        BarSeries series = candleDataService.createBarSeries(market, baseStrategy);
-        
-        return calculateSignalsFromSeries(series, market, buyStrategy, sellStrategy);
-    }
-    
-    /**
-     * 더 보수적인 전략을 선택합니다 (캔들 수가 더 많은 전략)
-     */
-    private Strategy getMoreConservativeStrategy(Strategy buyStrategy, Strategy sellStrategy) {
-        // 전략별 캔들 수를 비교하여 더 많은 캔들을 사용하는 전략을 선택
-        int buyCandleCount = buyStrategy.getCandleCount();
-        int sellCandleCount = sellStrategy.getCandleCount();
-        
-        return buyCandleCount >= sellCandleCount ? buyStrategy : sellStrategy;
-    }
-    
-    /**
-     * 시리즈로부터 매수/매도 전략을 분리하여 시그널을 계산합니다.
-     */
-    private TradingSignal calculateSignalsFromSeries(BarSeries series, String market, Strategy buyStrategy, Strategy sellStrategy) {
+    private TradingSignal calculateSignalsFromSeries(BarSeries series, String market) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         int lastIndex = series.getEndIndex();
         
@@ -106,9 +59,8 @@ public class TradingSignalService {
         boolean rsiSellSignal = isRSISellSignal(series, lastIndex);
         boolean macdBuySignal = isMACDBuySignal(series, lastIndex);
         boolean macdSellSignal = isMACDSellSignal(series, lastIndex);
-        boolean dropNFlipSignal = isDropNFlipSignal(market, bbBuySignal, rsiBuySignal, macdBuySignal);
         
-        // 매수/매도 시그널 충돌 해결: 전략별로 다른 처리
+        // 매수/매도 시그널 충돌 해결
         resolveSignalConflicts(series, lastIndex, bbBuySignal, bbSellSignal, rsiBuySignal, rsiSellSignal, macdBuySignal, macdSellSignal);
         
         // 지표 값들 계산
@@ -130,7 +82,6 @@ public class TradingSignalService {
             rsiSellSignal,
             macdBuySignal,
             macdSellSignal,
-            dropNFlipSignal,
             bbLowerBand,
             bbMiddleBand,
             bbUpperBand,
@@ -145,7 +96,6 @@ public class TradingSignalService {
     
     /**
      * 매수/매도 시그널 충돌을 해결합니다.
-     * 매수/매도 전략이 다를 수 있으므로 더 세밀한 처리가 필요합니다.
      */
     private void resolveSignalConflicts(BarSeries series, int index, 
                                       boolean bbBuySignal, boolean bbSellSignal,
@@ -174,295 +124,6 @@ public class TradingSignalService {
             macdSellSignal = macdValue.isLessThan(series.numOf(0));
             macdBuySignal = !macdSellSignal;
         }
-    }
-
-    /**
-     * 시그널 강도에 따른 주문 금액 계산 (매수/매도 전략 분리)
-     */
-    public BigDecimal calculateOrderAmountBySignalStrength(TradingSignal signal, Strategy strategy, 
-                                                          BigDecimal baseOrderAmount, BigDecimal maxOrderAmount) {
-        // 시그널 강도 계산 (0.0 ~ 1.0)
-        double signalStrength = calculateSignalStrength(signal, strategy);
-        
-        // 시그널 강도에 따른 주문 금액 계산
-        BigDecimal strengthMultiplier = BigDecimal.valueOf(signalStrength);
-        BigDecimal orderAmount = baseOrderAmount.add(
-            maxOrderAmount.subtract(baseOrderAmount).multiply(strengthMultiplier)
-        );
-        
-        return orderAmount.setScale(8, RoundingMode.HALF_UP);
-    }
-    
-    /**
-     * 선택된 전략의 시그널 강도를 계산합니다 (0.0 ~ 1.0)
-     * 매수/매도 전략이 다를 수 있으므로 더 정교한 계산이 필요합니다.
-     */
-    public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
-        switch (strategy) {
-            case STANDARD:
-                return calculateStandardSignalStrength(signal);
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return calculateTripleIndicatorConservativeSignalStrength(signal);
-            case TRIPLE_INDICATOR_MODERATE:
-                return calculateTripleIndicatorModerateSignalStrength(signal);
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return calculateTripleIndicatorAggressiveSignalStrength(signal);
-            case BB_RSI_COMBO:
-                return calculateBbRsiComboSignalStrength(signal);
-            case RSI_MACD_COMBO:
-                return calculateRsiMacdComboSignalStrength(signal);
-            case BB_MACD_COMBO:
-                return calculateBbMacdComboSignalStrength(signal);
-            default:
-                return 0.5; // 기본값
-        }
-    }
-    
-    /**
-     * 3지표 보수전략 시그널 강도 계산
-     * 매수/매도 시그널을 구분하여 계산
-     */
-    private double calculateTripleIndicatorConservativeSignalStrength(TradingSignal signal) {
-        if (signal.isTripleIndicatorConservativeBuySignal()) {
-            return calculateBuySignalStrength(signal, true);
-        } else if (signal.isTripleIndicatorConservativeSellSignal()) {
-            return calculateSellSignalStrength(signal, true);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * 3지표 중간전략 시그널 강도 계산
-     * 매수/매도 시그널을 구분하여 계산
-     */
-    private double calculateTripleIndicatorModerateSignalStrength(TradingSignal signal) {
-        if (signal.isTripleIndicatorModerateBuySignal()) {
-            return calculateBuySignalStrength(signal, false);
-        } else if (signal.isTripleIndicatorModerateSellSignal()) {
-            return calculateSellSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * 3지표 공격전략 시그널 강도 계산
-     * 매수/매도 시그널을 구분하여 계산
-     */
-    private double calculateTripleIndicatorAggressiveSignalStrength(TradingSignal signal) {
-        if (signal.isTripleIndicatorAggressiveBuySignal()) {
-            return calculateBuySignalStrength(signal, false);
-        } else if (signal.isTripleIndicatorAggressiveSellSignal()) {
-            return calculateSellSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * 매수 시그널 강도 계산
-     */
-    private double calculateBuySignalStrength(TradingSignal signal, boolean isConservative) {
-        int signalCount = signal.getBuySignalCount();
-        
-        if (isConservative) {
-            // 보수전략: 모든 지표가 시그널을 보낼 때만 최대 강도
-            return signalCount == 3 ? 1.0 : 0.0;
-        } else {
-            // 중간/공격전략: 시그널 개수에 따른 강도
-            double baseStrength = signalCount / 3.0;
-            double detailedStrength = calculateDetailedSignalStrength(signal, true);
-            return (baseStrength + detailedStrength) / 2.0;
-        }
-    }
-    
-    /**
-     * 매도 시그널 강도 계산
-     */
-    private double calculateSellSignalStrength(TradingSignal signal, boolean isConservative) {
-        int signalCount = signal.getSellSignalCount();
-        
-        if (isConservative) {
-            // 보수전략: 모든 지표가 시그널을 보낼 때만 최대 강도
-            return signalCount == 3 ? 1.0 : 0.0;
-        } else {
-            // 중간/공격전략: 시그널 개수에 따른 강도
-            double baseStrength = signalCount / 3.0;
-            double detailedStrength = calculateDetailedSignalStrength(signal, false);
-            return (baseStrength + detailedStrength) / 2.0;
-        }
-    }
-    
-    /**
-     * 볼린저+RSI 조합 시그널 강도 계산
-     */
-    private double calculateBbRsiComboSignalStrength(TradingSignal signal) {
-        if (signal.isBbRsiComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isBbRsiComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * RSI+MACD 조합 시그널 강도 계산
-     */
-    private double calculateRsiMacdComboSignalStrength(TradingSignal signal) {
-        if (signal.isRsiMacdComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isRsiMacdComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * 볼린저+MACD 조합 시그널 강도 계산
-     */
-    private double calculateBbMacdComboSignalStrength(TradingSignal signal) {
-        if (signal.isBbMacdComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isBbMacdComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-    
-    /**
-     * 지표 값들의 차이에 따른 세부 시그널 강도 계산 (0.0 ~ 1.0)
-     * 매수/매도 시그널을 구분하여 계산
-     */
-    private double calculateDetailedSignalStrength(TradingSignal signal, boolean isBuySignal) {
-        double bbStrength = calculateBollingerBandsStrength(signal, isBuySignal);
-        double rsiStrength = calculateRSIStrength(signal, isBuySignal);
-        double macdStrength = calculateMACDStrength(signal, isBuySignal);
-        
-        // 활성화된 지표들의 강도 평균 계산
-        int activeIndicators = 0;
-        double totalStrength = 0.0;
-        
-        if (isBuySignal) {
-            if (signal.bbBuySignal()) {
-                totalStrength += bbStrength;
-                activeIndicators++;
-            }
-            if (signal.rsiBuySignal()) {
-                totalStrength += rsiStrength;
-                activeIndicators++;
-            }
-            if (signal.macdBuySignal()) {
-                totalStrength += macdStrength;
-                activeIndicators++;
-            }
-        } else {
-            if (signal.bbSellSignal()) {
-                totalStrength += bbStrength;
-                activeIndicators++;
-            }
-            if (signal.rsiSellSignal()) {
-                totalStrength += rsiStrength;
-                activeIndicators++;
-            }
-            if (signal.macdSellSignal()) {
-                totalStrength += macdStrength;
-                activeIndicators++;
-            }
-        }
-        
-        return activeIndicators > 0 ? totalStrength / activeIndicators : 0.0;
-    }
-    
-    /**
-     * 볼린저밴드 강도 계산
-     * 매수: 현재가가 하단 밴드에서 얼마나 멀리 떨어져 있는지
-     * 매도: 현재가가 상단 밴드에서 얼마나 멀리 떨어져 있는지
-     */
-    private double calculateBollingerBandsStrength(TradingSignal signal, boolean isBuySignal) {
-        double currentPrice = signal.currentPrice().doubleValue();
-        double bbLower = signal.bbLowerBand().doubleValue();
-        double bbMiddle = signal.bbMiddleBand().doubleValue();
-        double bbUpper = signal.bbUpperBand().doubleValue();
-        
-        if (isBuySignal) {
-            // 매수: 현재가가 하단 밴드 아래에 있을 때
-            if (currentPrice < bbLower) {
-                // 하단 밴드와의 거리를 계산 (0.0 ~ 1.0)
-                double bandWidth = bbMiddle - bbLower;
-                double distance = bbLower - currentPrice;
-                return Math.min(distance / bandWidth, 1.0);
-            }
-        } else {
-            // 매도: 현재가가 상단 밴드 위에 있을 때
-            if (currentPrice > bbUpper) {
-                // 상단 밴드와의 거리를 계산 (0.0 ~ 1.0)
-                double bandWidth = bbUpper - bbMiddle;
-                double distance = currentPrice - bbUpper;
-                return Math.min(distance / bandWidth, 1.0);
-            }
-        }
-        
-        return 0.0;
-    }
-    
-    /**
-     * RSI 강도 계산
-     * 매수: RSI가 과매도 기준에서 얼마나 낮은지
-     * 매도: RSI가 과매수 기준에서 얼마나 높은지
-     */
-    private double calculateRSIStrength(TradingSignal signal, boolean isBuySignal) {
-        double rsiValue = signal.rsiValue().doubleValue();
-        
-        if (isBuySignal) {
-            // 매수: RSI가 35 이하일 때
-            if (rsiValue < RSI_OVERSOLD) {
-                // RSI가 0에 가까울수록 강한 시그널 (0.0 ~ 1.0)
-                return (RSI_OVERSOLD - rsiValue) / RSI_OVERSOLD;
-            }
-        } else {
-            // 매도: RSI가 65 이상일 때
-            if (rsiValue > RSI_OVERBOUGHT) {
-                // RSI가 100에 가까울수록 강한 시그널 (0.0 ~ 1.0)
-                return (rsiValue - RSI_OVERBOUGHT) / (100 - RSI_OVERBOUGHT);
-            }
-        }
-        
-        return 0.0;
-    }
-    
-    /**
-     * MACD 히스토그램 강도 계산
-     * 매수: 히스토그램이 얼마나 증가했는지
-     * 매도: 히스토그램이 얼마나 감소했는지
-     */
-    private double calculateMACDStrength(TradingSignal signal, boolean isBuySignal) {
-        double macdValue = signal.macdValue().doubleValue();
-        double histogram = signal.macdHistogram().doubleValue();
-        
-        // MACD 히스토그램의 절대값을 기준으로 강도 계산
-        double absHistogram = Math.abs(histogram);
-        
-        // 히스토그램이 0에 가까우면 약한 시그널, 멀수록 강한 시그널
-        // 일반적으로 MACD 히스토그램의 범위를 0.1% ~ 1%로 가정
-        double maxExpectedHistogram = Math.abs(macdValue) * 0.01; // MACD 값의 1%를 최대값으로 가정
-        
-        if (maxExpectedHistogram > 0) {
-            return Math.min(absHistogram / maxExpectedHistogram, 1.0);
-        }
-        
-        return 0.5; // 기본값
-    }
-
-    /**
-     * 스탠다드 전략 시그널 강도 계산
-     */
-    private double calculateStandardSignalStrength(TradingSignal signal) {
-        if (signal.dropNFlipSignal()) {
-            double detailedStrength = calculateDetailedSignalStrength(signal, true);
-            return Math.min(1.0, detailedStrength);
-        }
-        if (signal.isTripleIndicatorModerateSellSignal()) {
-            return calculateSellSignalStrength(signal, false);
-        }
-        return 0.1;
     }
     
     // ==================== 개별 지표 시그널 계산 메서드들 ====================
@@ -671,21 +332,5 @@ public class TradingSignalService {
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
         return macd.getValue(index).minus(signal.getValue(index));
-    }
-
-    private boolean isDropNFlipSignal(String market, boolean bbBuySignal, boolean rsiBuySignal, boolean macdBuySignal) {
-        MarketSignal marketSignal = marketSignalService.findOrCreateMarketSignal(Market.fromCode(market));
-        if (bbBuySignal && rsiBuySignal) {
-            marketSignal.countUpConsecutiveOversoldCount();
-            if (!macdBuySignal) return false;
-        }
-       if (bbBuySignal && macdBuySignal) {
-            if (marketSignal.getConsecutiveOversoldCount() >= 3 && marketSignal.getLastOversoldAt().isAfter(LocalDateTime.now().minusMinutes(10))) {
-                marketSignal.resetConsecutiveOversoldCount();
-                return true;
-            }
-        }
-        marketSignal.resetConsecutiveOversoldCount();
-        return false;
     }
 } 
