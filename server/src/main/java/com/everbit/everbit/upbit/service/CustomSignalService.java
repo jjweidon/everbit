@@ -54,7 +54,7 @@ public class CustomSignalService {
         
         if (bbMacdDropCondition) {
             customSignal.updateLastFlipUpAt();
-            if (customSignal.getConsecutiveDropCount() > 0 && isWithin10Minutes(customSignal.getLastDropAt())) {
+            if (customSignal.getConsecutiveDropCount() >= 3 && isWithin10Minutes(customSignal.getLastDropAt())) {
                 // 매수 시그널 발생
                 buySignalGenerated = true;
                 customSignal.resetConsecutiveDrop();
@@ -62,7 +62,7 @@ public class CustomSignalService {
             }
             customSignalRepository.save(customSignal);
         }
-        
+    
         return buySignalGenerated;
     }
 
@@ -93,7 +93,7 @@ public class CustomSignalService {
 
         if (bbMacdPopCondition) {
             customSignal.updateLastFlipDownAt();
-            if (customSignal.getConsecutivePopCount() > 0 && isWithin10Minutes(customSignal.getLastPopAt())) {
+            if (customSignal.getConsecutivePopCount() >= 3 && isWithin10Minutes(customSignal.getLastPopAt())) {
                 // 매도 시그널 발생
                 sellSignalGenerated = true;
                 customSignal.resetConsecutivePop();
