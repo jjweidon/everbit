@@ -52,13 +52,15 @@ public class CustomSignalService {
             log.debug("DROP count increased for market {}: {}", market, customSignal.getConsecutiveDropCount());
         }
         
-        if (bbMacdDropCondition && customSignal.getConsecutiveDropCount() > 0 && 
-            isWithin10Minutes(customSignal.getLastDropAt())) {
-            // 매수 시그널 발생
-            buySignalGenerated = true;
-            customSignal.resetConsecutiveDrop();
+        if (bbMacdDropCondition) {
+            customSignal.updateLastFlipUpAt();
+            if (customSignal.getConsecutiveDropCount() > 0 && isWithin10Minutes(customSignal.getLastDropAt())) {
+                // 매수 시그널 발생
+                buySignalGenerated = true;
+                customSignal.resetConsecutiveDrop();
+                log.info("DROP_N_FLIP 매수 신호 발생: {}", market);
+            }
             customSignalRepository.save(customSignal);
-            log.info("DROP_N_FLIP buy signal generated for market {}", market);
         }
         
         return buySignalGenerated;
@@ -88,16 +90,18 @@ public class CustomSignalService {
             customSignalRepository.save(customSignal);
             log.debug("POP count increased for market {}: {}", market, customSignal.getConsecutivePopCount());
         }
-        
-        if (bbMacdPopCondition && customSignal.getConsecutivePopCount() > 0 && 
-            isWithin10Minutes(customSignal.getLastPopAt())) {
-            // 매도 시그널 발생
-            sellSignalGenerated = true;
-            customSignal.resetConsecutivePop();
+
+        if (bbMacdPopCondition) {
+            customSignal.updateLastFlipDownAt();
+            if (customSignal.getConsecutivePopCount() > 0 && isWithin10Minutes(customSignal.getLastPopAt())) {
+                // 매도 시그널 발생
+                sellSignalGenerated = true;
+                customSignal.resetConsecutivePop();
+                log.info("POP_N_FLIP 매수 신호 발생: {}", market);
+            }
             customSignalRepository.save(customSignal);
-            log.info("POP_N_FLIP sell signal generated for market {}", market);
         }
-        
+
         return sellSignalGenerated;
     }
 
@@ -110,10 +114,10 @@ public class CustomSignalService {
         int dropCount = customSignal.getConsecutiveDropCount();
         
         if (dropCount <= 0) return 0.0;
-        if (dropCount >= 5) return 1.0;
+        if (dropCount >= 7) return 1.0;
         
-        // 1개 → 0.0, 2개 → 0.25, 3개 → 0.5, 4개 → 0.75, 5개 이상 → 1.0
-        return (dropCount - 1) / 4.0;
+        // 1개 → 0.0, 2개 → 0.167, 3개 → 0.333, 4개 → 0.5, 5개 → 0.667, 6개 → 0.833, 7개 이상 → 1.0
+        return (dropCount - 1) / 6.0;
     }
 
     /**
@@ -125,10 +129,10 @@ public class CustomSignalService {
         int popCount = customSignal.getConsecutivePopCount();
         
         if (popCount <= 0) return 0.0;
-        if (popCount >= 5) return 1.0;
+        if (popCount >= 7) return 1.0;
         
-        // 1개 → 0.0, 2개 → 0.25, 3개 → 0.5, 4개 → 0.75, 5개 이상 → 1.0
-        return (popCount - 1) / 4.0;
+        // 1개 → 0.0, 2개 → 0.167, 3개 → 0.333, 4개 → 0.5, 5개 → 0.667, 6개 → 0.833, 7개 이상 → 1.0
+        return (popCount - 1) / 6.0;
     }
 
     /**

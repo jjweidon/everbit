@@ -80,7 +80,7 @@ public class TradingScheduler {
         Strategy sellStrategy = botSetting.getSellStrategy();
         
         // 지표값 상세 로깅
-        log.info("사용자: {}, 마켓: {} - 지표값 [\n" +
+        log.info("사용자: {}, 마켓: {}, 매수전략: {}, 매도전략: {} - 지표값 [\n" +
                 "  현재가: {}\n" +
                 "  BB하단: {}\n" +
                 "  BB중간: {}\n" +
@@ -92,7 +92,7 @@ public class TradingScheduler {
                 "  DROP_N_FLIP: {}\n" +
                 "  POP_N_FLIP: {}\n" +
                 "]", 
-                user.getUsername(), marketCode,
+                user.getUsername(), marketCode, buyStrategy.getValue(), sellStrategy.getValue(),
                 signal.currentPrice().doubleValue(),
                 signal.bbLowerBand().doubleValue(),
                 signal.bbMiddleBand().doubleValue(),

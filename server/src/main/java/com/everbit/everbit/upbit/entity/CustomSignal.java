@@ -33,6 +33,10 @@ public class CustomSignal extends BaseTime {
     @Builder.Default
     private int consecutivePopCount = 0;
 
+    private LocalDateTime lastFlipUpAt;
+
+    private LocalDateTime lastFlipDownAt;
+
     public void countUpConsecutiveDrop() {
         this.lastDropAt = LocalDateTime.now();
         this.consecutiveDropCount += 1;
@@ -51,5 +55,13 @@ public class CustomSignal extends BaseTime {
     public void resetConsecutivePop() {
         this.lastPopAt = null;
         this.consecutivePopCount = 0;
+    }
+
+    public void updateLastFlipUpAt() {
+        this.lastFlipUpAt = LocalDateTime.now();
+    }
+
+    public void updateLastFlipDownAt() {
+        this.lastFlipDownAt = LocalDateTime.now();
     }
 }
