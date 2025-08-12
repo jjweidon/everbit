@@ -15,6 +15,8 @@ public record TradingSignal(
     boolean rsiSellSignal,    // RSI 매도 시그널
     boolean macdBuySignal,    // MACD 매수 시그널
     boolean macdSellSignal,   // MACD 매도 시그널
+
+    boolean dropNFlipSignal,
     
     // 지표 값들 (디버깅 및 강도 계산용)
     Num bbLowerBand,          // 볼린저밴드 하단

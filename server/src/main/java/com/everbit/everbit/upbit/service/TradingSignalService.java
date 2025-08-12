@@ -1,8 +1,11 @@
 package com.everbit.everbit.upbit.service;
 
+import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.trade.entity.enums.Strategy;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
+import com.everbit.everbit.upbit.entity.MarketSignal;
 import com.everbit.everbit.user.entity.User;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,12 +22,14 @@ import org.ta4j.core.num.Num;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TradingSignalService {
     private final CandleDataService candleDataService;
+    private final MarketSignalService marketSignalService;
     
     // 기술적 지표 계산을 위한 상수 정의
     private static final int RSI_PERIOD = 9;  // RSI 기간
@@ -95,12 +100,13 @@ public class TradingSignalService {
         int lastIndex = series.getEndIndex();
         
         // 개별 지표 시그널 계산
-        boolean bbBuySignal = calculateBollingerBandsBuySignal(series, lastIndex);
-        boolean bbSellSignal = calculateBollingerBandsSellSignal(series, lastIndex);
-        boolean rsiBuySignal = calculateRSIBuySignal(series, lastIndex);
-        boolean rsiSellSignal = calculateRSISellSignal(series, lastIndex);
-        boolean macdBuySignal = calculateMACDBuySignal(series, lastIndex);
-        boolean macdSellSignal = calculateMACDSellSignal(series, lastIndex);
+        boolean bbBuySignal = isBollingerBandsBuySignal(series, lastIndex);
+        boolean bbSellSignal = isBollingerBandsSellSignal(series, lastIndex);
+        boolean rsiBuySignal = isRSIBuySignal(series, lastIndex);
+        boolean rsiSellSignal = isRSISellSignal(series, lastIndex);
+        boolean macdBuySignal = isMACDBuySignal(series, lastIndex);
+        boolean macdSellSignal = isMACDSellSignal(series, lastIndex);
+        boolean dropNFlipSignal = isDropNFlipSignal(market, bbBuySignal, rsiBuySignal, macdBuySignal);
         
         // 매수/매도 시그널 충돌 해결: 전략별로 다른 처리
         resolveSignalConflicts(series, lastIndex, bbBuySignal, bbSellSignal, rsiBuySignal, rsiSellSignal, macdBuySignal, macdSellSignal);
@@ -124,6 +130,7 @@ public class TradingSignalService {
             rsiSellSignal,
             macdBuySignal,
             macdSellSignal,
+            dropNFlipSignal,
             bbLowerBand,
             bbMiddleBand,
             bbUpperBand,
@@ -192,6 +199,8 @@ public class TradingSignalService {
      */
     public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
+            case STANDARD:
+                return calculateStandardSignalStrength(signal);
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return calculateTripleIndicatorConservativeSignalStrength(signal);
             case TRIPLE_INDICATOR_MODERATE:
@@ -441,6 +450,20 @@ public class TradingSignalService {
         
         return 0.5; // 기본값
     }
+
+    /**
+     * 스탠다드 전략 시그널 강도 계산
+     */
+    private double calculateStandardSignalStrength(TradingSignal signal) {
+        if (signal.dropNFlipSignal()) {
+            double detailedStrength = calculateDetailedSignalStrength(signal, true);
+            return Math.min(1.0, detailedStrength);
+        }
+        if (signal.isTripleIndicatorModerateSellSignal()) {
+            return calculateSellSignalStrength(signal, false);
+        }
+        return 0.1;
+    }
     
     // ==================== 개별 지표 시그널 계산 메서드들 ====================
     
@@ -448,7 +471,7 @@ public class TradingSignalService {
      * 볼린저밴드 매수 시그널 계산
      * 조건: 현재가가 BB 하단 근처에 있을 때 (하단 대비 2% 이내)
      */
-    private boolean calculateBollingerBandsBuySignal(BarSeries series, int index) {
+    private boolean isBollingerBandsBuySignal(BarSeries series, int index) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         Num currentPrice = closePrice.getValue(index);
         Num bbLower = getBollingerBandsLower(series, index);
@@ -471,7 +494,7 @@ public class TradingSignalService {
      * 볼린저밴드 매도 시그널 계산
      * 조건: 현재가가 BB 상단 근처에 있을 때 (상단 대비 98% 이상)
      */
-    private boolean calculateBollingerBandsSellSignal(BarSeries series, int index) {
+    private boolean isBollingerBandsSellSignal(BarSeries series, int index) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         Num currentPrice = closePrice.getValue(index);
         Num bbUpper = getBollingerBandsUpper(series, index);
@@ -494,7 +517,7 @@ public class TradingSignalService {
      * RSI 매수 시그널 계산
      * 조건: RSI(9) < 30 (과매도 구간에서 매수 시그널)
      */
-    private boolean calculateRSIBuySignal(BarSeries series, int index) {
+    private boolean isRSIBuySignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
@@ -513,7 +536,7 @@ public class TradingSignalService {
      * RSI 매도 시그널 계산
      * 조건: RSI > 70 (과매수 구간에서 매도 시그널)
      */
-    private boolean calculateRSISellSignal(BarSeries series, int index) {
+    private boolean isRSISellSignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), RSI_PERIOD);
@@ -532,7 +555,7 @@ public class TradingSignalService {
      * MACD 매수 시그널 계산
      * 조건: MACD가 시그널선을 상향 돌파하거나, 히스토그램이 증가하면서 MACD가 양수일 때
      */
-    private boolean calculateMACDBuySignal(BarSeries series, int index) {
+    private boolean isMACDBuySignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         Num currentMacd = getMACDValue(series, index);
@@ -565,7 +588,7 @@ public class TradingSignalService {
      * MACD 매도 시그널 계산
      * 조건: MACD가 시그널선을 하향 돌파하거나, 히스토그램이 감소하면서 MACD가 음수일 때
      */
-    private boolean calculateMACDSellSignal(BarSeries series, int index) {
+    private boolean isMACDSellSignal(BarSeries series, int index) {
         if (index <= 0) return false;
         
         Num currentMacd = getMACDValue(series, index);
@@ -648,5 +671,21 @@ public class TradingSignalService {
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
         return macd.getValue(index).minus(signal.getValue(index));
+    }
+
+    private boolean isDropNFlipSignal(String market, boolean bbBuySignal, boolean rsiBuySignal, boolean macdBuySignal) {
+        MarketSignal marketSignal = marketSignalService.findOrCreateMarketSignal(Market.fromCode(market));
+        if (bbBuySignal && rsiBuySignal) {
+            marketSignal.countUpConsecutiveOversoldCount();
+            if (!macdBuySignal) return false;
+        }
+       if (bbBuySignal && macdBuySignal) {
+            if (marketSignal.getConsecutiveOversoldCount() >= 3 && marketSignal.getLastOversoldAt().isAfter(LocalDateTime.now().minusMinutes(10))) {
+                marketSignal.resetConsecutiveOversoldCount();
+                return true;
+            }
+        }
+        marketSignal.resetConsecutiveOversoldCount();
+        return false;
     }
 } 

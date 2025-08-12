@@ -28,6 +28,9 @@ public enum SignalType {
     RSI_MACD_COMBO_SELL("RSI+MACD 조합 매도"),
     BB_MACD_COMBO_BUY("볼린저+MACD 조합 매수"),
     BB_MACD_COMBO_SELL("볼린저+MACD 조합 매도"),
+
+    // 커스텀 시그널
+    DROP_N_FLIP("연속 하락 후 추세 전환 신호"),
     
     UNKNOWN("알 수 없음");
 

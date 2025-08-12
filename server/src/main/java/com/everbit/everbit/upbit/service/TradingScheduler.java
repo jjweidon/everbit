@@ -77,6 +77,7 @@ public class TradingScheduler {
                 "  MACD: {}\n" +
                 "  MACD시그널: {}\n" +
                 "  MACD히스토그램: {}\n" +
+                "  DROP_N_FLIP: {}\n" +
                 "]", 
                 user.getUsername(), market,
                 signal.currentPrice().doubleValue(),
@@ -86,10 +87,15 @@ public class TradingScheduler {
                 signal.rsiValue().doubleValue(),
                 signal.macdValue().doubleValue(),
                 signal.macdSignalValue().doubleValue(),
-                signal.macdHistogram().doubleValue());
+                signal.macdHistogram().doubleValue(),
+                signal.dropNFlipSignal());
+        
+        // 전략별 매수/매도 시그널 결정
+        boolean buySignal = determineBuySignal(signal, buyStrategy);
+        boolean sellSignal = determineSellSignal(signal, sellStrategy);
 
-        // 개별 지표 시그널 상태 로깅
-        log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [\n" +
+         // 개별 지표 시그널 상태 로깅
+         log.info("사용자: {}, 마켓: {} - 개별 지표 시그널 [\n" +
                 "  BB: 매수={}, 매도={},\n" +
                 "  RSI: 매수={}, 매도={},\n" +
                 "  MACD: 매수={}, 매도={},\n" +
@@ -99,11 +105,7 @@ public class TradingScheduler {
         signal.bbBuySignal(), signal.bbSellSignal(),
         signal.rsiBuySignal(), signal.rsiSellSignal(),
         signal.macdBuySignal(), signal.macdSellSignal(),
-        determineBuySignal(signal, buyStrategy), determineSellSignal(signal, sellStrategy));
-        
-        // 전략별 매수/매도 시그널 결정
-        boolean buySignal = determineBuySignal(signal, buyStrategy);
-        boolean sellSignal = determineSellSignal(signal, sellStrategy);
+        buySignal, sellSignal);
         
         // 시그널 상태 로그 출력
         if (!buySignal && !sellSignal) {
@@ -224,6 +226,8 @@ public class TradingScheduler {
      */
     private boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
+            case STANDARD:
+                return signal.dropNFlipSignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeBuySignal();
             case TRIPLE_INDICATOR_MODERATE:
@@ -237,7 +241,7 @@ public class TradingScheduler {
             case BB_MACD_COMBO:
                 return signal.isBbMacdComboBuySignal();
             default:
-                return signal.isTripleIndicatorModerateBuySignal(); // 기본값을 중간전략으로 변경
+                return signal.dropNFlipSignal();
         }
     }
     
@@ -246,6 +250,8 @@ public class TradingScheduler {
      */
     private boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
+            case STANDARD:
+                return signal.isTripleIndicatorModerateSellSignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeSellSignal();
             case TRIPLE_INDICATOR_MODERATE:
@@ -259,7 +265,7 @@ public class TradingScheduler {
             case BB_MACD_COMBO:
                 return signal.isBbMacdComboSellSignal();
             default:
-                return signal.isTripleIndicatorModerateSellSignal(); // 기본값을 중간전략으로 변경
+                return signal.isTripleIndicatorModerateSellSignal();
         }
     }
 
@@ -283,6 +289,8 @@ public class TradingScheduler {
         if (signal.isRsiMacdComboSellSignal()) return SignalType.RSI_MACD_COMBO_SELL;
         if (signal.isBbMacdComboBuySignal()) return SignalType.BB_MACD_COMBO_BUY;
         if (signal.isBbMacdComboSellSignal()) return SignalType.BB_MACD_COMBO_SELL;
+
+        if (signal.dropNFlipSignal()) return SignalType.DROP_N_FLIP;
         
         return SignalType.UNKNOWN;
     }

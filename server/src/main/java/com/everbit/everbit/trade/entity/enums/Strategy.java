@@ -6,6 +6,14 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Strategy {
+    STANDARD(
+        "에버비트 스탠다드",
+        "DROP_N_FLIP 시그널이 오면 매수, TRIPLE_INDICATOR_MODERATE 시그널이 오면 매도하는 전략",
+        true,
+        CandleInterval.THREE,
+        200
+    ),
+
     TRIPLE_INDICATOR_MODERATE(
         "3지표 중간전략", 
         "볼린저밴드, RSI, MACD 3가지 지표 중 2개 이상이 매수/매도 시그널을 보낼 때 거래하는 중간 전략",

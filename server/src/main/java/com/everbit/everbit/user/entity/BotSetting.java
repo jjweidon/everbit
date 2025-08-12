@@ -31,12 +31,12 @@ public class BotSetting extends BaseTime {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "buy_strategy")
-    private Strategy buyStrategy = Strategy.TRIPLE_INDICATOR_MODERATE;
+    private Strategy buyStrategy = Strategy.STANDARD;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "sell_strategy")
-    private Strategy sellStrategy = Strategy.TRIPLE_INDICATOR_MODERATE;
+    private Strategy sellStrategy = Strategy.STANDARD;
 
     // 거래할 마켓 목록 (예: KRW-BTC, KRW-ETH 등)
     @Builder.Default
