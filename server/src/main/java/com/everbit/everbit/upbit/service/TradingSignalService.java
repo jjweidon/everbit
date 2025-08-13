@@ -1,6 +1,7 @@
 package com.everbit.everbit.upbit.service;
 
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
+import com.everbit.everbit.upbit.dto.trading.SignalResult;
 import com.everbit.everbit.trade.entity.enums.Market;
 
 import lombok.RequiredArgsConstructor;
@@ -108,14 +109,12 @@ public class TradingSignalService {
     private TradingSignal applyCustomSignalLogic(TradingSignal baseSignal, String market) {
         // DROP_N_FLIP과 POP_N_FLIP 로직 처리
         Market marketEnum = Market.fromCode(market);
-        boolean dropNFlipBuy = customSignalService.processDropNFlipSignal(baseSignal, marketEnum);
-        boolean popNFlipSell = customSignalService.processPopNFlipSignal(baseSignal, marketEnum);
         
-        // 시그널 강도 계산
-        double dropNFlipStrength = customSignalService.calculateDropNFlipSignalStrength(marketEnum);
-        double popNFlipStrength = customSignalService.calculatePopNFlipSignalStrength(marketEnum);
+        // 시그널과 강도를 함께 반환받음
+        SignalResult dropNFlipResult = customSignalService.processDropNFlipSignal(baseSignal, marketEnum);
+        SignalResult popNFlipResult = customSignalService.processPopNFlipSignal(baseSignal, marketEnum);
         
-        // DROP_N_FLIP과 POP_N_FLIP 결과가 포함된 새로운 TradingSignal 생성
+        // 기존 TradingSignal을 새로운 값으로 업데이트하여 반환
         return new TradingSignal(
             baseSignal.market(),
             baseSignal.timestamp(),
@@ -126,10 +125,10 @@ public class TradingSignalService {
             baseSignal.rsiSellSignal(),
             baseSignal.macdBuySignal(),
             baseSignal.macdSellSignal(),
-            dropNFlipBuy,
-            popNFlipSell,
-            dropNFlipStrength,
-            popNFlipStrength,
+            dropNFlipResult.signalGenerated(),
+            popNFlipResult.signalGenerated(),
+            dropNFlipResult.signalStrength(),
+            popNFlipResult.signalStrength(),
             baseSignal.bbLowerBand(),
             baseSignal.bbMiddleBand(),
             baseSignal.bbUpperBand(),

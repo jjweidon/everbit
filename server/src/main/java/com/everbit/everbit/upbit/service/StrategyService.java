@@ -21,7 +21,7 @@ public class StrategyService {
      */
     public boolean determineBuySignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case STANDARD:
+            case EXTREME_FLIP:
                 return signal.dropNFlipBuySignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeBuySignal();
@@ -45,7 +45,7 @@ public class StrategyService {
      */
     public boolean determineSellSignal(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case STANDARD:
+            case EXTREME_FLIP:
                 return signal.popNFlipSellSignal();
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return signal.isTripleIndicatorConservativeSellSignal();
@@ -83,7 +83,7 @@ public class StrategyService {
      */
     public double calculateSignalStrength(TradingSignal signal, Strategy strategy) {
         switch (strategy) {
-            case STANDARD:
+            case EXTREME_FLIP:
                 return calculateStandardSignalStrength(signal);
             case TRIPLE_INDICATOR_CONSERVATIVE:
                 return calculateTripleIndicatorConservativeSignalStrength(signal);

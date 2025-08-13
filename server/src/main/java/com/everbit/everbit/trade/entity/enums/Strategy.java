@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Strategy {
-    STANDARD(
-        "에버비트 스탠다드",
-        "연속 상승 / 연속 하락 후 추세 전환 신호가 오면 거래하는 전략",
+    EXTREME_FLIP(
+        "극점포착",
+        "연속 하락/상승 직후 정체 시 거래하는 전략",
         true,
         CandleInterval.FIVE,
         100

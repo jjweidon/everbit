@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.everbit.everbit.upbit.repository.CustomSignalRepository;
 import com.everbit.everbit.upbit.entity.CustomSignal;
 import com.everbit.everbit.upbit.dto.trading.TradingSignal;
+import com.everbit.everbit.upbit.dto.trading.SignalResult;
 import com.everbit.everbit.trade.entity.enums.Market;
 
 import java.time.LocalDateTime;
@@ -29,80 +30,74 @@ public class CustomSignalService {
 
     /**
      * DROP_N_FLIP 매수 시그널 감지 및 처리
-     * 1. (볼린저밴드 하단 도달 + RSI 과매도) → consecutiveDropCount 증가
-     * 2. (볼린저밴드 하단 도달 + MACD 추세 변환 감지) + 최근 10분 내 Drop 있음 → 매수 시그널 발생
+     * 시그널 강도를 포함한 결과를 반환합니다.
      */
-    public boolean processDropNFlipSignal(TradingSignal signal, Market market) {
+    public SignalResult processDropNFlipSignal(TradingSignal signal, Market market) {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         
-        // 10분 경과 시 초기화 체크
-        checkAndResetExpiredSignals(customSignal);
-        
-        // 조건 1: 볼린저밴드 하단 도달 + RSI 과매도
-        boolean bbRsiDropCondition = signal.bbBuySignal() && signal.rsiBuySignal();
-        
-        // 조건 2: 볼린저밴드 하단 도달 + MACD 추세 변환 감지
-        boolean bbMacdDropCondition = signal.bbBuySignal() && signal.macdBuySignal();
-        
+        // RSI 과매도
+        boolean rsiDropCondition = signal.rsiBuySignal();
         boolean buySignalGenerated = false;
+        double signalStrength = 0.0;
         
-        if (bbRsiDropCondition) {
+        if (rsiDropCondition) {
             customSignal.countUpConsecutiveDrop();
             customSignalRepository.save(customSignal);
             log.debug("DROP count increased for market {}: {}", market, customSignal.getConsecutiveDropCount());
         }
         
-        if (bbMacdDropCondition) {
+        // 추세전환 판정: 3회 이상 연속된 RSI 과매도 신호가 누적되어 있고, 
+        // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
+        else if (customSignal.getConsecutiveDropCount() >= 3 && isWithin10Minutes(customSignal.getLastDropAt())) {
             customSignal.updateLastFlipUpAt();
-            if (customSignal.getConsecutiveDropCount() >= 3 && isWithin10Minutes(customSignal.getLastDropAt())) {
-                // 매수 시그널 발생
-                buySignalGenerated = true;
-                customSignal.resetConsecutiveDrop();
-                log.info("DROP_N_FLIP 매수 신호 발생: {}", market);
-            }
             customSignalRepository.save(customSignal);
+            // 매수 시그널 발생
+            buySignalGenerated = true;
+            signalStrength = calculateDropNFlipSignalStrength(market);
+            log.info("DROP_N_FLIP 매수 신호 발생: {} (강도: {}, 카운트: {})", market, signalStrength, customSignal.getConsecutiveDropCount());
         }
-    
-        return buySignalGenerated;
+
+        else {
+            checkAndResetExpiredSignals(customSignal);
+        }
+        
+        return SignalResult.of(buySignalGenerated, signalStrength);
     }
 
     /**
      * POP_N_FLIP 매도 시그널 감지 및 처리
-     * 1. (볼린저밴드 상단 도달 + RSI 과매수) → consecutivePopCount 증가
-     * 2. (볼린저밴드 상단 도달 + MACD 추세 변환 감지) + 최근 10분 내 Pop 있음 → 매도 시그널 발생
+     * 시그널 강도를 포함한 결과를 반환합니다.
      */
-    public boolean processPopNFlipSignal(TradingSignal signal, Market market) {
+    public SignalResult processPopNFlipSignal(TradingSignal signal, Market market) {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         
-        // 10분 경과 시 초기화 체크
-        checkAndResetExpiredSignals(customSignal);
-        
-        // 조건 1: 볼린저밴드 상단 도달 + RSI 과매수
-        boolean bbRsiPopCondition = signal.bbSellSignal() && signal.rsiSellSignal();
-        
-        // 조건 2: 볼린저밴드 상단 도달 + MACD 추세 변환 감지
-        boolean bbMacdPopCondition = signal.bbSellSignal() && signal.macdSellSignal();
-        
+        // RSI 과매수
+        boolean rsiPopCondition = signal.rsiSellSignal();
         boolean sellSignalGenerated = false;
+        double signalStrength = 0.0;
         
-        if (bbRsiPopCondition) {
+        if (rsiPopCondition) {
             customSignal.countUpConsecutivePop();
             customSignalRepository.save(customSignal);
             log.debug("POP count increased for market {}: {}", market, customSignal.getConsecutivePopCount());
         }
 
-        if (bbMacdPopCondition) {
+        // 추세전환 판정: 3회 이상 연속된 RSI 과매수 신호가 누적되어 있고, 
+        // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
+        else if (customSignal.getConsecutivePopCount() >= 3 && isWithin10Minutes(customSignal.getLastPopAt())) {
             customSignal.updateLastFlipDownAt();
-            if (customSignal.getConsecutivePopCount() >= 3 && isWithin10Minutes(customSignal.getLastPopAt())) {
-                // 매도 시그널 발생
-                sellSignalGenerated = true;
-                customSignal.resetConsecutivePop();
-                log.info("POP_N_FLIP 매수 신호 발생: {}", market);
-            }
             customSignalRepository.save(customSignal);
+            // 매도 시그널 발생
+            sellSignalGenerated = true;
+            signalStrength = calculatePopNFlipSignalStrength(market);
+            log.info("POP_N_FLIP 매도 신호 발생: {} (강도: {}, 카운트: {})", market, signalStrength, customSignal.getConsecutivePopCount());
         }
 
-        return sellSignalGenerated;
+        else {
+            checkAndResetExpiredSignals(customSignal);
+        }
+        
+        return SignalResult.of(sellSignalGenerated, signalStrength);
     }
 
     /**
@@ -113,11 +108,10 @@ public class CustomSignalService {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         int dropCount = customSignal.getConsecutiveDropCount();
         
-        if (dropCount <= 0) return 0.0;
-        if (dropCount >= 7) return 1.0;
+        if (dropCount <= 3) return 0.0;
+        if (dropCount >= 10) return 1.0;
         
-        // 1개 → 0.0, 2개 → 0.167, 3개 → 0.333, 4개 → 0.5, 5개 → 0.667, 6개 → 0.833, 7개 이상 → 1.0
-        return (dropCount - 1) / 6.0;
+        return (dropCount - 3) / 7.0;
     }
 
     /**
@@ -128,11 +122,10 @@ public class CustomSignalService {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         int popCount = customSignal.getConsecutivePopCount();
         
-        if (popCount <= 0) return 0.0;
-        if (popCount >= 7) return 1.0;
+        if (popCount <= 3) return 0.0;
+        if (popCount >= 10) return 1.0;
         
-        // 1개 → 0.0, 2개 → 0.167, 3개 → 0.333, 4개 → 0.5, 5개 → 0.667, 6개 → 0.833, 7개 이상 → 1.0
-        return (popCount - 1) / 6.0;
+        return (popCount - 3) / 7.0;
     }
 
     /**
