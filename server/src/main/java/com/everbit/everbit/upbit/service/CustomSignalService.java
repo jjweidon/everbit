@@ -36,7 +36,7 @@ public class CustomSignalService {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         
         // RSI 과매도
-        boolean rsiDropCondition = signal.rsiBuySignal();
+        boolean rsiDropCondition = signal.rsiBuySignal() && signal.bbBuySignal();
         boolean buySignalGenerated = false;
         double signalStrength = 0.0;
         
@@ -72,7 +72,7 @@ public class CustomSignalService {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         
         // RSI 과매수
-        boolean rsiPopCondition = signal.rsiSellSignal();
+        boolean rsiPopCondition = signal.rsiSellSignal() && signal.bbSellSignal();
         boolean sellSignalGenerated = false;
         double signalStrength = 0.0;
         

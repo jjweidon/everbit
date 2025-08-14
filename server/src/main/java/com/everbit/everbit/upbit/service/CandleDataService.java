@@ -22,7 +22,7 @@ public class CandleDataService {
     private static final ZoneId UTC = ZoneId.of("UTC");
 
     private static final int CANDLE_COUNT = 100;
-    private static final int CANDLE_INTERVAL = 5;
+    private static final int CANDLE_INTERVAL = 15;
 
     /**
      * 고정된 값으로 BarSeries를 생성합니다.
