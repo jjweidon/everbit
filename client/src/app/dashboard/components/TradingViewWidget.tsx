@@ -1,6 +1,8 @@
 // TradingViewWidget.jsx
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo, useState } from 'react';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { tradeApi } from '@/api/services/tradeApi';
+import { MarketResponse } from '@/api/types/trade';
 
 interface TradingViewWidgetProps {
     symbol?: string;
@@ -31,7 +33,7 @@ interface TradingViewWidgetProps {
 
 function TradingViewWidget({
     symbol = 'UPBIT:BTCKRW',
-    interval = '3',
+    interval = '15',
     theme: propTheme,
     locale = 'kr',
     timezone = 'Asia/Seoul',
@@ -51,18 +53,49 @@ function TradingViewWidget({
     details = false,
     hotlist = true,
     withDateRanges = false,
-    watchlist = [
-        'UPBIT:BTCKRW',
-        'UPBIT:ETHKRW',
-        'UPBIT:SOLKRW',
-        'UPBIT:DOGEKRW',
-        'UPBIT:USDTKRW'
-    ],
+    watchlist: propWatchlist,
     compareSymbols = [],
     studies = []
 }: TradingViewWidgetProps) {
     const container = useRef<HTMLDivElement>(null);
     const isDarkMode = useDarkMode();
+    const [markets, setMarkets] = useState<MarketResponse[]>([]);
+    const [watchlist, setWatchlist] = useState<string[]>([]);
+
+    // 마켓 데이터를 TradingView 형식으로 변환하는 함수
+    const convertMarketToTradingViewSymbol = (market: string): string => {
+        return `UPBIT:${market}KRW`;
+    };
+
+    // API에서 마켓 데이터를 로드하는 함수
+    const loadMarkets = async () => {
+        try {
+            const response = await tradeApi.getMarkets();
+            setMarkets(response);
+            
+            // 마켓 데이터를 TradingView 형식으로 변환하여 watchlist 설정
+            const tradingViewSymbols = response.map(market => 
+                convertMarketToTradingViewSymbol(market.market)
+            );
+            setWatchlist(tradingViewSymbols);
+        } catch (error) {
+            console.error('마켓 데이터 로드 실패:', error);
+            // 실패 시 기본 watchlist 사용
+            setWatchlist([
+                'UPBIT:BTCKRW',
+                'UPBIT:ETHKRW',
+                'UPBIT:SOLKRW'
+            ]);
+        }
+    };
+
+    // 컴포넌트 마운트 시 마켓 데이터 로드
+    useEffect(() => {
+        loadMarkets();
+    }, []);
+    
+    // props로 전달받은 watchlist가 있으면 그것을 사용하고, 없으면 API에서 로드한 watchlist 사용
+    const finalWatchlist = propWatchlist || watchlist;
     
     // 다크모드 상태에 따라 테마와 배경색, 그리드색을 동적으로 설정
     const theme = propTheme || (isDarkMode ? 'dark' : 'light');
@@ -94,7 +127,7 @@ function TradingViewWidget({
             timezone,
             backgroundColor: dynamicBackgroundColor,
             gridColor: dynamicGridColor,
-            watchlist,
+            watchlist: finalWatchlist,
             withdateranges: withDateRanges,
             compareSymbols,
             studies,
@@ -129,7 +162,7 @@ function TradingViewWidget({
         hideSideToolbar, hideTopToolbar, hideLegend, hideVolume,
         dynamicBackgroundColor, dynamicGridColor, style, width, height, autosize,
         saveImage, calendar, details, hotlist, withDateRanges,
-        watchlist, compareSymbols, studies, isDarkMode
+        finalWatchlist, compareSymbols, studies, isDarkMode
     ]);
 
     return (
