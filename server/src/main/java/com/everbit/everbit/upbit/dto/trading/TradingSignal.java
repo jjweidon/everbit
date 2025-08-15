@@ -56,7 +56,7 @@ public record TradingSignal(
         if (bbBuySignal) buyCount++;
         if (rsiBuySignal) buyCount++;
         if (macdBuySignal) buyCount++;
-        return buyCount >= 2;
+        return buyCount >= 2 || dropNFlipBuySignal;
     }
     
     /**
@@ -67,7 +67,7 @@ public record TradingSignal(
         if (bbSellSignal) sellCount++;
         if (rsiSellSignal) sellCount++;
         if (macdSellSignal) sellCount++;
-        return sellCount >= 2;
+        return sellCount >= 2 || popNFlipSellSignal;
     }
     
     /**
