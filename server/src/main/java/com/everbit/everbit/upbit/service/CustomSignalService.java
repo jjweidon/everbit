@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 public class CustomSignalService {
     private final CustomSignalRepository customSignalRepository;
 
+    private final int MIN_CONSECUTIVE_COUNT = 10;
+    private final int MAX_CONSECUTIVE_COUNT = 25;
+
     public CustomSignal findOrCreateCustomSignal(Market market) {
         return customSignalRepository.findByMarket(market)
             .orElseGet(() -> {
@@ -48,7 +51,7 @@ public class CustomSignalService {
         
         // 추세전환 판정: 3회 이상 연속된 RSI 과매도 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
-        else if (customSignal.getConsecutiveDropCount() >= 3 && isWithin10Minutes(customSignal.getLastDropAt())) {
+        else if (customSignal.getConsecutiveDropCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastDropAt())) {
             customSignal.updateLastFlipUpAt();
             customSignalRepository.save(customSignal);
             // 매수 시그널 발생
@@ -84,7 +87,7 @@ public class CustomSignalService {
 
         // 추세전환 판정: 3회 이상 연속된 RSI 과매수 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
-        else if (customSignal.getConsecutivePopCount() >= 3 && isWithin10Minutes(customSignal.getLastPopAt())) {
+        else if (customSignal.getConsecutivePopCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastPopAt())) {
             customSignal.updateLastFlipDownAt();
             customSignalRepository.save(customSignal);
             // 매도 시그널 발생
@@ -102,30 +105,30 @@ public class CustomSignalService {
 
     /**
      * DROP_N_FLIP 시그널 강도 계산
-     * 최소(1개) → 0.00, 최대(5개 이상) → 1.00
+     * 최소 → 0.00, 최대 → 1.00
      */
     public double calculateDropNFlipSignalStrength(Market market) {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         int dropCount = customSignal.getConsecutiveDropCount();
         
-        if (dropCount <= 3) return 0.0;
-        if (dropCount >= 10) return 1.0;
+        if (dropCount <= MIN_CONSECUTIVE_COUNT) return 0.0;
+        if (dropCount >= MAX_CONSECUTIVE_COUNT) return 1.0;
         
-        return (dropCount - 3) / 7.0;
+        return (dropCount - MIN_CONSECUTIVE_COUNT) / (MAX_CONSECUTIVE_COUNT - MIN_CONSECUTIVE_COUNT);
     }
 
     /**
      * POP_N_FLIP 시그널 강도 계산
-     * 최소(1개) → 0.00, 최대(5개 이상) → 1.00
+     * 최소 → 0.00, 최대 → 1.00
      */
     public double calculatePopNFlipSignalStrength(Market market) {
         CustomSignal customSignal = findOrCreateCustomSignal(market);
         int popCount = customSignal.getConsecutivePopCount();
         
-        if (popCount <= 3) return 0.0;
-        if (popCount >= 10) return 1.0;
+        if (popCount <= MIN_CONSECUTIVE_COUNT) return 0.0;
+        if (popCount >= MAX_CONSECUTIVE_COUNT) return 1.0;
         
-        return (popCount - 3) / 7.0;
+        return (popCount - MIN_CONSECUTIVE_COUNT) / (MAX_CONSECUTIVE_COUNT - MIN_CONSECUTIVE_COUNT);
     }
 
     /**
