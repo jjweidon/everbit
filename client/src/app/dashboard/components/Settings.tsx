@@ -410,14 +410,14 @@ export default function Settings() {
                 </div>
             </div>
 
-            {/* 손실/이익 관리 설정 */}
+            {/* 손실/이익/시간초과 관리 설정 */}
             <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
-                    손실/이익 관리 설정
+                    손실/이익/시간초과 관리 설정
                 </h3>
 
                 {/* 활성화/비활성화 토글 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* 손실 관리 활성화 */}
                     <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
                         <div>
@@ -469,9 +469,35 @@ export default function Settings() {
                             />
                         </button>
                     </div>
+
+                    {/* 시간초과 관리 활성화 */}
+                    <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                        <div>
+                            <h4 className="text-sm font-medium text-navy-800 dark:text-navy-200">
+                                시간초과 전략
+                            </h4>
+                            <p className="text-xs text-navy-600 dark:text-navy-400">
+                                설정 시간 경과 시 자동 매도
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => updateBotSetting('isTimeOutSellActive', !botSetting.isTimeOutSellActive)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                botSetting.isTimeOutSellActive
+                                    ? 'bg-navy-500'
+                                    : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                    botSetting.isTimeOutSellActive ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                        </button>
+                    </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* 손실 임계값 */}
                     <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
                         <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
@@ -568,6 +594,54 @@ export default function Settings() {
                         </p>
                     </div>
 
+                    {/* 시간초과 매도 이익 비율 */}
+                    <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            시간초과 매도 이익 비율 (%)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                value={(botSetting.timeOutSellProfitRatio * 100).toFixed(1)}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value) / 100 || 0;
+                                    updateBotSetting('timeOutSellProfitRatio', value);
+                                }}
+                                disabled={!botSetting.isTimeOutSellActive}
+                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                placeholder="0.1"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.min(botSetting.timeOutSellProfitRatio + 0.001, 1);
+                                        updateBotSetting('timeOutSellProfitRatio', newValue);
+                                    }}
+                                    disabled={!botSetting.isTimeOutSellActive}
+                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newValue = Math.max(botSetting.timeOutSellProfitRatio - 0.001, 0);
+                                        updateBotSetting('timeOutSellProfitRatio', newValue);
+                                    }}
+                                    disabled={!botSetting.isTimeOutSellActive}
+                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            시간초과 시 최소 이익 비율 (미달 시 손실 매도)
+                        </p>
+                    </div>
+
                     {/* 손실 매도 비율 */}
                     <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
                         <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
@@ -661,6 +735,61 @@ export default function Settings() {
                         </div>
                         <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
                             이익 시 보유량의 몇 %를 매도할지 설정
+                        </p>
+                    </div>
+
+                    {/* 시간초과 매도 시간 */}
+                    <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
+                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                            시간초과 매도 시간 (분)
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                step="1"
+                                min="1"
+                                max="3000"
+                                value={botSetting.timeOutSellMinutes}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value) || 1;
+                                    updateBotSetting('timeOutSellMinutes', value);
+                                }}
+                                onBlur={(e) => {
+                                    const value = parseInt(e.target.value) || 1;
+                                    const clampedValue = Math.max(1, Math.min(value, 3000));
+                                    updateBotSetting('timeOutSellMinutes', clampedValue);
+                                }}
+                                disabled={!botSetting.isTimeOutSellActive}
+                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                placeholder="45"
+                            />
+                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => handleIncrement(
+                                        botSetting.timeOutSellMinutes,
+                                        'timeOutSellMinutes',
+                                        3000
+                                    )}
+                                    disabled={!botSetting.isTimeOutSellActive}
+                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    <FaChevronUp size={8} />
+                                </button>
+                                <button
+                                    onClick={() => handleDecrement(
+                                        botSetting.timeOutSellMinutes,
+                                        'timeOutSellMinutes',
+                                        1
+                                    )}
+                                    disabled={!botSetting.isTimeOutSellActive}
+                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    <FaChevronDown size={8} />
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                            매수 후 설정 시간 경과 시 자동 매도 (1-3000분)
                         </p>
                     </div>
                 </div>

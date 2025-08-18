@@ -88,13 +88,24 @@ public class BotSetting extends BaseTime {
 
     // 손실 관리 활성화 여부
     @Builder.Default
-    @Column(nullable = false)
-    private Boolean isLossManagementActive = false;
+    private Boolean isLossManagementActive = true;
 
     // 이익 관리 활성화 여부
     @Builder.Default
-    @Column(nullable = false)
-    private Boolean isProfitTakingActive = false;
+    private Boolean isProfitTakingActive = true;
+
+    // 시간초과 관리 활성화 여부
+    @Builder.Default
+    private Boolean isTimeOutSellActive = true;
+
+    // 시간초과 관리 시간
+    @Builder.Default
+    private int timeOutSellMinutes = 45;
+
+    // 시간초과 관리 이익 비율
+    @Builder.Default
+    @Column(precision = 4, scale = 3)
+    private BigDecimal timeOutSellProfitRatio = new BigDecimal("0.001");
 
     public static BotSetting init(User user) {
         return BotSetting.builder()
@@ -116,5 +127,8 @@ public class BotSetting extends BaseTime {
         this.profitSellRatio = request.profitSellRatio();
         this.isLossManagementActive = request.isLossManagementActive();
         this.isProfitTakingActive = request.isProfitTakingActive();
+        this.isTimeOutSellActive = request.isTimeOutSellActive();
+        this.timeOutSellMinutes = request.timeOutSellMinutes();
+        this.timeOutSellProfitRatio = request.timeOutSellProfitRatio();
     }
 }

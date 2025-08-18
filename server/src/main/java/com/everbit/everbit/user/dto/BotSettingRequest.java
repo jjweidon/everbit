@@ -22,5 +22,8 @@ public record BotSettingRequest(
     BigDecimal lossSellRatio,
     BigDecimal profitSellRatio,
     Boolean isLossManagementActive,
-    Boolean isProfitTakingActive
+    Boolean isProfitTakingActive,
+    Boolean isTimeOutSellActive,
+    int timeOutSellMinutes,
+    BigDecimal timeOutSellProfitRatio
 ) {}

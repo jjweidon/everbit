@@ -37,9 +37,6 @@ public class LossAndProfitManagementScheduler {
     private final UpbitQuotationClient upbitQuotationClient;
     private final TradeService tradeService;
 
-    private final int TIMEOUT_SELL_MINUTES = 45;
-    private final BigDecimal TIMEOUT_SELL_PROFIT_RATE = new BigDecimal("0.001");
-
     @Transactional
     @Scheduled(cron = "1 */3 * * * *") // 3분마다 실행
     public void checkLossAndProfitManagement() {
@@ -135,6 +132,8 @@ public class LossAndProfitManagementScheduler {
      */
     private void checkAndExecuteFullSellIfNeeded(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, BigDecimal avgBuyPrice, BigDecimal sellRatio) {
         try {
+            int timeOutSellMinutes = user.getBotSetting().getTimeOutSellMinutes();
+            BigDecimal timeOutSellProfitRatio = user.getBotSetting().getTimeOutSellProfitRatio();
             // 마지막 매수 거래 정보 조회
             Trade lastBuyTrade = tradeService.findLastBuyByUserAndMarket(user, market);
             
@@ -144,15 +143,15 @@ public class LossAndProfitManagementScheduler {
             long minutesElapsed = ChronoUnit.MINUTES.between(lastBuyTime, now);
             
             // TIMEOUT_SELL_MINUTES분이 지났는지 확인
-            if (minutesElapsed >= TIMEOUT_SELL_MINUTES) {
+            if (minutesElapsed >= timeOutSellMinutes) {
                 // 수익률 계산
                 BigDecimal profitRate = calculateProfitRate(currentPrice, avgBuyPrice);
                 
                 // TIMEOUT_SELL_PROFIT_RATE 이익도 못 낸 경우 부분 매도
-                 if (profitRate.compareTo(TIMEOUT_SELL_PROFIT_RATE) < 0) {
+                 if (profitRate.compareTo(timeOutSellProfitRatio) < 0) {
                      log.warn("사용자: {}, 마켓: {} - {}분 경과 후 {}% 이익도 못 내서 부분 매도 실행! 경과시간: {}분, 수익률: {}%", 
-                         user.getUsername(), market, TIMEOUT_SELL_MINUTES, 
-                         TIMEOUT_SELL_PROFIT_RATE.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
+                         user.getUsername(), market, timeOutSellMinutes, 
+                         timeOutSellProfitRatio.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
                          minutesElapsed, 
                          profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
                      
@@ -160,17 +159,17 @@ public class LossAndProfitManagementScheduler {
                      executePartialSell(user, market, coinBalance, currentPrice, Strategy.TIMEOUT_SELL, sellRatio);
                  } else {
                     log.info("사용자: {}, 마켓: {} - {}분 경과했지만 {}% 이상 이익이 있어 전량 매도 건너뜀. 경과시간: {}분, 수익률: {}%", 
-                        user.getUsername(), market, TIMEOUT_SELL_MINUTES, 
-                        TIMEOUT_SELL_PROFIT_RATE.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
+                        user.getUsername(), market, timeOutSellMinutes, 
+                        timeOutSellProfitRatio.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
                         minutesElapsed, 
                         profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
                 }
             } else {
                 log.debug("사용자: {}, 마켓: {} - 마지막 매수로부터 {}분 경과 ({}분 미만)", 
-                    user.getUsername(), market, minutesElapsed, TIMEOUT_SELL_MINUTES);
+                    user.getUsername(), market, minutesElapsed, timeOutSellMinutes);
             }
         } catch (Exception e) {
-            log.error("사용자: {}, 마켓: {} - {}분 경과 체크 중 오류 발생", user.getUsername(), market, TIMEOUT_SELL_MINUTES, e);
+            log.error("사용자: {}, 마켓: {} - 시간초과 관리 체크 중 오류 발생", user.getUsername(), market, e);
         }
     }
     
