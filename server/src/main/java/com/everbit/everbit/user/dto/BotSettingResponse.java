@@ -25,7 +25,12 @@ public record BotSettingResponse(
     BigDecimal lossThreshold,
     BigDecimal profitThreshold,
     BigDecimal lossSellRatio,
-    BigDecimal profitSellRatio
+    BigDecimal profitSellRatio,
+    Boolean isLossManagementActive,
+    Boolean isProfitTakingActive,
+    Boolean isTimeOutSellActive,
+    int timeOutSellMinutes,
+    BigDecimal timeOutSellProfitRatio
 ) implements Response {
     public static BotSettingResponse from(BotSetting botSetting) {
         return BotSettingResponse.builder()
@@ -41,6 +46,11 @@ public record BotSettingResponse(
             .profitThreshold(botSetting.getProfitThreshold())
             .lossSellRatio(botSetting.getLossSellRatio())
             .profitSellRatio(botSetting.getProfitSellRatio())
+            .isLossManagementActive(botSetting.getIsLossManagementActive())
+            .isProfitTakingActive(botSetting.getIsProfitTakingActive())
+            .isTimeOutSellActive(botSetting.getIsTimeOutSellActive())
+            .timeOutSellMinutes(botSetting.getTimeOutSellMinutes())
+            .timeOutSellProfitRatio(botSetting.getTimeOutSellProfitRatio())
             .build();
     }
 }
