@@ -20,5 +20,7 @@ public record BotSettingRequest(
     BigDecimal lossThreshold,
     BigDecimal profitThreshold,
     BigDecimal lossSellRatio,
-    BigDecimal profitSellRatio
+    BigDecimal profitSellRatio,
+    Boolean isLossManagementActive,
+    Boolean isProfitTakingActive
 ) {}

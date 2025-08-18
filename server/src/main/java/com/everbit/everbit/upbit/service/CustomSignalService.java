@@ -49,7 +49,7 @@ public class CustomSignalService {
             log.debug("DROP count increased for market {}: {}", market, customSignal.getConsecutiveDropCount());
         }
         
-        // 추세전환 판정: 3회 이상 연속된 RSI 과매도 신호가 누적되어 있고, 
+        // 추세전환 판정: MIN_CONSECUTIVE_COUNT회 이상 연속된 RSI 과매도 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
         else if (customSignal.getConsecutiveDropCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastDropAt())) {
             customSignal.updateLastFlipUpAt();
@@ -85,7 +85,7 @@ public class CustomSignalService {
             log.debug("POP count increased for market {}: {}", market, customSignal.getConsecutivePopCount());
         }
 
-        // 추세전환 판정: 3회 이상 연속된 RSI 과매수 신호가 누적되어 있고, 
+        // 추세전환 판정: MIN_CONSECUTIVE_COUNT회 이상 연속된 RSI 과매수 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
         else if (customSignal.getConsecutivePopCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastPopAt())) {
             customSignal.updateLastFlipDownAt();

@@ -26,7 +26,7 @@ export default function Home() {
                             className={`space-y-3 sm:space-y-4 ${isVisible ? 'animate-fade-in-down' : 'opacity-0'}`}
                         >
                             <h3 className="text-base sm:text-lg md:text-2xl font-medium text-navy-100 tracking-wide">
-                                비트코인 자동 트레이딩 시스템
+                                코인 퀀트 트레이딩 시스템
                             </h3>
                             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white tracking-tight font-logo">
                                 everbit

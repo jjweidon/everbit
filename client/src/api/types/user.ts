@@ -34,6 +34,8 @@ export const BotSetting = z.object({
     profitThreshold: z.number(),
     lossSellRatio: z.number(),
     profitSellRatio: z.number(),
+    isLossManagementActive: z.boolean(),
+    isProfitTakingActive: z.boolean(),
 });
 export type BotSettingResponse = z.infer<typeof BotSetting>;
 export type BotSettingRequest = z.infer<typeof BotSetting>;

@@ -86,6 +86,16 @@ public class BotSetting extends BaseTime {
     @Column(nullable = false, precision = 3, scale = 2)
     private BigDecimal profitSellRatio = new BigDecimal("0.5"); // 이익 매도 비율
 
+    // 손실 관리 활성화 여부
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isLossManagementActive = false;
+
+    // 이익 관리 활성화 여부
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isProfitTakingActive = false;
+
     public static BotSetting init(User user) {
         return BotSetting.builder()
                 .user(user)
@@ -104,5 +114,7 @@ public class BotSetting extends BaseTime {
         this.profitThreshold = request.profitThreshold();
         this.lossSellRatio = request.lossSellRatio();
         this.profitSellRatio = request.profitSellRatio();
+        this.isLossManagementActive = request.isLossManagementActive();
+        this.isProfitTakingActive = request.isProfitTakingActive();
     }
 }

@@ -38,7 +38,7 @@ export default function Login() {
                     <div className="space-y-6 sm:space-y-8">
                         <div className="text-center">
                             <h3 className="text-lg sm:text-2xl font-bold text-navy-900 mb-2">
-                                비트코인 자동 매매하기
+                                코인 자동 매매하기
                             </h3>
                             <p className="text-xs sm:text-base text-navy-600">
                                 지금 로그인하고 24시간 자동 수익을 만들어 보세요
