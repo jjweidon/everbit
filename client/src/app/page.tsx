@@ -47,6 +47,9 @@ export default function Home() {
                             >
                                 시작하기
                             </button>
+                            {/* <p className="text-xs text-navy-100 mt-1">
+                                코인을 하나도 몰라도 안정적인 수입 쌉가능!
+                            </p> */}
                         </div>
                     </div>
                 </div>

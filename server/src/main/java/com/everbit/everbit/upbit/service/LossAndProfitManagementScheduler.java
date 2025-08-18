@@ -132,6 +132,7 @@ public class LossAndProfitManagementScheduler {
      */
     private void checkAndExecuteFullSellIfNeeded(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, BigDecimal avgBuyPrice, BigDecimal sellRatio) {
         try {
+            if (!user.getBotSetting().getIsTimeOutSellActive()) return;
             int timeOutSellMinutes = user.getBotSetting().getTimeOutSellMinutes();
             BigDecimal timeOutSellProfitRatio = user.getBotSetting().getTimeOutSellProfitRatio();
             // 마지막 매수 거래 정보 조회

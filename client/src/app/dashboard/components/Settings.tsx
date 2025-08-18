@@ -192,18 +192,40 @@ export default function Settings() {
                 <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
                     거래소 마켓 선택
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                     {markets.map((market) => (
                         <button
                             key={market.market}
                             onClick={() => handleMarketToggle(market.market)}
-                            className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            className={`p-3 rounded-lg text-left transition-all duration-200 ${
                                 botSetting.marketList.includes(market.market)
                                     ? 'bg-navy-500 text-white'
                                     : 'bg-navy-50 dark:bg-navy-800 text-navy-700 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700'
                             }`}
                         >
-                            {market.market}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="font-medium text-sm">
+                                        {market.market}
+                                    </div>
+                                    <div className={`text-xs mt-0.5 ${
+                                        botSetting.marketList.includes(market.market)
+                                            ? 'text-navy-100'
+                                            : 'text-navy-500 dark:text-navy-400'
+                                    }`}>
+                                        {market.description}
+                                    </div>
+                                </div>
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    botSetting.marketList.includes(market.market)
+                                        ? 'border-white bg-white'
+                                        : 'border-navy-300 dark:border-navy-500'
+                                }`}>
+                                    {botSetting.marketList.includes(market.market) && (
+                                        <div className="w-2 h-2 rounded-full bg-navy-500"></div>
+                                    )}
+                                </div>
+                            </div>
                         </button>
                     ))}
                 </div>
