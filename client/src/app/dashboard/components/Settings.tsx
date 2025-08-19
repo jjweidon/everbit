@@ -438,381 +438,399 @@ export default function Settings() {
                     손실/이익/시간초과 관리 설정
                 </h3>
 
-                {/* 활성화/비활성화 토글 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {/* 손실 관리 활성화 */}
-                    <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
-                        <div>
-                            <h4 className="text-sm font-medium text-navy-800 dark:text-navy-200">
-                                손실 관리 전략
-                            </h4>
-                            <p className="text-xs text-navy-600 dark:text-navy-400">
-                                손실 임계값 도달 시 자동 매도
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 손실 관리 영역 */}
+                    <div className="space-y-4">
+                        <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 border-b border-navy-200 dark:border-navy-600 pb-2">
+                            손실 관리
+                        </h4>
+                        
+                        {/* 손실 관리 활성화 토글 */}
+                        <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                            <div>
+                                <h5 className="text-sm font-medium text-navy-800 dark:text-navy-200">
+                                    손실 관리 전략
+                                </h5>
+                                <p className="text-xs text-navy-600 dark:text-navy-400">
+                                    손실 임계값 도달 시 자동 매도
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => updateBotSetting('isLossManagementActive', !botSetting.isLossManagementActive)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                    botSetting.isLossManagementActive
+                                        ? 'bg-navy-500'
+                                        : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                        botSetting.isLossManagementActive ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+
+                        {/* 손실 임계값 */}
+                        <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                손실 임계값 (%)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="100"
+                                    value={(botSetting.lossThreshold * 100).toFixed(1)}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value) / 100 || 0;
+                                        updateBotSetting('lossThreshold', value);
+                                    }}
+                                    disabled={!botSetting.isLossManagementActive}
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="1.0"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.min(botSetting.lossThreshold + 0.001, 1);
+                                            updateBotSetting('lossThreshold', newValue);
+                                        }}
+                                        disabled={!botSetting.isLossManagementActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.max(botSetting.lossThreshold - 0.001, 0);
+                                            updateBotSetting('lossThreshold', newValue);
+                                        }}
+                                        disabled={!botSetting.isLossManagementActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                이 비율 이상 손실 시 자동 매도 실행
                             </p>
                         </div>
-                        <button
-                            onClick={() => updateBotSetting('isLossManagementActive', !botSetting.isLossManagementActive)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
-                                botSetting.isLossManagementActive
-                                    ? 'bg-navy-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                                    botSetting.isLossManagementActive ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                            />
-                        </button>
-                    </div>
 
-                    {/* 이익 관리 활성화 */}
-                    <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
-                        <div>
-                            <h4 className="text-sm font-medium text-navy-800 dark:text-navy-200">
-                                이익 실현 전략
-                            </h4>
-                            <p className="text-xs text-navy-600 dark:text-navy-400">
-                                이익 임계값 도달 시 자동 매도
+                        {/* 손실 매도 비율 */}
+                        <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                손실 매도 비율 (%)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="0"
+                                    max="100"
+                                    value={(botSetting.lossSellRatio * 100).toFixed(0)}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) / 100 || 0;
+                                        updateBotSetting('lossSellRatio', value);
+                                    }}
+                                    disabled={!botSetting.isLossManagementActive}
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="90"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.min(botSetting.lossSellRatio + 0.01, 1);
+                                            updateBotSetting('lossSellRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isLossManagementActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.max(botSetting.lossSellRatio - 0.01, 0);
+                                            updateBotSetting('lossSellRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isLossManagementActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                손실 시 보유량의 몇 %를 매도할지 설정
                             </p>
                         </div>
-                        <button
-                            onClick={() => updateBotSetting('isProfitTakingActive', !botSetting.isProfitTakingActive)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
-                                botSetting.isProfitTakingActive
-                                    ? 'bg-navy-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                                    botSetting.isProfitTakingActive ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                            />
-                        </button>
                     </div>
 
-                    {/* 시간초과 관리 활성화 */}
-                    <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
-                        <div>
-                            <h4 className="text-sm font-medium text-navy-800 dark:text-navy-200">
-                                시간초과 전략
-                            </h4>
-                            <p className="text-xs text-navy-600 dark:text-navy-400">
-                                설정 시간 경과 시 자동 매도
+                    {/* 이익 관리 영역 */}
+                    <div className="space-y-4">
+                        <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 border-b border-navy-200 dark:border-navy-600 pb-2">
+                            이익 관리
+                        </h4>
+                        
+                        {/* 이익 관리 활성화 토글 */}
+                        <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                            <div>
+                                <h5 className="text-sm font-medium text-navy-800 dark:text-navy-200">
+                                    이익 실현 전략
+                                </h5>
+                                <p className="text-xs text-navy-600 dark:text-navy-400">
+                                    이익 임계값 도달 시 자동 매도
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => updateBotSetting('isProfitTakingActive', !botSetting.isProfitTakingActive)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                    botSetting.isProfitTakingActive
+                                        ? 'bg-navy-500'
+                                        : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                        botSetting.isProfitTakingActive ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+
+                        {/* 이익 임계값 */}
+                        <div className={`${!botSetting.isProfitTakingActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                이익 임계값 (%)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="100"
+                                    value={(botSetting.profitThreshold * 100).toFixed(1)}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value) / 100 || 0;
+                                        updateBotSetting('profitThreshold', value);
+                                    }}
+                                    disabled={!botSetting.isProfitTakingActive}
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="1.8"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.min(botSetting.profitThreshold + 0.001, 1);
+                                            updateBotSetting('profitThreshold', newValue);
+                                        }}
+                                        disabled={!botSetting.isProfitTakingActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.max(botSetting.profitThreshold - 0.001, 0);
+                                            updateBotSetting('profitThreshold', newValue);
+                                        }}
+                                        disabled={!botSetting.isProfitTakingActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                이 비율 이상 이익 시 자동 매도 실행
                             </p>
                         </div>
-                        <button
-                            onClick={() => updateBotSetting('isTimeOutSellActive', !botSetting.isTimeOutSellActive)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
-                                botSetting.isTimeOutSellActive
-                                    ? 'bg-navy-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                                    botSetting.isTimeOutSellActive ? 'translate-x-6' : 'translate-x-1'
+
+                        {/* 이익 매도 비율 */}
+                        <div className={`${!botSetting.isProfitTakingActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                이익 매도 비율 (%)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="0"
+                                    max="100"
+                                    value={(botSetting.profitSellRatio * 100).toFixed(0)}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) / 100 || 0;
+                                        updateBotSetting('profitSellRatio', value);
+                                    }}
+                                    disabled={!botSetting.isProfitTakingActive}
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="50"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.min(botSetting.profitSellRatio + 0.01, 1);
+                                            updateBotSetting('profitSellRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isProfitTakingActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.max(botSetting.profitSellRatio - 0.01, 0);
+                                            updateBotSetting('profitSellRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isProfitTakingActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                이익 시 보유량의 몇 %를 매도할지 설정
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 시간초과 관리 영역 */}
+                    <div className="space-y-4">
+                        <h4 className="text-md font-medium text-navy-800 dark:text-navy-200 border-b border-navy-200 dark:border-navy-600 pb-2">
+                            시간초과 관리
+                        </h4>
+                        
+                        {/* 시간초과 관리 활성화 토글 */}
+                        <div className="flex items-center justify-between p-3 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                            <div>
+                                <h5 className="text-sm font-medium text-navy-800 dark:text-navy-200">
+                                    시간초과 전략
+                                </h5>
+                                <p className="text-xs text-navy-600 dark:text-navy-400">
+                                    설정 시간 경과 시 자동 매도
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => updateBotSetting('isTimeOutSellActive', !botSetting.isTimeOutSellActive)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                    botSetting.isTimeOutSellActive
+                                        ? 'bg-navy-500'
+                                        : 'bg-gray-300 dark:bg-gray-600'
                                 }`}
-                            />
-                        </button>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* 손실 임계값 */}
-                    <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            손실 임계값 (%)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                value={(botSetting.lossThreshold * 100).toFixed(1)}
-                                onChange={(e) => {
-                                    const value = parseFloat(e.target.value) / 100 || 0;
-                                    updateBotSetting('lossThreshold', value);
-                                }}
-                                disabled={!botSetting.isLossManagementActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="1.0"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.min(botSetting.lossThreshold + 0.001, 1);
-                                        updateBotSetting('lossThreshold', newValue);
-                                    }}
-                                    disabled={!botSetting.isLossManagementActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.max(botSetting.lossThreshold - 0.001, 0);
-                                        updateBotSetting('lossThreshold', newValue);
-                                    }}
-                                    disabled={!botSetting.isLossManagementActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                        botSetting.isTimeOutSellActive ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
                         </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            이 비율 이상 손실 시 자동 매도 실행
-                        </p>
-                    </div>
 
-                    {/* 이익 임계값 */}
-                    <div className={`${!botSetting.isProfitTakingActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            이익 임계값 (%)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                value={(botSetting.profitThreshold * 100).toFixed(1)}
-                                onChange={(e) => {
-                                    const value = parseFloat(e.target.value) / 100 || 0;
-                                    updateBotSetting('profitThreshold', value);
-                                }}
-                                disabled={!botSetting.isProfitTakingActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="1.8"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.min(botSetting.profitThreshold + 0.001, 1);
-                                        updateBotSetting('profitThreshold', newValue);
-                                    }}
-                                    disabled={!botSetting.isProfitTakingActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.max(botSetting.profitThreshold - 0.001, 0);
-                                        updateBotSetting('profitThreshold', newValue);
-                                    }}
-                                    disabled={!botSetting.isProfitTakingActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
-                        </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            이 비율 이상 이익 시 자동 매도 실행
-                        </p>
-                    </div>
-
-                    {/* 시간초과 매도 이익 비율 */}
-                    <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            시간초과 매도 이익 비율 (%)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                value={(botSetting.timeOutSellProfitRatio * 100).toFixed(1)}
-                                onChange={(e) => {
-                                    const value = parseFloat(e.target.value) / 100 || 0;
-                                    updateBotSetting('timeOutSellProfitRatio', value);
-                                }}
-                                disabled={!botSetting.isTimeOutSellActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="0.1"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.min(botSetting.timeOutSellProfitRatio + 0.001, 1);
-                                        updateBotSetting('timeOutSellProfitRatio', newValue);
+                        {/* 시간초과 매도 이익 비율 */}
+                        <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                시간초과 매도 이익 비율 (%)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="100"
+                                    value={(botSetting.timeOutSellProfitRatio * 100).toFixed(1)}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value) / 100 || 0;
+                                        updateBotSetting('timeOutSellProfitRatio', value);
                                     }}
                                     disabled={!botSetting.isTimeOutSellActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.max(botSetting.timeOutSellProfitRatio - 0.001, 0);
-                                        updateBotSetting('timeOutSellProfitRatio', newValue);
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="0.1"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.min(botSetting.timeOutSellProfitRatio + 0.001, 1);
+                                            updateBotSetting('timeOutSellProfitRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isTimeOutSellActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newValue = Math.max(botSetting.timeOutSellProfitRatio - 0.001, 0);
+                                            updateBotSetting('timeOutSellProfitRatio', newValue);
+                                        }}
+                                        disabled={!botSetting.isTimeOutSellActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                시간초과 시 최소 이익 비율 (미달 시 손실 매도)
+                            </p>
+                        </div>
+
+                        {/* 시간초과 매도 시간 */}
+                        <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
+                            <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
+                                시간초과 매도 시간 (분)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    max="3000"
+                                    value={botSetting.timeOutSellMinutes}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 1;
+                                        updateBotSetting('timeOutSellMinutes', value);
+                                    }}
+                                    onBlur={(e) => {
+                                        const value = parseInt(e.target.value) || 1;
+                                        const clampedValue = Math.max(1, Math.min(value, 3000));
+                                        updateBotSetting('timeOutSellMinutes', clampedValue);
                                     }}
                                     disabled={!botSetting.isTimeOutSellActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
+                                    className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
+                                    placeholder="45"
+                                />
+                                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
+                                    <button
+                                        onClick={() => handleIncrement(
+                                            botSetting.timeOutSellMinutes,
+                                            'timeOutSellMinutes',
+                                            3000
+                                        )}
+                                        disabled={!botSetting.isTimeOutSellActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronUp size={8} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDecrement(
+                                            botSetting.timeOutSellMinutes,
+                                            'timeOutSellMinutes',
+                                            1
+                                        )}
+                                        disabled={!botSetting.isTimeOutSellActive}
+                                        className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <FaChevronDown size={8} />
+                                    </button>
+                                </div>
                             </div>
+                            <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+                                매수 후 설정 시간 경과 시 자동 매도 (1-3000분)
+                            </p>
                         </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            시간초과 시 최소 이익 비율 (미달 시 손실 매도)
-                        </p>
-                    </div>
-
-                    {/* 손실 매도 비율 */}
-                    <div className={`${!botSetting.isLossManagementActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            손실 매도 비율 (%)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="1"
-                                min="0"
-                                max="100"
-                                value={(botSetting.lossSellRatio * 100).toFixed(0)}
-                                onChange={(e) => {
-                                    const value = parseInt(e.target.value) / 100 || 0;
-                                    updateBotSetting('lossSellRatio', value);
-                                }}
-                                disabled={!botSetting.isLossManagementActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="90"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.min(botSetting.lossSellRatio + 0.01, 1);
-                                        updateBotSetting('lossSellRatio', newValue);
-                                    }}
-                                    disabled={!botSetting.isLossManagementActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.max(botSetting.lossSellRatio - 0.01, 0);
-                                        updateBotSetting('lossSellRatio', newValue);
-                                    }}
-                                    disabled={!botSetting.isLossManagementActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
-                        </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            손실 시 보유량의 몇 %를 매도할지 설정
-                        </p>
-                    </div>
-
-                    {/* 이익 매도 비율 */}
-                    <div className={`${!botSetting.isProfitTakingActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            이익 매도 비율 (%)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="1"
-                                min="0"
-                                max="100"
-                                value={(botSetting.profitSellRatio * 100).toFixed(0)}
-                                onChange={(e) => {
-                                    const value = parseInt(e.target.value) / 100 || 0;
-                                    updateBotSetting('profitSellRatio', value);
-                                }}
-                                disabled={!botSetting.isProfitTakingActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="50"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.min(botSetting.profitSellRatio + 0.01, 1);
-                                        updateBotSetting('profitSellRatio', newValue);
-                                    }}
-                                    disabled={!botSetting.isProfitTakingActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const newValue = Math.max(botSetting.profitSellRatio - 0.01, 0);
-                                        updateBotSetting('profitSellRatio', newValue);
-                                    }}
-                                    disabled={!botSetting.isProfitTakingActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
-                        </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            이익 시 보유량의 몇 %를 매도할지 설정
-                        </p>
-                    </div>
-
-                    {/* 시간초과 매도 시간 */}
-                    <div className={`${!botSetting.isTimeOutSellActive ? 'opacity-50' : ''}`}>
-                        <label className="block text-sm font-medium text-navy-700 dark:text-navy-300 mb-2">
-                            시간초과 매도 시간 (분)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="1"
-                                min="1"
-                                max="3000"
-                                value={botSetting.timeOutSellMinutes}
-                                onChange={(e) => {
-                                    const value = parseInt(e.target.value) || 1;
-                                    updateBotSetting('timeOutSellMinutes', value);
-                                }}
-                                onBlur={(e) => {
-                                    const value = parseInt(e.target.value) || 1;
-                                    const clampedValue = Math.max(1, Math.min(value, 3000));
-                                    updateBotSetting('timeOutSellMinutes', clampedValue);
-                                }}
-                                disabled={!botSetting.isTimeOutSellActive}
-                                className={`${inputStyle} pr-12 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                                placeholder="45"
-                            />
-                            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
-                                <button
-                                    onClick={() => handleIncrement(
-                                        botSetting.timeOutSellMinutes,
-                                        'timeOutSellMinutes',
-                                        3000
-                                    )}
-                                    disabled={!botSetting.isTimeOutSellActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronUp size={8} />
-                                </button>
-                                <button
-                                    onClick={() => handleDecrement(
-                                        botSetting.timeOutSellMinutes,
-                                        'timeOutSellMinutes',
-                                        1
-                                    )}
-                                    disabled={!botSetting.isTimeOutSellActive}
-                                    className={`${spinButtonStyle} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    <FaChevronDown size={8} />
-                                </button>
-                            </div>
-                        </div>
-                        <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
-                            매수 후 설정 시간 경과 시 자동 매도 (1-3000분)
-                        </p>
                     </div>
                 </div>
             </div>
