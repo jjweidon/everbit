@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Profile("prod")
 @Order(3)
 public class TradingScheduler {
+    // private final TradingSignalService tradingSignalService;
     private final TradingSignalService tradingSignalService;
     private final StrategyService strategyService;
     private final UpbitExchangeClient upbitExchangeClient;

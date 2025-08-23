@@ -10,9 +10,11 @@ import java.math.BigDecimal;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record BotSettingRequest(
+    List<Market> marketList,
+    Boolean isBuyActive,
+    Boolean isSellActive,
     Strategy buyStrategy,
     Strategy sellStrategy,
-    List<Market> marketList,
     Long buyBaseOrderAmount,
     Long buyMaxOrderAmount,
     Long sellBaseOrderAmount,
