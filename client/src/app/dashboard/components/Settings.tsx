@@ -131,6 +131,110 @@ export default function Settings() {
 
     return (
         <div className="space-y-6">
+            {/* 거래소 마켓 선택 */}
+            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
+                    거래소 마켓 선택
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    {markets.map((market) => (
+                        <button
+                            key={market.market}
+                            onClick={() => handleMarketToggle(market.market)}
+                            className={`p-3 rounded-lg text-left transition-all duration-200 ${
+                                botSetting.marketList.includes(market.market)
+                                    ? 'bg-navy-500 text-white'
+                                    : 'bg-navy-50 dark:bg-navy-800 text-navy-700 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700'
+                            }`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="font-medium text-sm">
+                                        {market.market}
+                                    </div>
+                                    <div className={`text-xs mt-0.5 ${
+                                        botSetting.marketList.includes(market.market)
+                                            ? 'text-navy-100'
+                                            : 'text-navy-500 dark:text-navy-400'
+                                    }`}>
+                                        {market.description}
+                                    </div>
+                                </div>
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    botSetting.marketList.includes(market.market)
+                                        ? 'border-white bg-white'
+                                        : 'border-navy-300 dark:border-navy-500'
+                                }`}>
+                                    {botSetting.marketList.includes(market.market) && (
+                                        <div className="w-2 h-2 rounded-full bg-navy-500"></div>
+                                    )}
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* 자동 매수/매도 주문 활성화 설정 */}
+            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
+                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
+                    자동 주문 활성화 설정
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* 자동 매수 활성화 */}
+                    <div className="flex items-center justify-between p-4 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                        <div>
+                            <h4 className="text-base font-medium text-navy-800 dark:text-navy-200 mb-2">
+                                자동 매수 활성화
+                            </h4>
+                            <p className="text-sm text-navy-600 dark:text-navy-400">
+                                설정된 전략에 따라 자동으로 매수 주문을 실행합니다
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => updateBotSetting('isBuyActive', !botSetting.isBuyActive)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                botSetting.isBuyActive
+                                    ? 'bg-green-500'
+                                    : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                    botSetting.isBuyActive ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                        </button>
+                    </div>
+
+                    {/* 자동 매도 활성화 */}
+                    <div className="flex items-center justify-between p-4 bg-navy-50/50 dark:bg-navy-800/50 rounded-lg">
+                        <div>
+                            <h4 className="text-base font-medium text-navy-800 dark:text-navy-200 mb-2">
+                                자동 매도 활성화
+                            </h4>
+                            <p className="text-sm text-navy-600 dark:text-navy-400">
+                                설정된 전략에 따라 자동으로 매도 주문을 실행합니다
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => updateBotSetting('isSellActive', !botSetting.isSellActive)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+                                botSetting.isSellActive
+                                    ? 'bg-red-500'
+                                    : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                    botSetting.isSellActive ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div className="flex gap-4">
                 {/* 매수 전략 선택 */}
                 <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
@@ -184,50 +288,6 @@ export default function Settings() {
                             </button>
                         ))}
                     </div>
-                </div>
-            </div>
-
-            {/* 거래소 마켓 선택 */}
-            <div className="bg-white dark:bg-gradient-to-br dark:from-navy-800 dark:to-navy-700 p-4 sm:p-6 rounded-lg shadow-lg shadow-navy-200/50 dark:shadow-navy-900/50 border border-navy-200/50 dark:border-navy-700/50">
-                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4">
-                    거래소 마켓 선택
-                </h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                    {markets.map((market) => (
-                        <button
-                            key={market.market}
-                            onClick={() => handleMarketToggle(market.market)}
-                            className={`p-3 rounded-lg text-left transition-all duration-200 ${
-                                botSetting.marketList.includes(market.market)
-                                    ? 'bg-navy-500 text-white'
-                                    : 'bg-navy-50 dark:bg-navy-800 text-navy-700 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700'
-                            }`}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="font-medium text-sm">
-                                        {market.market}
-                                    </div>
-                                    <div className={`text-xs mt-0.5 ${
-                                        botSetting.marketList.includes(market.market)
-                                            ? 'text-navy-100'
-                                            : 'text-navy-500 dark:text-navy-400'
-                                    }`}>
-                                        {market.description}
-                                    </div>
-                                </div>
-                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                    botSetting.marketList.includes(market.market)
-                                        ? 'border-white bg-white'
-                                        : 'border-navy-300 dark:border-navy-500'
-                                }`}>
-                                    {botSetting.marketList.includes(market.market) && (
-                                        <div className="w-2 h-2 rounded-full bg-navy-500"></div>
-                                    )}
-                                </div>
-                            </div>
-                        </button>
-                    ))}
                 </div>
             </div>
 
