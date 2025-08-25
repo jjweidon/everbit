@@ -11,7 +11,7 @@ public enum Market {
     SOL("KRW-SOL", "솔라나"),
     DOGE("KRW-DOGE", "도지코인"),
     USDT("KRW-USDT", "테더"),
-    STRIKE("KRW-STRIKE", "스트라이크"),
+    // STRIKE("KRW-STRIKE", "스트라이크"),
     XRP("KRW-XRP", "리플"),
     PENGU("KRW-PENGU", "펏지펭귄"),
     ENA("KRW-ENA", "에테나"),
