@@ -136,7 +136,7 @@ public class TradingScheduler {
         }
         
         // 매수 주문 로직
-        if (buySignal) {
+        if (buySignal && botSetting.getIsBuyActive()) {
             log.info("마켓: {} - 매수 시그널 감지됨 (전략: {}, 시그널 강도: {})", marketCode, buyStrategy, String.format("%.2f", buySignalStrength));
             try {
                 // 매수용 최소/최대 주문금액 가져오기
@@ -184,7 +184,7 @@ public class TradingScheduler {
         }
         
         // 매도 주문 로직
-        if (sellSignal) {
+        if (sellSignal && botSetting.getIsSellActive()) {
             log.info("마켓: {} - 매도 시그널 감지됨 (전략: {}, 시그널 강도: {})", marketCode, sellStrategy, String.format("%.2f", sellSignalStrength));
             try {
                 // 매도용 최소/최대 주문금액 가져오기
