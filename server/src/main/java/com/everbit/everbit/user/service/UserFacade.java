@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserManager {
+public class UserFacade {
     private final UserService userService;
     private final EncryptionUtil encryptionUtil;
     

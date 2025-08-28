@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.support.dto.InquiryRequest;
-import com.everbit.everbit.support.service.SupportManager;
+import com.everbit.everbit.support.service.SupportFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class SupportController {
-    private final SupportManager supportManager;
+    private final SupportFacade supportManager;
 
     // 문의 접수
     @PostMapping("/inquiries")

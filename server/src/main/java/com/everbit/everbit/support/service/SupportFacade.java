@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SupportManager {
+public class SupportFacade {
     private final InquiryRepository inquiryRepository;
     private final UserService userService;
 

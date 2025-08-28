@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TradeManager {
+public class TradeFacade {
     private final TradeService tradeService;
     private final UserService userService;
 

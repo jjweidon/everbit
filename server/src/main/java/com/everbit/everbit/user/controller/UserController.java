@@ -9,7 +9,7 @@ import com.everbit.everbit.user.dto.EmailRequest;
 import com.everbit.everbit.user.dto.UpbitApiKeysResponse;
 import com.everbit.everbit.user.dto.UpbitKeyRequest;
 import com.everbit.everbit.user.dto.UserResponse;
-import com.everbit.everbit.user.service.UserManager;
+import com.everbit.everbit.user.service.UserFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserManager userManager;
+    private final UserFacade userFacade;
 
     // 현재 사용자 정보 조회
     @GetMapping("/me")
     public ApiResponse<Response> getCurrentUser(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
-        UserResponse response = userManager.getUserResponse(username);
+        UserResponse response = userFacade.getUserResponse(username);
         return ApiResponse.success(response, "현재 사용자 정보 조회 성공");
     }
 
@@ -38,7 +38,7 @@ public class UserController {
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("POST 업비트 API 키 등록: {}", username);
-        UserResponse response = userManager.registerUpbitApiKeys(username, request);
+        UserResponse response = userFacade.registerUpbitApiKeys(username, request);
         return ApiResponse.success(response, "업비트 API 키 등록 성공");
     }
 
@@ -47,7 +47,7 @@ public class UserController {
     public ApiResponse<Response> getUpbitApiKeys(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("GET 업비트 API 키 조회: {}", username);
-        UpbitApiKeysResponse response = userManager.getUpbitApiKeys(username);
+        UpbitApiKeysResponse response = userFacade.getUpbitApiKeys(username);
         return ApiResponse.success(response, "업비트 API 키 조회 성공");
     }
 
@@ -56,7 +56,7 @@ public class UserController {
     public ApiResponse<Response> updateEmail(@AuthenticationPrincipal CustomOAuth2User oAuth2User, @RequestBody EmailRequest request) {
         String username = oAuth2User.getName();
         log.info("PATCH 이메일 업데이트: {}", username);
-        userManager.updateEmail(username, request.email());
+        userFacade.updateEmail(username, request.email());
         return ApiResponse.success(null, "이메일 업데이트 성공");
     }
 
@@ -65,7 +65,7 @@ public class UserController {
     public ApiResponse<Response> toggleBotActive(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("PATCH 봇 활성화 토글: {}", username);
-        UserResponse response = userManager.toggleBotActive(username);
+        UserResponse response = userFacade.toggleBotActive(username);
         return ApiResponse.success(response, "봇 활성화 토글 성공");
     }
 
@@ -74,7 +74,7 @@ public class UserController {
     public ApiResponse<Response> getBotSetting(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         String username = oAuth2User.getName();
         log.info("GET 봇 설정 조회: {}", username);
-        BotSettingResponse response = userManager.getBotSetting(username);
+        BotSettingResponse response = userFacade.getBotSetting(username);
         return ApiResponse.success(response, "봇 설정 조회 성공");
     }
 
@@ -83,7 +83,7 @@ public class UserController {
     public ApiResponse<Response> updateBotSetting(@AuthenticationPrincipal CustomOAuth2User oAuth2User, @RequestBody BotSettingRequest request) {
         String username = oAuth2User.getName();
         log.info("PUT 봇 설정 업데이트: {}", username);
-        BotSettingResponse response = userManager.updateBotSetting(username, request);
+        BotSettingResponse response = userFacade.updateBotSetting(username, request);
         return ApiResponse.success(response, "봇 설정 업데이트 성공");
     }
 } 
