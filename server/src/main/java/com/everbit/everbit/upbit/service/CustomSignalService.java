@@ -19,7 +19,7 @@ public class CustomSignalService {
     private final CustomSignalRepository customSignalRepository;
 
     private final int MIN_CONSECUTIVE_COUNT = 10;
-    private final int MAX_CONSECUTIVE_COUNT = 25;
+    private final int MAX_CONSECUTIVE_COUNT = 30;
 
     public CustomSignal findOrCreateCustomSignal(Market market) {
         return customSignalRepository.findByMarket(market)
@@ -52,11 +52,12 @@ public class CustomSignalService {
         // 추세전환 판정: MIN_CONSECUTIVE_COUNT회 이상 연속된 RSI 과매도 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
         else if (customSignal.getConsecutiveDropCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastDropAt())) {
-            customSignal.updateLastFlipUpAt();
-            customSignalRepository.save(customSignal);
             // 매수 시그널 발생
             buySignalGenerated = true;
             signalStrength = calculateDropNFlipSignalStrength(market);
+            customSignal.updateLastFlipUpAt();
+            customSignal.setConsecutiveDropCountMin(MIN_CONSECUTIVE_COUNT);
+            customSignalRepository.save(customSignal);
             log.info("DROP_N_FLIP 매수 신호 발생: {} (강도: {}, 카운트: {})", market, signalStrength, customSignal.getConsecutiveDropCount());
         }
 
@@ -88,11 +89,12 @@ public class CustomSignalService {
         // 추세전환 판정: MIN_CONSECUTIVE_COUNT회 이상 연속된 RSI 과매수 신호가 누적되어 있고, 
         // 마지막 RSI 시그널이 10분 이내 발생했으며, 현재 RSI 시그널이 없으면 추세전환
         else if (customSignal.getConsecutivePopCount() >= MIN_CONSECUTIVE_COUNT && isWithin10Minutes(customSignal.getLastPopAt())) {
-            customSignal.updateLastFlipDownAt();
-            customSignalRepository.save(customSignal);
             // 매도 시그널 발생
             sellSignalGenerated = true;
             signalStrength = calculatePopNFlipSignalStrength(market);
+            customSignal.updateLastFlipDownAt();
+            customSignal.setConsecutivePopCountMin(MIN_CONSECUTIVE_COUNT);
+            customSignalRepository.save(customSignal);
             log.info("POP_N_FLIP 매도 신호 발생: {} (강도: {}, 카운트: {})", market, signalStrength, customSignal.getConsecutivePopCount());
         }
 

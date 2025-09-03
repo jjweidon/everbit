@@ -1,6 +1,5 @@
 package com.everbit.everbit.trade.controller;
 
-import com.everbit.everbit.global.dto.ApiResponse;
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.trade.dto.MarketResponse;
 import com.everbit.everbit.trade.dto.StrategyResponse;
@@ -22,8 +21,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

@@ -64,4 +64,12 @@ public class CustomSignal extends BaseTime {
     public void updateLastFlipDownAt() {
         this.lastFlipDownAt = LocalDateTime.now();
     }
+
+    public void setConsecutiveDropCountMin(int minConsecutiveCount) {
+        this.consecutiveDropCount = minConsecutiveCount;
+    }
+
+    public void setConsecutivePopCountMin(int minConsecutiveCount) {
+        this.consecutivePopCount = minConsecutiveCount;
+    }
 }
