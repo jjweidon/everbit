@@ -109,15 +109,24 @@ public class LossAndProfitManagementScheduler {
         // 30분 경과 후 0.1% 이익도 못 내면 전량 매도 체크
         checkAndExecuteFullSellIfNeeded(user, market, coinBalance, currentPrice, avgBuyPrice, profitSellRatio);
         
-        // 손실 임계값 이상 손실인 경우 손실 매도 비율로 매도
-        if (profitRate.compareTo(lossThreshold.negate()) <= 0) {
-            log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, lossThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
-            executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, lossSellRatio);
+        // 손실 관리가 활성화된 경우에만 손실 임계값 체크
+        if (user.getBotSetting().getIsLossManagementActive()) {
+            if (profitRate.compareTo(lossThreshold.negate()) <= 0) {
+                log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, lossThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+                executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, lossSellRatio);
+            }
+        } else {
+            log.debug("사용자: {}, 마켓: {} - 손실 관리가 비활성화되어 있음", user.getUsername(), market);
         }
-        // 이익 임계값 이상 이익인 경우 이익 매도 비율로 매도
-        else if (profitRate.compareTo(profitThreshold) >= 0) {
-            log.info("사용자: {}, 마켓: {} - {}% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market, profitThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
-            executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING, profitSellRatio);
+        
+        // 이익 관리가 활성화된 경우에만 이익 임계값 체크
+        if (user.getBotSetting().getIsProfitTakingActive()) {
+            if (profitRate.compareTo(profitThreshold) >= 0) {
+                log.info("사용자: {}, 마켓: {} - {}% 이상 이익 감지! 부분 매도 실행", user.getUsername(), market, profitThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+                executePartialSell(user, market, coinBalance, currentPrice, Strategy.PROFIT_TAKING, profitSellRatio);
+            }
+        } else {
+            log.debug("사용자: {}, 마켓: {} - 이익 관리가 비활성화되어 있음", user.getUsername(), market);
         }
     }
     
@@ -132,7 +141,10 @@ public class LossAndProfitManagementScheduler {
      */
     private void checkAndExecuteFullSellIfNeeded(User user, Market market, BigDecimal coinBalance, BigDecimal currentPrice, BigDecimal avgBuyPrice, BigDecimal sellRatio) {
         try {
-            if (!user.getBotSetting().getIsTimeOutSellActive()) return;
+            if (!user.getBotSetting().getIsTimeOutSellActive()) {
+                log.debug("사용자: {}, 마켓: {} - 시간초과 관리가 비활성화되어 있음", user.getUsername(), market);
+                return;
+            }
             int timeOutSellMinutes = user.getBotSetting().getTimeOutSellMinutes();
             BigDecimal timeOutSellProfitRatio = user.getBotSetting().getTimeOutSellProfitRatio();
             // 마지막 매수 거래 정보 조회
