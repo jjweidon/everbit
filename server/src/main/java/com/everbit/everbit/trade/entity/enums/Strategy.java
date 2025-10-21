@@ -10,7 +10,7 @@ public enum Strategy {
         "극점포착",
         "연속 하락/상승 직후 정체 시 거래하는 전략",
         true,
-        CandleInterval.FIFTEEN,
+        CandleInterval.SIXTY,
         100
     ),
 

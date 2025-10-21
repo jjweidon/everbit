@@ -42,7 +42,7 @@ public class TradingScheduler {
     private final TradeService tradeService;
     
     @Transactional
-    @Scheduled(cron = "2 */3 * * * *")
+    @Scheduled(cron = "2 */10 * * * *")
     public void checkTradingSignals() {
         // 1. 모든 마켓에 대한 시그널을 먼저 계산
         Map<Market, TradingSignal> marketSignals = new HashMap<>();
