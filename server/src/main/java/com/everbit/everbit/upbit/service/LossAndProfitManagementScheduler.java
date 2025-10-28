@@ -22,6 +22,7 @@ import com.everbit.everbit.trade.entity.enums.Market;
 import com.everbit.everbit.upbit.dto.quotation.TickerResponse;
 import com.everbit.everbit.user.entity.User;
 import com.everbit.everbit.user.service.UserService;
+import com.everbit.everbit.upbit.repository.CustomSignalRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class LossAndProfitManagementScheduler {
     private final UpbitExchangeClient upbitExchangeClient;
     private final UpbitQuotationClient upbitQuotationClient;
     private final TradeService tradeService;
+    private final CustomSignalRepository customSignalRepository;
 
     @Transactional
     @Scheduled(cron = "1 */3 * * * *") // 3분마다 실행
@@ -114,6 +116,10 @@ public class LossAndProfitManagementScheduler {
             if (profitRate.compareTo(lossThreshold.negate()) <= 0) {
                 log.warn("사용자: {}, 마켓: {} - {}% 이상 손실 감지! 부분 매도 실행", user.getUsername(), market, lossThreshold.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
                 executePartialSell(user, market, coinBalance, currentPrice, Strategy.LOSS_MANAGEMENT, lossSellRatio);
+                
+                // 이상 손실 감지 시 CustomSignal의 연속 하락 카운트 초기화
+                // EXTREME_FLIP 전략의 추격 매수를 방지하여 반복 손실을 막음
+                resetConsecutiveDropForMarket(market);
             }
         } else {
             log.debug("사용자: {}, 마켓: {} - 손실 관리가 비활성화되어 있음", user.getUsername(), market);
@@ -162,14 +168,14 @@ public class LossAndProfitManagementScheduler {
                 
                 // TIMEOUT_SELL_PROFIT_RATE 이익도 못 낸 경우 부분 매도
                  if (profitRate.compareTo(timeOutSellProfitRatio) < 0) {
-                     log.warn("사용자: {}, 마켓: {} - {}분 경과 후 {}% 이익도 못 내서 부분 매도 실행! 경과시간: {}분, 수익률: {}%", 
-                         user.getUsername(), market, timeOutSellMinutes, 
-                         timeOutSellProfitRatio.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
-                         minutesElapsed, 
-                         profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
+                    log.warn("사용자: {}, 마켓: {} - {}분 경과 후 {}% 이익도 못 내서 부분 매도 실행! 경과시간: {}분, 수익률: {}%", 
+                        user.getUsername(), market, timeOutSellMinutes, 
+                        timeOutSellProfitRatio.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP),
+                        minutesElapsed, 
+                        profitRate.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP));
                      
-                     // TIMEOUT_SELL_MINUTES분 경과 후 이익도 못 내면 보유량의 sellRatio 매도
-                     executePartialSell(user, market, coinBalance, currentPrice, Strategy.TIMEOUT_SELL, sellRatio);
+                    // TIMEOUT_SELL_MINUTES분 경과 후 이익도 못 내면 보유량의 sellRatio 매도
+                    executePartialSell(user, market, coinBalance, currentPrice, Strategy.TIMEOUT_SELL, sellRatio);
                  } else {
                     log.info("사용자: {}, 마켓: {} - {}분 경과했지만 {}% 이상 이익이 있어 전량 매도 건너뜀. 경과시간: {}분, 수익률: {}%", 
                         user.getUsername(), market, timeOutSellMinutes, 
@@ -235,5 +241,25 @@ public class LossAndProfitManagementScheduler {
 
     private BigDecimal calculateProfitRate(BigDecimal currentPrice, BigDecimal avgBuyPrice) {
         return currentPrice.subtract(avgBuyPrice).divide(avgBuyPrice, 4, RoundingMode.HALF_UP);
+    }
+    
+    /**
+     * 특정 마켓의 CustomSignal에서 연속 하락 카운트를 초기화합니다.
+     * 이상 손실이 감지되었을 때 EXTREME_FLIP 전략의 추격 매수를 방지하여 반복 손실을 막기 위해 사용됩니다.
+     */
+    private void resetConsecutiveDropForMarket(Market market) {
+        try {
+            customSignalRepository.findByMarket(market)
+                .ifPresentOrElse(
+                    customSignal -> {
+                        customSignal.resetConsecutiveDrop();
+                        customSignalRepository.save(customSignal);
+                        log.info("마켓: {} - 연속 하락 카운트 초기화 완료 (이상 손실 방지)", market);
+                    },
+                    () -> log.debug("마켓: {} - CustomSignal이 존재하지 않아 초기화 건너뜀", market)
+                );
+        } catch (Exception e) {
+            log.error("마켓: {} - 연속 하락 카운트 초기화 중 오류 발생", market, e);
+        }
     }
 } 
