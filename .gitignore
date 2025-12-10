@@ -86,3 +86,9 @@ logs/
 
 # 스크립트
 run-everbit.sh
+
+# 문서
+/docs/
+*.docx
+*.pptx
+*.pdf

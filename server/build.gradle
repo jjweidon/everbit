@@ -35,6 +35,9 @@ dependencies {
 	implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.0'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	
+	// Spring Batch
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	
 	// Kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 	
