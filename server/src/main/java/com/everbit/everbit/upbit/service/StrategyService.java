@@ -23,18 +23,8 @@ public class StrategyService {
         switch (strategy) {
             case EXTREME_FLIP:
                 return signal.dropNFlipBuySignal();
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return signal.isTripleIndicatorConservativeBuySignal();
             case TRIPLE_INDICATOR_MODERATE:
                 return signal.isTripleIndicatorModerateBuySignal();
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return signal.isTripleIndicatorAggressiveBuySignal();
-            case BB_RSI_COMBO:
-                return signal.isBbRsiComboBuySignal();
-            case RSI_MACD_COMBO:
-                return signal.isRsiMacdComboBuySignal();
-            case BB_MACD_COMBO:
-                return signal.isBbMacdComboBuySignal();
             default:
                 return signal.isTripleIndicatorModerateBuySignal();
         }
@@ -47,18 +37,8 @@ public class StrategyService {
         switch (strategy) {
             case EXTREME_FLIP:
                 return signal.popNFlipSellSignal();
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return signal.isTripleIndicatorConservativeSellSignal();
             case TRIPLE_INDICATOR_MODERATE:
                 return signal.isTripleIndicatorModerateSellSignal();
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return signal.isTripleIndicatorAggressiveSellSignal();
-            case BB_RSI_COMBO:
-                return signal.isBbRsiComboSellSignal();
-            case RSI_MACD_COMBO:
-                return signal.isRsiMacdComboSellSignal();
-            case BB_MACD_COMBO:
-                return signal.isBbMacdComboSellSignal();
             default:
                 return signal.isTripleIndicatorModerateSellSignal();
         }
@@ -85,18 +65,8 @@ public class StrategyService {
         switch (strategy) {
             case EXTREME_FLIP:
                 return calculateStandardSignalStrength(signal);
-            case TRIPLE_INDICATOR_CONSERVATIVE:
-                return calculateTripleIndicatorConservativeSignalStrength(signal);
             case TRIPLE_INDICATOR_MODERATE:
                 return calculateTripleIndicatorModerateSignalStrength(signal);
-            case TRIPLE_INDICATOR_AGGRESSIVE:
-                return calculateTripleIndicatorAggressiveSignalStrength(signal);
-            case BB_RSI_COMBO:
-                return calculateBbRsiComboSignalStrength(signal);
-            case RSI_MACD_COMBO:
-                return calculateRsiMacdComboSignalStrength(signal);
-            case BB_MACD_COMBO:
-                return calculateBbMacdComboSignalStrength(signal);
             default:
                 return 0.5; // 기본값
         }
@@ -117,18 +87,6 @@ public class StrategyService {
     }
 
     /**
-     * 3지표 보수전략 시그널 강도 계산
-     */
-    private double calculateTripleIndicatorConservativeSignalStrength(TradingSignal signal) {
-        if (signal.isTripleIndicatorConservativeBuySignal()) {
-            return calculateBuySignalStrength(signal, true);
-        } else if (signal.isTripleIndicatorConservativeSellSignal()) {
-            return calculateSellSignalStrength(signal, true);
-        }
-        return 0.0;
-    }
-
-    /**
      * 3지표 중간전략 시그널 강도 계산
      */
     private double calculateTripleIndicatorModerateSignalStrength(TradingSignal signal) {
@@ -136,54 +94,6 @@ public class StrategyService {
             return calculateBuySignalStrength(signal, false);
         } else if (signal.isTripleIndicatorModerateSellSignal()) {
             return calculateSellSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-
-    /**
-     * 3지표 공격전략 시그널 강도 계산
-     */
-    private double calculateTripleIndicatorAggressiveSignalStrength(TradingSignal signal) {
-        if (signal.isTripleIndicatorAggressiveBuySignal()) {
-            return calculateBuySignalStrength(signal, false);
-        } else if (signal.isTripleIndicatorAggressiveSellSignal()) {
-            return calculateSellSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-
-    /**
-     * 볼린저+RSI 조합 시그널 강도 계산
-     */
-    private double calculateBbRsiComboSignalStrength(TradingSignal signal) {
-        if (signal.isBbRsiComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isBbRsiComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-
-    /**
-     * RSI+MACD 조합 시그널 강도 계산
-     */
-    private double calculateRsiMacdComboSignalStrength(TradingSignal signal) {
-        if (signal.isRsiMacdComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isRsiMacdComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
-        }
-        return 0.0;
-    }
-
-    /**
-     * 볼린저+MACD 조합 시그널 강도 계산
-     */
-    private double calculateBbMacdComboSignalStrength(TradingSignal signal) {
-        if (signal.isBbMacdComboBuySignal()) {
-            return calculateDetailedSignalStrength(signal, true);
-        } else if (signal.isBbMacdComboSellSignal()) {
-            return calculateDetailedSignalStrength(signal, false);
         }
         return 0.0;
     }

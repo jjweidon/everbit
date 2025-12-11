@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * 캔들 데이터 처리 및 BarSeries 생성을 담당하는 서비스
@@ -58,23 +59,19 @@ public class CandleDataService {
      * 캔들 데이터로부터 BarSeries를 빌드합니다.
      */
     private BarSeries buildBarSeries(String market, List<MinuteCandleResponse> candles) {
-        // BarSeries 생성
         BarSeries series = new BaseBarSeriesBuilder().withName(market).build();
         
-        // 캔들 데이터를 BarSeries에 추가 (시간 순서대로)
-        for (int i = candles.size() - 1; i >= 0; i--) {
-            MinuteCandleResponse candle = candles.get(i);
-            ZonedDateTime zonedDateTime = candle.candleDateTimeUtc().atZone(UTC);
-            
-            series.addBar(
-                zonedDateTime,
+        // 캔들 데이터를 역순으로 BarSeries에 추가 (시간 순서대로)
+        IntStream.range(0, candles.size())
+            .mapToObj(i -> candles.get(candles.size() - 1 - i))
+            .forEach(candle -> series.addBar(
+                candle.candleDateTimeUtc().atZone(UTC),
                 candle.openingPrice(),
                 candle.highPrice(),
                 candle.lowPrice(),
                 candle.tradePrice(),
                 candle.candleAccTradeVolume()
-            );
-        }
+            ));
         
         return series;
     }
