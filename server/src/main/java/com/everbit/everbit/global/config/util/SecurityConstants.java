@@ -8,7 +8,8 @@ public class SecurityConstants {
             "/",
             "/api/login/**",
             "/api/login/oauth2/code/**",
-            "/api/permitAll"
+            "/api/permitAll",
+            "/api/auth/refresh"
     );
 
     // URL 패턴이 일치하는지 확인하는 메서드

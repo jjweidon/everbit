@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 import { userApi } from '@/api/services';
 import { UserResponse } from '@/api/types';
 import { HttpClientFactory } from '@/api/lib/HttpClientFactory';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 interface AuthState {
     user: UserResponse | null;
@@ -25,8 +26,11 @@ const createAuthSlice: StateCreator<AuthState, [], [["zustand/persist", AuthStat
         // persist 저장소 초기화
         if (typeof window !== 'undefined') {
             localStorage.removeItem('auth-storage');
+            
+            // Access 토큰 삭제
+            tokenStorage.removeAccessToken();
 
-            // 모든 쿠키 제거
+            // 모든 쿠키 제거 (Refresh 토큰 포함)
             document.cookie.split(';').forEach(function (c) {
                 document.cookie = c
                     .replace(/^ +/, '')

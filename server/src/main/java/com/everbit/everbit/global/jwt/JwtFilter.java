@@ -3,7 +3,6 @@ package com.everbit.everbit.global.jwt;
 import org.springframework.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,28 +41,14 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        // Authorization 헤더에서 Access 토큰 추출 (로컬 스토리지에서 가져온 토큰)
         String authorization = null;
-
-        // 1. Authorization 헤더 우선 확인
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             authorization = authHeader.substring(7);
         }
 
-        // 2. Authorization 쿠키 확인 (헤더 없을 때만)
-        if (authorization == null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if ("Authorization".equals(cookie.getName())) {
-                        authorization = cookie.getValue();
-                        break;
-                    }
-                }
-            }
-        }
-
-        //Authorization 헤더 검증
+        // Authorization 헤더 검증
         if (authorization == null) {
             log.debug("Token is null");
             filterChain.doFilter(request, response);
@@ -76,14 +61,22 @@ public class JwtFilter extends OncePerRequestFilter {
         //토큰 소멸 시간 검증
         if (jwtUtil.isExpired(token)) {
             log.debug("Token is expired");
-            // 토큰이 만료되면 쿠키 삭제
-            Cookie cookie = new Cookie("Authorization", null);
-            cookie.setPath("/");
-            cookie.setMaxAge(0);
-            response.addCookie(cookie);
-            
-            // 로그인 페이지로 리다이렉트
-            response.sendRedirect(logoutRedirectUri);
+            // 401 Unauthorized 응답 반환 (클라이언트에서 refresh 처리)
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        // Access 토큰 카테고리 확인
+        try {
+            String category = jwtUtil.getCategory(token);
+            if (!"access".equals(category)) {
+                log.debug("Invalid token category: {}", category);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+        } catch (Exception e) {
+            log.debug("Failed to get token category", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 

@@ -2,6 +2,7 @@ package com.everbit.everbit.oauth2.service;
 
 import com.everbit.everbit.oauth2.dto.CustomOAuth2User;
 import com.everbit.everbit.global.jwt.JwtUtil;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +27,7 @@ import java.util.Iterator;
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${spring.security.oauth2.authenticated-redirect-uri}")
     private String authenticatedRedirectUri;
@@ -41,23 +43,31 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        //토큰 생성
-        // String access = jwtUtil.createJwt("access", username, role);
-        String access = jwtUtil.createJwt("default", username, role);
+        // Access 토큰 생성 (15분)
+        String accessToken = jwtUtil.createJwt("access", username, role);
+        
+        // Refresh 토큰 생성 (24시간)
+        String refreshToken = jwtUtil.createJwt("refresh", username, role);
+        
+        // Redis에 refresh 토큰 저장
+        refreshTokenService.saveRefreshToken(username, refreshToken);
             
-        // ResponseCookie를 사용하여 쿠키 설정
-        ResponseCookie cookie = createCookie("Authorization", access);
-        response.setHeader("Set-Cookie", cookie.toString());
-        response.sendRedirect(authenticatedRedirectUri);
+        // Refresh 토큰만 httpOnly 쿠키로 설정
+        ResponseCookie refreshCookie = createCookie("RefreshToken", refreshToken, 86400); // 24시간
+        response.setHeader("Set-Cookie", refreshCookie.toString());
+        
+        // Access 토큰은 URL 파라미터로 전달 (클라이언트에서 로컬 스토리지에 저장)
+        String redirectUrl = authenticatedRedirectUri + "?accessToken=" + accessToken;
+        response.sendRedirect(redirectUrl);
     }
 
-    private ResponseCookie createCookie(String name, String value) {
+    private ResponseCookie createCookie(String name, String value, int maxAgeSeconds) {
         return ResponseCookie.from(name, value)
                 .path("/")
                 .secure(true)
                 .httpOnly(true)
                 .sameSite("None")
-                .maxAge(Duration.ofHours(24))
+                .maxAge(Duration.ofSeconds(maxAgeSeconds))
                 .build();
     }
 }

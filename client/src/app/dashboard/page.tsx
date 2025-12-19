@@ -1,14 +1,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Overview, Portfolio, History, Settings, Navigation } from './components';
 import { DashboardTab } from './types';
 import MainHeader from '@/components/MainHeader';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 export default function Dashboard() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [selectedTab, setSelectedTab] = useState<DashboardTab>('overview');
+
+    // URL 쿼리 파라미터에서 Access 토큰 추출 및 저장
+    useEffect(() => {
+        const accessToken = searchParams.get('accessToken');
+        if (accessToken) {
+            // Access 토큰을 로컬 스토리지에 저장
+            tokenStorage.setAccessToken(accessToken);
+            
+            // URL에서 accessToken 파라미터 제거
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('accessToken');
+            const newUrl = params.toString() 
+                ? `/dashboard?${params.toString()}`
+                : '/dashboard';
+            router.replace(newUrl);
+        }
+    }, [searchParams, router]);
 
     // URL 쿼리 파라미터에서 초기 탭 상태를 가져옵니다
     useEffect(() => {
