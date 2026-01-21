@@ -27,9 +27,19 @@ public record TradingSignal(
     Num bbMiddleBand,         // 볼린저밴드 중간
     Num bbUpperBand,          // 볼린저밴드 상단
     Num rsiValue,             // RSI 값
+    Num previousRSIValue,     // 이전 RSI 값 (RSI 크로스 확인용)
     Num macdValue,            // MACD 값
     Num macdSignalValue,      // MACD 시그널 값
-    Num macdHistogram        // MACD 히스토그램
+    Num macdHistogram,        // MACD 히스토그램
+    
+    // 추세 및 변동성 지표 (Extreme Flip 전략 개선용)
+    Num adxValue,             // ADX 값 (추세 강도)
+    Num plusDI,               // +DI 값
+    Num minusDI,              // -DI 값
+    Num ema20,                // EMA 20
+    Num ema60,                // EMA 60
+    Num ema120,               // EMA 120
+    Num atrValue              // ATR 값 (변동성)
 ) {
     
     /**

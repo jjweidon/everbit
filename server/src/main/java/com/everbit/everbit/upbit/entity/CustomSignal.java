@@ -37,6 +37,8 @@ public class CustomSignal extends BaseTime {
 
     private LocalDateTime lastFlipDownAt;
 
+    private Double previousAtr;  // 이전 ATR 값 (변동성 감소 확인용)
+
     public void countUpConsecutiveDrop() {
         this.lastDropAt = LocalDateTime.now();
         this.consecutiveDropCount += 1;
@@ -72,4 +74,12 @@ public class CustomSignal extends BaseTime {
     public void setConsecutivePopCountMin(int minConsecutiveCount) {
         this.consecutivePopCount = minConsecutiveCount;
     }
+
+    /**
+     * ATR 값을 업데이트합니다.
+     */
+    public void updateAtr(double currentATR) {
+        this.previousAtr = currentATR;
+    }
+
 }

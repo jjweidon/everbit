@@ -11,6 +11,11 @@ import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.ATRIndicator;
+import org.ta4j.core.indicators.adx.ADXIndicator;
+import org.ta4j.core.indicators.adx.PlusDIIndicator;
+import org.ta4j.core.indicators.adx.MinusDIIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
@@ -31,6 +36,17 @@ public class TradingSignalService {
     private static final int MACD_SHORT = 6;  // MACD 단기
     private static final int MACD_LONG = 13;  // MACD 장기
     private static final int MACD_SIGNAL = 5; // MACD 시그널
+    
+    // EMA 기간
+    private static final int EMA_20 = 20;
+    private static final int EMA_60 = 60;
+    private static final int EMA_120 = 120;
+    
+    // ADX 기간
+    private static final int ADX_PERIOD = 14;
+    
+    // ATR 기간
+    private static final int ATR_PERIOD = 14;
     
     // RSI 기준값
     private static final int RSI_OVERSOLD = 30;   // RSI 과매도 기준
@@ -71,9 +87,20 @@ public class TradingSignalService {
         Num bbMiddleBand = getBollingerBandsMiddle(series, lastIndex);
         Num bbUpperBand = getBollingerBandsUpper(series, lastIndex);
         Num rsiValue = getRSIValue(series, lastIndex);
+        // 이전 RSI 값 계산 (RSI 크로스 확인용)
+        Num previousRSIValue = lastIndex > 0 ? getRSIValue(series, lastIndex - 1) : rsiValue;
         Num macdValue = getMACDValue(series, lastIndex);
         Num macdSignalValue = getMACDSignalValue(series, lastIndex);
         Num macdHistogram = getMACDHistogram(series, lastIndex);
+        
+        // 추세 및 변동성 지표 계산
+        Num adxValue = getADXValue(series, lastIndex);
+        Num plusDI = getPlusDIValue(series, lastIndex);
+        Num minusDI = getMinusDIValue(series, lastIndex);
+        Num ema20 = getEMAValue(series, lastIndex, EMA_20);
+        Num ema60 = getEMAValue(series, lastIndex, EMA_60);
+        Num ema120 = getEMAValue(series, lastIndex, EMA_120);
+        Num atrValue = getATRValue(series, lastIndex);
 
         // 기본 시그널 생성
         TradingSignal baseSignal = new TradingSignal(
@@ -94,9 +121,17 @@ public class TradingSignalService {
             bbMiddleBand,
             bbUpperBand,
             rsiValue,
+            previousRSIValue,
             macdValue,
             macdSignalValue,
-            macdHistogram
+            macdHistogram,
+            adxValue,
+            plusDI,
+            minusDI,
+            ema20,
+            ema60,
+            ema120,
+            atrValue
         );
         
         // DROP_N_FLIP과 POP_N_FLIP 로직 적용하여 최종 시그널 생성
@@ -133,9 +168,17 @@ public class TradingSignalService {
             baseSignal.bbMiddleBand(),
             baseSignal.bbUpperBand(),
             baseSignal.rsiValue(),
+            baseSignal.previousRSIValue(),
             baseSignal.macdValue(),
             baseSignal.macdSignalValue(),
-            baseSignal.macdHistogram()
+            baseSignal.macdHistogram(),
+            baseSignal.adxValue(),
+            baseSignal.plusDI(),
+            baseSignal.minusDI(),
+            baseSignal.ema20(),
+            baseSignal.ema60(),
+            baseSignal.ema120(),
+            baseSignal.atrValue()
         );
     }
     
@@ -377,5 +420,61 @@ public class TradingSignalService {
         SMAIndicator signal = new SMAIndicator(macd, MACD_SIGNAL);
         
         return macd.getValue(index).minus(signal.getValue(index));
+    }
+    
+    /**
+     * ADX 값 계산 (추세 강도)
+     */
+    private Num getADXValue(BarSeries series, int index) {
+        if (index < ADX_PERIOD) {
+            return series.numOf(0);
+        }
+        ADXIndicator adx = new ADXIndicator(series, ADX_PERIOD);
+        return adx.getValue(index);
+    }
+    
+    /**
+     * +DI 값 계산
+     */
+    private Num getPlusDIValue(BarSeries series, int index) {
+        if (index < ADX_PERIOD) {
+            return series.numOf(0);
+        }
+        PlusDIIndicator plusDI = new PlusDIIndicator(series, ADX_PERIOD);
+        return plusDI.getValue(index);
+    }
+    
+    /**
+     * -DI 값 계산
+     */
+    private Num getMinusDIValue(BarSeries series, int index) {
+        if (index < ADX_PERIOD) {
+            return series.numOf(0);
+        }
+        MinusDIIndicator minusDI = new MinusDIIndicator(series, ADX_PERIOD);
+        return minusDI.getValue(index);
+    }
+    
+    /**
+     * EMA 값 계산
+     */
+    private Num getEMAValue(BarSeries series, int index, int period) {
+        if (index < period - 1) {
+            return series.numOf(0);
+        }
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        EMAIndicator ema = new EMAIndicator(closePrice, period);
+        return ema.getValue(index);
+    }
+    
+    /**
+     * ATR 값 계산 (변동성)
+     */
+    private Num getATRValue(BarSeries series, int index) {
+        if (index < ATR_PERIOD) {
+            return series.numOf(0);
+        }
+        ATRIndicator atr = new ATRIndicator(series, ATR_PERIOD);
+        return atr.getValue(index);
     }
 } 
