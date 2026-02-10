@@ -48,6 +48,10 @@ public class TradingSignalService {
     // ATR 기간
     private static final int ATR_PERIOD = 14;
     
+    // Stochastic 기간
+    private static final int STOCHASTIC_K_PERIOD = 14;  // Stochastic %K 기간
+    private static final int STOCHASTIC_D_PERIOD = 3;  // Stochastic %D 기간 (SMA of %K)
+    
     // RSI 기준값
     private static final int RSI_OVERSOLD = 30;   // RSI 과매도 기준
     private static final int RSI_OVERBOUGHT = 70; // RSI 과매수 기준
@@ -101,6 +105,10 @@ public class TradingSignalService {
         Num ema60 = getEMAValue(series, lastIndex, EMA_60);
         Num ema120 = getEMAValue(series, lastIndex, EMA_120);
         Num atrValue = getATRValue(series, lastIndex);
+        
+        // Stochastic 지표 계산
+        Num stochasticK = getStochasticK(series, lastIndex);
+        Num stochasticD = getStochasticD(series, lastIndex);
 
         // 기본 시그널 생성
         TradingSignal baseSignal = new TradingSignal(
@@ -131,7 +139,9 @@ public class TradingSignalService {
             ema20,
             ema60,
             ema120,
-            atrValue
+            atrValue,
+            stochasticK,
+            stochasticD
         );
         
         // DROP_N_FLIP과 POP_N_FLIP 로직 적용하여 최종 시그널 생성
@@ -178,7 +188,9 @@ public class TradingSignalService {
             baseSignal.ema20(),
             baseSignal.ema60(),
             baseSignal.ema120(),
-            baseSignal.atrValue()
+            baseSignal.atrValue(),
+            baseSignal.stochasticK(),
+            baseSignal.stochasticD()
         );
     }
     
@@ -476,5 +488,61 @@ public class TradingSignalService {
         }
         ATRIndicator atr = new ATRIndicator(series, ATR_PERIOD);
         return atr.getValue(index);
+    }
+    
+    /**
+     * Stochastic %K 값 계산
+     * %K = ((현재가 - 최근 N일 최저가) / (최근 N일 최고가 - 최근 N일 최저가)) * 100
+     */
+    private Num getStochasticK(BarSeries series, int index) {
+        if (index < STOCHASTIC_K_PERIOD - 1) {
+            return series.numOf(50); // 기본값 50 (중간값)
+        }
+        
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        Num currentClose = closePrice.getValue(index);
+        
+        // 최근 N일 최고가와 최저가 찾기
+        Num highestHigh = series.numOf(0);
+        Num lowestLow = series.numOf(Double.MAX_VALUE);
+        
+        for (int i = index - STOCHASTIC_K_PERIOD + 1; i <= index; i++) {
+            Num high = series.getBar(i).getHighPrice();
+            Num low = series.getBar(i).getLowPrice();
+            
+            if (high.isGreaterThan(highestHigh)) {
+                highestHigh = high;
+            }
+            if (low.isLessThan(lowestLow)) {
+                lowestLow = low;
+            }
+        }
+        
+        // %K 계산
+        Num numerator = currentClose.minus(lowestLow);
+        Num denominator = highestHigh.minus(lowestLow);
+        
+        if (denominator.isZero()) {
+            return series.numOf(50); // 분모가 0이면 중간값 반환
+        }
+        
+        return numerator.dividedBy(denominator).multipliedBy(series.numOf(100));
+    }
+    
+    /**
+     * Stochastic %D 값 계산 (%K의 이동평균)
+     */
+    private Num getStochasticD(BarSeries series, int index) {
+        if (index < STOCHASTIC_K_PERIOD + STOCHASTIC_D_PERIOD - 2) {
+            return series.numOf(50); // 기본값 50 (중간값)
+        }
+        
+        // %K 값들의 이동평균 계산
+        Num sum = series.numOf(0);
+        for (int i = index - STOCHASTIC_D_PERIOD + 1; i <= index; i++) {
+            sum = sum.plus(getStochasticK(series, i));
+        }
+        
+        return sum.dividedBy(series.numOf(STOCHASTIC_D_PERIOD));
     }
 } 

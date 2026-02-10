@@ -39,7 +39,11 @@ public record TradingSignal(
     Num ema20,                // EMA 20
     Num ema60,                // EMA 60
     Num ema120,               // EMA 120
-    Num atrValue              // ATR 값 (변동성)
+    Num atrValue,             // ATR 값 (변동성)
+    
+    // 다중 오실레이터 지표 (Extreme Flip v2.0 개선용)
+    Num stochasticK,         // Stochastic %K 값
+    Num stochasticD          // Stochastic %D 값
 ) {
     // 지표 값들은 유지하되, 다른 전략 관련 메서드는 제거하고 EXTREME_FLIP 전략에만 집중
 }
