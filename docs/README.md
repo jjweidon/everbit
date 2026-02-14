@@ -1,0 +1,26 @@
+# Everbit 문서
+
+## 목차
+
+- [Requirements](./requirements/)
+  - [기능 요구사항](./requirements/functional.md)
+  - [비기능 요구사항](./requirements/non-functional.md)
+- [Architecture](./architecture/)
+  - [개요](./architecture/overview.md)
+  - [컴포넌트](./architecture/components.md)
+  - [데이터 모델](./architecture/data-model.md)
+  - [Kafka 토픽](./architecture/kafka-topics.md)
+- [Security](./security/)
+  - [시크릿 관리](./security/secrets.md)
+  - [위협 모델](./security/threat-model.md)
+- [Testing](./testing/)
+  - [테스트 전략](./testing/strategy.md)
+  - [테스트 매트릭스](./testing/test-matrix.md)
+  - [성능 테스트 계획](./testing/performance-plan.md)
+- [Operations](./operations/)
+  - [환경](./operations/environments.md)
+  - [런북](./operations/runbook.md)
+  - [재해 복구](./operations/disaster-recovery.md)
+- [Strategies](./strategies/)
+  - [EXTREME_FLIP](./strategies/EXTREME_FLIP/spec.md)
+- [ADR (Architecture Decision Records)](./adr/)

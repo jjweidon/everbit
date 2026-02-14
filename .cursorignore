@@ -1,0 +1,34 @@
+# secrets
+.env*
+**/application-*.yml
+**/application-*.yaml
+**/application.yml
+**/application.yaml
+**/*secret*
+**/*key*
+**/*credentials*
+
+# build outputs
+**/build/**
+**/.next/**
+**/dist/**
+**/out/**
+
+# logs & runtime
+**/*.log
+**/logs/**
+**/tmp/**
+**/.DS_Store
+
+# data/backtest artifacts
+data/**
+backtest-results/**
+**/*.csv
+**/*.parquet
+
+# infra local state
+**/.terraform/**
+**/*.tfstate*
+
+# docs: 문서는 실제 시크릿이 아닌 가이드이므로 허용
+!docs/
