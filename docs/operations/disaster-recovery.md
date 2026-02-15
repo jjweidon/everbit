@@ -1,12 +1,15 @@
 # 재해 복구 (Disaster Recovery)
 
-Status: Draft (운영 스펙 고정)
-Last updated: 2026-02-14 (Asia/Seoul)
-
-## 1. 목표
+Status: **Ready for Operation (v2 MVP)**  
+Owner: everbit  
+Last updated: 2026-02-15 (Asia/Seoul)
 
 단일 VM 올인원 구조는 VM 장애 시 전체 다운이 발생한다.  
 v2는 HA를 목표로 하지 않지만, **복구 가능성**은 반드시 확보한다.
+
+---
+
+## 1. 목표(RPO/RTO)
 
 - RPO(데이터 손실 허용): 24시간 이내(최소), 목표는 1시간 이내(향후)
 - RTO(복구 시간): 2~6시간(단일 VM 재구축 포함)
@@ -15,76 +18,64 @@ v2는 HA를 목표로 하지 않지만, **복구 가능성**은 반드시 확보
 
 ## 2. 복구 대상(우선순위)
 
-### P0 (반드시 복구)
-- PostgreSQL 데이터:
-  - 주문/체결/포지션/잔고 스냅샷
-  - 전략 설정/운영 정책
-  - 업비트 키 암호문(마스터키는 별도)
-  - Outbox/주문 상태(가능하면)
-- `/etc/everbit/everbit.env`는 **재생성 가능**이어야 하며, 백업하지 않는다(시크릿 정책)
+### P0(반드시)
+- PostgreSQL 데이터(주문/체결/포지션/설정/키 암호문/Outbox)
+- DNS/TLS 재구성(재발급 가능)
 
-### P1 (가능하면 복구)
+### P1(가능하면)
 - Grafana 대시보드/설정
-- Jenkins Job 설정(필요 시)
-- Prometheus TSDB(없어도 됨, 재수집 가능)
+- Jenkins job 설정(필요 시)
 
 ---
 
 ## 3. 백업 정책(최소)
 
 ### 3.1 DB 덤프(필수)
-- 주기: 하루 1회(최소), 운영 안정화 후 1시간 단위로 상향 가능
+- 주기: 하루 1회(최소)
 - 보관: 7~14일
-- 형태: `pg_dump`(논리 백업)
+- 방법: `pg_dump` 논리 백업
 
 권장:
-- 백업 파일은 VM 디스크에만 두지 말고, Object Storage로 업로드(Always Free 범위 내) 검토
+- 백업을 VM 디스크에만 두지 말고 Object Storage 업로드를 검토한다(Always Free 범위 내).
 
 ### 3.2 볼륨 스냅샷(옵션)
-- OCI에서 볼륨 스냅샷 기능을 활용할 수 있다면 주 1회
-- 단, “스냅샷이 곧 복구”는 아니다. 복구 절차가 문서화돼야 한다.
+- 주 1회(가능하면)
+- 단, 스냅샷만으로 “복구”가 보장되지는 않는다. 복구 절차가 핵심이다.
 
 ---
 
 ## 4. 복구 절차(표준)
 
-### 4.1 VM 완전 유실(최악 케이스)
+### 4.1 VM 완전 유실
 1) 새 OCI VM 생성(동일 shape/리전)
-2) NSG/포트 정책 적용(80/443, 22 제한)
+2) NSG/iptables 적용(80/443, 22 제한)
 3) Docker 설치
-4) repo clone + compose(prod) 준비
-5) DNS가 기존 Public IP를 가리키도록 조정(또는 Reserved IP를 사용했다면 재연결)
-6) TLS 재발급(또는 백업한 cert 복구 — 권장 X)
-7) PostgreSQL 컨테이너 기동
-8) DB restore:
-   - `psql` 또는 `pg_restore`로 덤프 복원
-9) 서버 기동
-10) 기능 검증:
-    - 로그인
-    - 업비트 키 복호화/검증(마스터키가 맞는지)
-    - 대시보드 최소 기능
+4) `/etc/everbit/everbit.env` 재생성(시크릿은 백업하지 않음)
+5) repo clone + compose(prod) 준비
+6) DNS 연결(또는 Reserved IP 재연결)
+7) TLS 재발급
+8) PostgreSQL 기동
+9) DB restore(pg_restore/psql)
+10) 서버 기동
+11) 기능 검증(로그인/키 복호화/대시보드)
 
-### 4.2 DB만 손상
-1) 즉시 Kill Switch OFF
-2) Postgres 컨테이너 중지
+### 4.2 DB 손상
+1) Kill Switch OFF
+2) Postgres 중지
 3) 최신 정상 백업으로 restore
-4) 서버 기동 후 데이터 정합성 점검
-5) Kill Switch ON(조건 만족 시)
+4) 서버 기동 후 정합성 점검
+5) Kill Switch ON
 
 ---
 
 ## 5. 복구 후 검증 체크리스트
-
-- [ ] api.everbit.kr HTTPS 정상
+- [ ] https://api.everbit.kr 정상
 - [ ] Kakao 로그인 정상
-- [ ] 업비트 키 복호화 및 Upbit 호출 정상
-- [ ] 주문 파이프라인 정상(테스트 모드/드라이런)
-- [ ] Grafana(필요 시) 접근 정상
+- [ ] Upbit 키 복호화 및 검증 정상
+- [ ] 주문 파이프라인 정상(테스트 모드/드라이런 권장)
 - [ ] 백업 스케줄 재활성화
 
 ---
 
-## 6. 운영 규칙(강제)
-
-- “복구 가능”을 보장하려면 **정기적으로 restore 리허설**이 필요하다.
-- 최소 분기 1회, 빈 DB에 restore만이라도 수행한다.
+## 6. 운영 규칙
+- 최소 분기 1회 restore 리허설을 수행한다(빈 DB에 restore만이라도).
