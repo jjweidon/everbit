@@ -1,34 +1,59 @@
-# secrets
+# Cursor AI index exclusion rules for Everbit v2
+# 목적: 시크릿/개인정보/대용량 산출물/운영 데이터가 AI 인덱싱에 포함되는 것을 방지
+
+# --- Secrets (절대 인덱싱 금지) ---
 .env*
-**/application-*.yml
-**/application-*.yaml
-**/application.yml
-**/application.yaml
+!.env.example
+**/application*.yml
+**/application*.yaml
 **/*secret*
 **/*key*
 **/*credentials*
+**/*token*
+**/*private*
+**/*.pem
+**/*.p12
+**/*.jks
+**/*.keystore
+**/*.crt
+**/*.cer
 
-# build outputs
+# --- Local/dev tooling ---
+**/.idea/**
+**/.vscode/**
+**/.DS_Store
+
+# --- Build outputs ---
 **/build/**
+**/target/**
+**/.gradle/**
 **/.next/**
 **/dist/**
 **/out/**
+**/coverage/**
 
-# logs & runtime
+# --- Runtime logs & temp ---
 **/*.log
 **/logs/**
 **/tmp/**
-**/.DS_Store
+**/.cache/**
+**/.pnpm-store/**
+**/.npm/**
+**/node_modules/**
 
-# data/backtest artifacts
+# --- Data / backtest artifacts (대용량/민감 가능) ---
 data/**
+datasets/**
 backtest-results/**
+artifacts/**
 **/*.csv
 **/*.parquet
+**/*.sqlite
+**/*.db
 
-# infra local state
+# --- Observability / infra local state ---
 **/.terraform/**
 **/*.tfstate*
-
-# docs: 문서는 실제 시크릿이 아닌 가이드이므로 허용
-!docs/
+**/prometheus/data/**
+**/grafana/data/**
+**/jenkins_home/**
