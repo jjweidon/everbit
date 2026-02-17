@@ -1,0 +1,22 @@
+#!/bin/sh
+# ADR-0001 Git 커밋 전략 적용: docs/adr/0001-git-strategy.md
+# 비표준 prefix(client: 등) 커밋 시 로컬에서 실패하도록 차단
+
+MSG_FILE="$1"
+FIRST_LINE="$(head -n 1 "$MSG_FILE")"
+
+# 허용 type: docs, feat, fix, test, chore, refactor
+# scope 옵션: type(scope): subject
+PATTERN='^(docs|feat|fix|test|chore|refactor)(\([a-z0-9._-]+\))?: .+'
+
+echo "$FIRST_LINE" | grep -Eq "$PATTERN"
+if [ $? -ne 0 ]; then
+  echo "Invalid commit message (ADR-0001)."
+  echo "Use: <type>(optional-scope): <subject>"
+  echo "Allowed types: docs, feat, fix, test, chore, refactor"
+  echo "Allowed scopes: server, client, infra, docs, ops, build, test"
+  echo "Example: chore(client): 로고 에셋 교체"
+  exit 1
+fi
+
+exit 0
