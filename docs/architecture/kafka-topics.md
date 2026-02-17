@@ -124,6 +124,7 @@ payload:
 
 푸시 알림 트리거:
 - `OrderAccepted` 이벤트를 notification-worker가 소비하여 WebPush 발송(FRD: FR-NOTI-001)
+- 상세: `docs/architecture/push-notifications.md`
 
 ---
 

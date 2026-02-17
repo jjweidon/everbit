@@ -190,6 +190,7 @@ Upbit REST 응답 헤더 `Remaining-Req`를 파싱하여 group/sec 기준으로 
 
 - `OrderAccepted` 이벤트 발생 시 `notification-worker`가 WebPush 발송(FRD: FR-NOTI-001)
 - 푸시는 SoT가 아니므로 실패해도 거래 흐름은 유지한다(단, 실패 구독은 정리).
+- 상세: `docs/architecture/push-notifications.md`
 
 ---
 

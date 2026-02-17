@@ -27,7 +27,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ---
 
-## 2. Backend(Sprint Boot) 모듈 경계
+## 2. Backend(Spring Boot) 모듈 경계
 
 > 패키지 예시는 가이드다. 핵심은 “책임”과 “입출력”이다.
 

@@ -20,6 +20,12 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - Access Token: Bearer header
 - Refresh Token: HttpOnly + Secure cookie
 - Refresh rotation + 재사용 탐지(서버 Redis `refresh_jti`)
+- Refresh Cookie 속성(결정 고정):
+  - `HttpOnly`, `Secure`, `SameSite=Lax`
+  - `Path`는 refresh 전용으로 좁힌다(예: `/api/v2/auth/refresh`).
+- CSRF 방어(필수):
+  - refresh/logout 등 **cookie 기반** 엔드포인트는 `Origin`/`Referer` allowlist 검증을 강제한다(`https://everbit.kr`만).
+  - (선택, P1) Double Submit CSRF 토큰 도입(비-HttpOnly 쿠키 + 헤더).
 - CORS는 `everbit.kr`(프론트) → `api.everbit.kr`(백)만 허용한다(명시 allowlist).
 
 ### 1.3 노출 정책

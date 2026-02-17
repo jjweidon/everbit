@@ -119,9 +119,12 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 계정 Kill Switch:
   - UI: 헤더 토글(ON/OFF)
   - OFF 시 신규 주문 생성/전송을 금지한다.
+  - OFF 시에도 **Signal/OrderIntent 기록은 허용**한다(분석/감사용).
+  - 단, `OrderAttempt` 발행(Upbit 호출) 및 `everbit.trade.command` 발행은 **금지**한다(상세: `docs/architecture/order-pipeline.md`).
+  - 이미 Upbit에 접수된 주문을 자동 취소하지 않는다(P0). 필요 시 수동 정리/향후 확장(P1).
 - 전략 Kill Switch:
   - OFF 시 해당 전략 키의 주문 생성/실행을 금지한다.
-- Kill Switch는 파이프라인 모든 단계에서 강제되어야 한다(상세: `order-pipeline.md`).
+- Kill Switch는 파이프라인 모든 단계에서 강제되어야 한다(상세: `docs/architecture/order-pipeline.md`).
 
 ---
 

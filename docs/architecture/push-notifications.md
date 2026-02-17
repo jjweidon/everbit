@@ -67,7 +67,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 ### 2.3 권한 상태별 UI 규격(최소)
 - `granted`: “푸시 사용 중” + “해지 버튼”
 - `default`: “푸시 사용하기” (권한 요청은 토글/버튼 클릭 시 수행)
-- `denied`: “브라우저 설정에서 알림을 허용해야 함” 가이드(링크/설명)
+- `denied`: “브라우저 설정에서 알림을 허용해야 함” 가이드
 
 ---
 
@@ -102,10 +102,6 @@ Base URL 예시:
 
 ### 4.1 POST `/api/v2/push/subscriptions` (등록/갱신)
 
-의도:
-- “등록”과 “갱신”을 동일 엔드포인트로 처리한다.
-- 동일 endpoint가 이미 존재하면 update(upsert)한다.
-
 Request DTO (JSON):
 ```json
 {
@@ -138,8 +134,6 @@ Response DTO:
 DB 규칙:
 - UNIQUE(owner_id, endpoint)
 - 등록 시 `enabled=true`로 강제
-
-멱등:
 - 같은 endpoint 재등록은 upsert로 처리(중복 row 금지)
 
 ### 4.2 GET `/api/v2/push/subscriptions` (목록)
@@ -161,8 +155,7 @@ Response DTO:
 ```
 
 보안:
-- endpoint는 개인 식별/추적 가능성이 있으므로 UI에 전부 노출할 필요는 없다.
-- MVP에서는 디버깅용으로만 제한적으로 보여준다(마스킹 권장).
+- endpoint는 UI에 전부 노출할 필요가 없다(마스킹 권장).
 
 ### 4.3 DELETE `/api/v2/push/subscriptions/{id}` (해지)
 
@@ -176,10 +169,8 @@ Response:
 
 서버 동작(결정 고정):
 - delete(물리 삭제) 대신 기본은 `enabled=false`로 비활성화(감사/분석 용이)
-- 필요 시 GC 배치로 오래된 disabled row 정리(P1)
 
 ### 4.4 POST `/api/v2/push/test` (테스트 발송, P0 권장)
-운영 초기 검증에 필요하다.
 
 Request:
 ```json
@@ -203,9 +194,6 @@ Response:
 ## 5. 알림 Payload 스키마(고정)
 
 ### 5.1 공통 Envelope
-- `eventId`는 중복 전송 방지/추적용
-- `type`으로 알림 종류 확장 가능
-
 ```json
 {
   "schemaVersion": 1,
@@ -241,24 +229,17 @@ Response:
 }
 ```
 
-필드 규칙:
-- `side`: 내부 표준(BUY/SELL)
-- `intentType`: ENTRY/EXIT_STOPLOSS/EXIT_TP/EXIT_TRAIL/EXIT_TIME
-- `requestedKrw` 또는 `requestedVolume`은 주문 타입에 따라 하나만 채워도 됨
-- UI 표시를 위해 `title/body`는 서버에서 완성해서 보내도 되고,
-  클라이언트가 `data`를 기반으로 재구성해도 된다(단, MVP에서는 서버 완성 권장).
-
 ---
 
 ## 6. 딥링크 규격(알림 클릭 동작)
 
 원칙:
 - 딥링크는 프론트 라우트 기준의 **상대 경로**로만 허용한다.
-- 외부 URL/스킴 실행은 금지(피싱/오픈리다이렉트 방지).
+- 외부 URL/스킴 실행은 금지(오픈 리다이렉트/피싱 방지).
 
-### 6.1 deepLink 허용 규칙(고정)
+허용 규칙(고정):
 - 반드시 `/`로 시작
-- `//`(프로토콜 상대 URL) 금지
+- `//` 금지
 - `http:` `https:` 포함 금지
 - 길이 제한(권장): 512
 
@@ -268,9 +249,9 @@ Response:
 - ❌ `https://evil.com/...`
 - ❌ `//evil.com/...`
 
-### 6.2 Service Worker 클릭 처리 규격
+Service Worker 클릭 처리 규격:
 - 알림 클릭 시:
-  1) 열린 클라이언트 탭 중 everbit.kr이 있으면 focus
+  1) 열린 탭 중 everbit.kr이 있으면 focus
   2) 없으면 새 탭을 열고 deepLink로 이동
 - deepLink는 `notification.data.deepLink`에서 읽는다.
 
@@ -278,97 +259,65 @@ Response:
 
 ## 7. Server: 발송 파이프라인(권장 구현)
 
-### 7.1 트리거
-- `OrderAccepted` 도메인 이벤트 발생
-- `notification-worker`가 consume
-
-### 7.2 구독 조회
-- `push_subscription`에서 `enabled=true`인 모든 row 조회(싱글 테넌트지만 multi-device 허용)
-
-### 7.3 발송
-- WebPush 라이브러리로 각 subscription endpoint에 POST
-- 발송 시 payload는 JSON string
-
-### 7.4 결과 처리(필수)
-- 성공: (선택) notification_log 기록
-- 실패: 실패 코드별 정리 규칙 수행(아래 8장)
+1) `OrderAccepted` 도메인 이벤트 발생
+2) `notification-worker`가 consume
+3) `push_subscription(enabled=true)` 조회
+4) Web Push 발송(payload JSON string)
+5) 실패 코드별 정리 규칙 수행(8장)
 
 ---
 
 ## 8. 실패 코드별 구독 정리 규칙(강제)
 
-푸시는 실패가 정상이며, 방치하면 다음 문제가 생긴다.
-- 매번 실패 호출로 리소스/시간 낭비
-- 일부 브라우저에서 410/404가 지속되어 로그 오염
-
-정리 정책은 **보수적으로** 간다:
-- “구독이 더 이상 유효하지 않다”가 확실한 경우만 비활성화/삭제
-- 네트워크/일시 장애는 재시도(또는 다음 이벤트에서 재시도)
-
-### 8.1 Web Push 실패 유형 분류
-
-A) **구독 만료/해지(영구 실패)** → 즉시 비활성화/삭제 대상  
+### 8.1 구독 만료/해지(영구 실패) → 즉시 비활성화
 - HTTP 404 Not Found
-- HTTP 410 Gone  
-의미: 해당 endpoint는 더 이상 유효하지 않음
+- HTTP 410 Gone
 
 조치(강제):
-- 해당 endpoint의 subscription을 `enabled=false`로 전환
-- (선택) disabled_at 기록
-- (선택) notification_log에 failure reason 기록
+- 해당 endpoint subscription을 `enabled=false`로 전환
 
-B) **일시 장애(재시도 가능)** → 비활성화 금지  
-- HTTP 429 Too Many Requests
+### 8.2 일시 장애(재시도 가능) → 비활성화 금지
+- HTTP 429
 - HTTP 500/502/503/504
 - 네트워크 타임아웃
 
 조치(권장):
-- 즉시 재시도는 금지(폭주 방지)
-- “다음 알림 이벤트”에서 자연 재시도(싱글 사용자라 충분)
-- 필요하면 `next_retry_at` 필드 도입(P1)
+- 즉시 재시도 금지(폭주 방지)
+- 다음 이벤트에서 자연 재시도
 
-C) **클라이언트/서버 구성 오류(개발 이슈)** → 즉시 분석  
+### 8.3 구성 오류(개발 이슈) → 분석 필요
 - HTTP 400/401/403 등
-- payload 스키마/키 문제 가능
 
 조치(강제):
-- subscription을 바로 비활성화하지 않는다(구독이 문제인지 확정 불가)
-- 에러 로그에 correlation id + endpoint hash(원문 endpoint는 최소화) 남김
-- 운영자가 원인 수정 후 재시도
-
-### 8.2 endpoint 해시 로그 규칙(권장)
-- endpoint 원문을 로그에 남기지 말고 해시(예: SHA-256 8자리)로 남긴다.
-- 이유: endpoint는 사용자 환경 식별 가능.
+- 구독을 바로 비활성화하지 않는다(구독 무효가 확정 아님)
+- 에러 로그에 correlation id + endpoint hash 남김(원문 endpoint 최소화)
 
 ---
 
 ## 9. 보안/시크릿(강제)
 
-- `VAPID_PRIVATE_KEY`는 운영 시크릿이며:
+- `VAPID_PRIVATE_KEY`는 운영 시크릿
   - Git 커밋 금지
   - 로그 출력 금지
   - `.cursorignore`로 인덱싱 제외
-- `VAPID_PUBLIC_KEY`는 클라이언트에 노출 가능
-- deepLink는 상대 경로만 허용(오픈 리다이렉트 방지)
+- deepLink는 상대 경로만 허용
 
 ---
 
 ## 10. 테스트 요구사항(최소)
 
-### 10.1 Backend 통합 테스트(필수)
-- 구독 등록 upsert(동일 endpoint)
-- 전송 성공 시 delivered count 반영
+Backend 통합 테스트(필수):
+- 구독 upsert(동일 endpoint)
 - 410/404 실패 시 subscription 비활성화
 - 500/timeout 시 비활성화하지 않음
 
-### 10.2 Frontend(필수)
+Frontend(필수):
 - 권한 상태별 UI 분기
-- 토글 ON 시 SW 등록 + 구독 생성 + 서버 등록 호출
-- 토글 OFF 시 서버 해지 호출
+- ON: SW 등록 + 구독 생성 + 서버 등록 호출
+- OFF: 서버 해지 호출
 
-### 10.3 E2E(권장)
-- OrderAccepted 발생(스텁) → 서버가 push 전송 시도까지 확인(실제 OS 알림 수신은 환경 의존)
-- 최소는 “push send 함수 호출/응답”을 검증하는 수준으로 고정
+E2E(권장):
+- OrderAccepted 발생(스텁) → 서버 push 전송 시도까지 확인
 
 ---
 
