@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - AI 생성 코드가 “그럴듯하게 돌아가 보이는” 수준을 넘어서, 실거래에서 안전하도록 만든다.
@@ -12,18 +12,24 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ## 1. 기본 원칙
 
-1) **FRD → 테스트 케이스**로 추적 가능해야 한다.
+1) **TDD(RED→GREEN→REFACTOR)를 기본 개발 루프로 고정**
+- 새 기능/버그 수정은 **실패하는 테스트(RED)** 부터 시작한다.
+- 테스트를 통과시키는 최소 구현으로 **GREEN**을 만들고, 그 다음에만 리팩토링한다.
+- 상세 규칙/DoD: `docs/testing/tdd.md`
+
+2) **FRD → 테스트 케이스**로 추적 가능해야 한다.
 - 각 FR-ID는 최소 1개 이상의 테스트 케이스로 연결한다.
 
-2) **외부 API는 스텁/컨트랙트 기반**
+3) **외부 API는 스텁/컨트랙트 기반**
 - 개발/CI에서는 실 Upbit/Kakao 호출을 최소화한다.
 - 운영 검증 단계에서만 제한적으로 실 호출을 수행한다.
 
-3) **실거래 사고 유발 영역은 P0 테스트로 승격**
+4) **실거래 사고 유발 영역은 P0 테스트로 승격**
 - 중복 주문
 - 429/418 대응
 - timeout/5xx → UNKNOWN 수렴
 - Kill Switch 강제
+
 
 ---
 
@@ -31,7 +37,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### 2.1 Backend
 - Unit: 도메인 규칙(전략 계산, 리스크 게이트, 상태머신)
-- Integration(Testcontainers): Postgres/Redis/Kafka + Outbox 흐름
+- Integration(Testcontainers): Postgres/Redis + Outbox/Queue 흐름
 - Contract(Stub): WireMock(Upbit REST), (가능하면) WS mock
 - E2E: API 레벨 + 프론트 Playwright
 - Security: secret scanning, dependency scanning(최소)
@@ -82,5 +88,6 @@ P1(권장):
 ---
 
 ## 6. 출력물
+- `docs/testing/tdd.md`가 백엔드 개발 루프(TDD)의 최종 기준이다.
 - `docs/testing/test-matrix.md`가 케이스 목록의 최종 기준이다.
 - 성능/지표 산식은 `docs/testing/performance-plan.md`가 최종 기준이다.

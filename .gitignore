@@ -90,6 +90,7 @@ run-everbit.sh
 # 문서
 # docs/*.md는 커밋에 포함. ignore 필요한 파일만 제외
 docs/ignore/
+docs.zip
 *.docx
 *.pptx
 *.pdf

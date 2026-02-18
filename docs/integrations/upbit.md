@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - Upbit 연동을 “주문 파이프라인(멱등/UNKNOWN 수렴/레이트리밋)”과 충돌 없이 구현한다.
@@ -12,11 +12,11 @@ Last updated: 2026-02-15 (Asia/Seoul)
 비목표(v2 MVP):
 - 브라우저(클라이언트)에서 Upbit 직접 호출 (금지)
 - 다중 거래소/다중 계정 지원
-- 고빈도 시세 원본 스트리밍을 Kafka로 전송
+- 고빈도 시세 원본 스트리밍을 메시지 브로커/큐로 전송
 
 관련 문서(SoT):
 - `docs/architecture/order-pipeline.md` (UNKNOWN 수렴/재시도/멱등)
-- `docs/architecture/kafka-topics.md` (이벤트/알림 트리거)
+- `docs/architecture/event-bus.md` (이벤트/알림 트리거)
 - `docs/security/secrets.md` (키 저장/로깅 금지)
 
 참조(공식 문서):
@@ -62,7 +62,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 정책:
 - 대량 적재는 백오프/배치로 수행한다.
-- 시장 데이터 원본(고빈도)은 Kafka로 흘리지 않는다.
+- 시장 데이터 원본(고빈도)은 EventBus/Queue(outbox_event)로 흘리지 않는다.
 
 ### 2.2 REST (Exchange: 거래/자산)
 목적:
@@ -123,8 +123,11 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - `side`: `bid`(매수) / `ask`(매도)
 - `identifier`: Attempt별 신규 생성(ULID/UUID)
 
-주의:
-- identifier는 멱등키가 아니다.
+주의(강제):
+- identifier는 **멱등키가 아니다.**
+- identifier는 **계정 전체 주문 내 유일**해야 하며, 한번 사용한 값은 주문의 성공/실패/체결 여부와 무관하게 **재사용 불가**다.
+- Upbit 주문 관련 API 응답에서 `identifier` 필드는 **2024-10-18 이후 생성된 주문**에 대해서만 제공된다.
+  - 따라서 reconcile 시에는 `identifier`를 “보조 상관관계 키”로만 사용하고, 기준 키는 `uuid(upbit_uuid)`를 사용한다.
 
 ### 6.2 ord_type 정책(Upbit 규격)
 - 지정가: `limit` (volume/price)
@@ -145,6 +148,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### 7.3 private 구독 규칙(강제)
 - `myOrder`: 주문/체결
+  - `myOrder` 이벤트에는 `trade_uuid`(체결의 유일 식별자)가 포함된다. 체결 적재(`fill`)는 trade_uuid로 멱등 처리한다.
 - `myAsset`: 자산
 
 주의:

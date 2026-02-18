@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - “어디에 어떤 코드가 있어야 하는지”를 고정한다.
@@ -13,21 +13,27 @@ Last updated: 2026-02-15 (Asia/Seoul)
 ## 1. 설계 원칙(강제)
 
 1) **SoT는 PostgreSQL**
-- 상태의 최종 기준은 DB다. Kafka/Redis는 보조.
+- 상태의 최종 기준은 DB다. Redis는 보조, EventBus는 DB outbox_event로 구현한다.
 
-2) **외부 연동은 Adapter로 격리**
+2) **비동기는 EventBus로 분리**
+- v2 MVP에서는 Kafka 대신 PostgreSQL Outbox/Queue(`outbox_event`)를 이벤트 버스/큐로 사용한다.
+- 전달은 **at-least-once**, 소비자는 **idempotent**로 구현한다.
+
+3) **외부 연동은 Adapter로 격리**
 - Upbit/Kakao/WebPush는 전부 Adapter 계층 뒤로 숨긴다.
 
-3) **숨은 부작용 금지**
+4) **숨은 부작용 금지**
 - 함수/모듈 이름으로 예측 가능한 동작만 수행한다.
 - 로깅/메트릭/알림 전송은 호출자가 명시적으로 트리거한다(또는 이벤트로 분리).
 
-4) **조건 분기 복잡도는 컴포넌트/모듈로 분리**
+5) **조건 분기 복잡도는 컴포넌트/모듈로 분리**
 - 서로 다른 정책(레짐/주문타입/리스크)은 단일 함수에서 뭉개지 않는다.
 
 ---
 
 ## 2. Backend(Spring Boot) 모듈 경계
+
+코드/클래스 규칙(패키지/엔티티/DTO/서비스 표준): `docs/architecture/spring-boot-conventions.md`
 
 > 패키지 예시는 가이드다. 핵심은 “책임”과 “입출력”이다.
 
@@ -50,7 +56,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
   - 입력: Signal + 현재 Position + 설정
   - 출력: OrderIntent 생성 여부 + intent_type + ReasonCode
 - `OrderIntentService`
-  - Signal/Intent 저장, Outbox 생성
+  - Signal/Intent 저장, `CreateOrderAttempt` 커맨드 발행(EventBus)
 - `OrderStateService`
   - Order/Fill/Position/PnL 업데이트(정합성 유지)
 
@@ -58,7 +64,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - `OrderExecutor`
   - 입력: orderAttemptId
   - 동작: Upbit 주문 생성/조회/취소 수행(반드시 Adapter 경유)
-  - 출력: Attempt 상태 전이 + 이벤트(outbox)
+  - 출력: Attempt 상태 전이 + 이벤트(EventBus)
 
 #### Reconciliation
 - `ReconcileService`
@@ -67,7 +73,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 #### Backtest
 - `BacktestService`(요청 저장/조회)
-- `BacktestWorker`(Kafka 소비/시뮬레이션)
+- `BacktestWorker`(Outbox/Queue 소비/시뮬레이션)
 
 #### Notification
 - `NotificationService`
@@ -87,21 +93,43 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### 2.4 Persistence Layer
 - Repository/JPA/Query 계층
-- 중요한 테이블: Signal, OrderIntent, OrderAttempt, UpbitOrder, Fill, Position, Pnl, Outbox, StrategyConfig, PushSubscription
+- 중요한 테이블: Signal, OrderIntent, OrderAttempt, UpbitOrder, Fill, Position, Pnl, OutboxEvent, StrategyConfig, PushSubscription
 
 규칙:
 - 유니크 제약/인덱스는 `docs/architecture/data-model.md`가 최종 기준이다.
 - 멱등은 “쿼리 if exists”가 아니라 **유니크 제약 + 예외 처리**로 보장한다.
+- 복합키/공유PK 매핑은 `docs/architecture/jpa-mapping.md`를 따른다.
 
 ---
 
-## 3. Frontend(Next.js) 구조 가이드
+## 3. EventBus 추상화(미래 교체를 위한 고정)
+
+v2 MVP에서는 DB 기반 Outbox/Queue로 시작하지만, **코드 의존성은 EventBus 인터페이스로 고정**한다.
+
+권장 구성:
+- `EventBus` (port)
+  - `publish(stream, envelope)` : 트랜잭션 내 outbox_event INSERT
+- `OutboxWorker` (adapter)
+  - DB polling + `FOR UPDATE SKIP LOCKED` claim
+  - envelope → `EventDispatcher`로 라우팅
+- `EventHandler<T>`
+  - 이벤트 타입별 핸들러(주문 실행/푸시/백테스트 등)
+
+추후 Kafka 도입 시:
+- `KafkaEventBus`/Kafka Consumer adapter로 교체
+- `EventDispatcher`/핸들러/도메인 로직은 그대로 유지
+
+SoT: `docs/architecture/event-bus.md`, ADR-0009
+
+---
+
+## 4. Frontend(Next.js) 구조 가이드
 
 목표:
 - 기능 단위로 폴더를 묶어서 삭제/수정/확장이 쉽도록 한다.
 - 로직/상태/컴포넌트를 한 파일에서 과도하게 섞지 않는다.
 
-### 3.1 디렉터리 구조(권장)
+### 4.1 디렉터리 구조(권장)
 - 기능/도메인 중심으로 묶는다.
 
 예:
@@ -116,22 +144,22 @@ client/src/
     notifications/       # 푸시 권한/구독 관리
 ```
 
-### 3.2 상태/훅 설계 원칙
+### 4.2 상태/훅 설계 원칙
 - Zustand store는 “범위가 작은 store 여러 개”로 쪼갠다(거대 store 금지).
 - API 훅은 가능한 한 “일관된 반환 형태”를 유지한다.
 - 복잡한 조건은 이름 있는 변수/정책 객체로 분리한다.
 
-### 3.3 UI 분기 원칙
+### 4.3 UI 분기 원칙
 - 상태별 UI가 크게 다르면 컴포넌트를 분리한다.
   - 예: `PushPermissionBanner` / `PushEnabledPanel` / `PushBlockedPanel`
 
-### 3.4 매직 넘버 금지
+### 4.4 매직 넘버 금지
 - 시간(ms), 재시도 횟수, threshold 등은 상수로 명명한다.
 - 상수는 사용되는 로직 근처(도메인 폴더) 또는 `shared/constants`에 둔다.
 
 ---
 
-## 4. 푸시 알림(클라이언트) 구성(요약)
+## 5. 푸시 알림(클라이언트) 구성(요약)
 
 - Service Worker 등록(명시적 사용자 액션 이후)
 - Push subscription 생성(PushManager)

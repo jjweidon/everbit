@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 실거래 시스템에서 가장 위험한 문제는 아래 3가지다.
 
@@ -31,8 +31,10 @@ Last updated: 2026-02-15 (Asia/Seoul)
 1) **SoT는 PostgreSQL**
 - 멱등/상태는 DB 유니크 제약 + 상태머신으로 보장한다.
 
-2) **Kafka는 at-least-once**
-- 중복 수신이 정상이다. 소비자는 idempotent하게 동작해야 한다.
+2) **EventBus/Queue는 at-least-once**
+- v2 MVP에서는 Kafka 대신 PostgreSQL Outbox/Queue(`outbox_event`)를 사용한다.
+- 워커 크래시/재기동으로 동일 커맨드/이벤트가 **중복 처리**될 수 있다.
+- 소비자는 idempotent하게 동작해야 한다.
 
 3) **Upbit identifier는 멱등키가 아니다**
 - identifier는 재사용 금지이며, 조회/상관관계(correlation) 용도만 허용한다.
@@ -47,7 +49,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### 3.1 시장 데이터 수신
 - WebSocket에서 필요한 최소 데이터만 수신한다.
-- 시장 데이터 원본은 Kafka로 흘리지 않는다.
+- 시장 데이터 원본(고빈도)은 **EventBus/Queue(outbox_event)** 로 흘리지 않는다.
 
 ### 3.2 Signal 생성(확정 캔들 close)
 - 입력: (market, timeframe, candle_close_time, candle)
@@ -61,16 +63,20 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 주문 금액(min/max) 위반 → 주문 금지
 - 손절/익절/트레일링 조건 → 청산 intent 생성
 
-### 3.4 OrderIntent 생성 + Outbox
+### 3.4 OrderIntent 생성 + EventBus publish
 - OrderIntent 저장(유니크: signal_id + intent_type)
-- Outbox row 생성
-- Outbox Relay가 `CreateOrderAttempt` 커맨드를 발행
+- **동일 트랜잭션 내** `CreateOrderAttempt` 커맨드(outbox_event) 생성
+- 워커가 `everbit.trade.command` 스트림을 polling/claim하여 Attempt 실행을 트리거한다.
 
-### 3.5 Order Executor(Attempt 실행)
-- `everbit.trade.command` 소비
-- `orderAttemptId`로 DB 조회 → Upbit 호출
-- 결과를 DB에 기록(Attempt 상태 전이)
-- 이벤트(outbox) 발행
+SoT: `docs/architecture/event-bus.md`
+
+### 3.5 Order Executor Worker(Attempt 실행)
+- 입력: `orderAttemptId`
+- 소비 대상: `outbox_event.stream = everbit.trade.command` + `event_type = CreateOrderAttempt`
+- 동작:
+  - `orderAttemptId`로 DB 조회 → Upbit 호출
+  - 결과를 DB에 기록(Attempt 상태 전이)
+  - 이벤트(outbox_event) 발행
 
 ### 3.6 체결/정합성 처리
 - 우선: Upbit private WS(myOrder/myAsset)로 체결/잔고 반영
@@ -94,7 +100,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 유니크 인덱스:
   - UNIQUE(order_intent_id, attempt_no)
   - UNIQUE(identifier)
-- Kafka 중복 소비로 executor가 같은 attempt를 다시 실행해도, Attempt 상태를 보고 no-op 처리해야 한다.
+- 워커 중복 처리로 executor가 같은 attempt를 다시 실행해도, Attempt 상태를 보고 no-op 처리해야 한다.
 
 ---
 
@@ -197,7 +203,7 @@ Upbit REST 응답 헤더 `Remaining-Req`를 파싱하여 group/sec 기준으로 
 ## 10. Done 체크리스트(구현 게이트)
 
 - [ ] Signal/OrderIntent/OrderAttempt 유니크 제약 설정(필수)
-- [ ] Outbox 패턴 구현(DB→Kafka 신뢰성)
+- [ ] Outbox/Queue 구현(`outbox_event` + `FOR UPDATE SKIP LOCKED` 워커)
 - [ ] UpbitHttpClient 단일 진입점 + Remaining-Req 파싱
 - [ ] 429/418/UNKNOWN 상태 전이 테스트(회귀)
 - [ ] Private WS(myOrder/myAsset) 기반 체결/자산 반영

@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 이 문서는 everbit v2에서 **절대 커밋하면 안 되는 값**과 **환경 분리(local/prod)**, **암호화/키관리** 원칙을 고정한다.  
 1인 프로젝트라도 실거래 피해가 발생할 수 있으므로 보안을 완화하지 않는다.
@@ -32,7 +32,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - (선택) VAPID 공개키는 공개 가능하지만, 운영에서는 함께 관리해도 된다.
 
 ### 1.5 인프라/DB
-- PostgreSQL/Redis/Kafka(도입 시) 운영 비밀번호/토큰
+- PostgreSQL/Redis 운영 비밀번호/토큰 (Kafka는 P1+ 도입 시 별도 관리)
 - Grafana admin password
 - Jenkins admin password / API token
 - TLS 개인키(.pem/.p12/.jks)
@@ -115,4 +115,4 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - [ ] Upbit 키는 DB에 암호문으로만 존재
 - [ ] `UPBIT_KEY_MASTER_KEY`, JWT secrets, `VAPID_PRIVATE_KEY`는 운영 환경변수에만 존재
 - [ ] Grafana/Jenkins 기본 비밀번호 변경
-- [ ] 서버 방화벽: DB/Redis/Kafka/Admin 포트 외부 차단
+- [ ] 서버 방화벽: DB/Redis/Admin 포트 외부 차단

@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 우선순위:
 - **P0**: MVP 런칭/운영에 필수(미구현 시 거래/운영 불가)
@@ -11,7 +11,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 문서 관계:
 - 주문/재시도/멱등의 최종 기준: `docs/architecture/order-pipeline.md`
-- Kafka 메시지/토픽 기준: `docs/architecture/kafka-topics.md`
+- Event Bus/Queue(Outbox) 기준: `docs/architecture/event-bus.md`
 - 전략 상세: `docs/strategies/EXTREME_FLIP/spec.md`
 
 ---
@@ -120,7 +120,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
   - UI: 헤더 토글(ON/OFF)
   - OFF 시 신규 주문 생성/전송을 금지한다.
   - OFF 시에도 **Signal/OrderIntent 기록은 허용**한다(분석/감사용).
-  - 단, `OrderAttempt` 발행(Upbit 호출) 및 `everbit.trade.command` 발행은 **금지**한다(상세: `docs/architecture/order-pipeline.md`).
+  - 단, `OrderAttempt` 발행(Upbit 호출) 및 `everbit.trade.command` 스트림(outbox_event) 커맨드 발행은 **금지**한다(상세: `docs/architecture/order-pipeline.md`).
   - 이미 Upbit에 접수된 주문을 자동 취소하지 않는다(P0). 필요 시 수동 정리/향후 확장(P1).
 - 전략 Kill Switch:
   - OFF 시 해당 전략 키의 주문 생성/실행을 금지한다.
@@ -133,7 +133,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 > 최종 스펙: `docs/architecture/order-pipeline.md`
 
 ### FR-ORDER-001 (P0) DB 기반 멱등(SoT) + 상태머신
-**설명**: Kafka(at-least-once) 전제에서도 중복 주문이 발생하지 않도록 **DB가 멱등을 보장**한다.
+**설명**: Outbox/Queue(at-least-once) 전제에서도 중복 주문이 발생하지 않도록 **DB가 멱등을 보장**한다.
 
 **수용 기준**
 - Signal 유니크: `(strategy_key, market, timeframe, candle_close_time, side)`

@@ -2,7 +2,7 @@
 
 Status: **Ready for Execution (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 관리 UI/모니터링 UI를 인터넷에 직접 노출하지 않는다.
@@ -18,7 +18,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 22/tcp: SSH(본인 IP /32 제한, 키 인증)
 
 ### 1.2 절대 외부 공개 금지
-- 9090(Prometheus), 3000(Grafana), Jenkins 포트, 5432/6379/9092 등
+- 9090(Prometheus), 3000(Grafana), Jenkins 포트, 5432/6379 등
 
 ---
 

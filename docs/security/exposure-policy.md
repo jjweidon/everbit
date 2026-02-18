@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 인터넷에 노출되는 공격면(Attack Surface)을 최소화한다.
@@ -16,7 +16,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 외부 공개는 `api.everbit.kr`(Nginx 443)만 허용한다.
 
 2) **Admin Surface는 기본 비공개**
-- Grafana/Jenkins/Prometheus/DB/Redis/Kafka는 외부 노출 금지.
+- Grafana/Jenkins/Prometheus/DB/Redis는 외부 노출 금지.
 - 접근은 SSH 터널이 표준이며, 예외 공개는 기간/사유/allowlist/인증이 강제다.
 
 3) **두 단계 방화벽**
@@ -36,7 +36,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 비밀번호 로그인 금지, 키 인증만 허용
 
 ### 2.3 절대 열지 않는 포트(고정)
-- 5432(Postgres), 6379(Redis), 9092(Kafka), 9090(Prometheus), 3000(Grafana), Jenkins port 등
+- 5432(Postgres), 6379(Redis), 9090(Prometheus), 3000(Grafana), Jenkins port 등
 - 이유: 스캐닝/취약점/크리덴셜 공격에 직접 노출
 
 ---

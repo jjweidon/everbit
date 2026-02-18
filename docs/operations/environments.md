@@ -2,13 +2,15 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 원칙:
 - 시크릿은 절대 Git에 커밋하지 않는다.
 - 로컬: `.env.local`
 - 운영: VM 환경변수 또는 root-only env 파일(`/etc/everbit/everbit.env`, 600)
 - Docker Compose는 local/prod로 “포트 노출/보안”을 다르게 가져간다.
+
+v2 MVP에서는 Kafka를 사용하지 않는다. 비동기 파이프라인은 PostgreSQL Outbox/Queue(`outbox_event`) + 워커 폴링으로 구현한다.
 
 ---
 
@@ -75,8 +77,15 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - `REDIS_PORT=6379`
 - `REDIS_PASSWORD=` (초기 미사용, 운영에서 필요 시 적용)
 
-### 3.5 Kafka
-- `KAFKA_BOOTSTRAP_SERVERS=kafka:9092`
+### 3.5 Outbox/Queue Worker(권장)
+> v2 MVP에서 Kafka를 대체하는 핵심 구성이다.
+
+권장(선택) 튜닝 변수:
+- `OUTBOX_WORKER_ENABLED=true` (기본 true)
+- `OUTBOX_WORKER_POLL_MS=200` (폴링 간격)
+- `OUTBOX_WORKER_BATCH_SIZE=50`
+- `OUTBOX_WORKER_LOCK_TTL_SECONDS=30`
+- `OUTBOX_WORKER_MAX_ATTEMPTS=10`
 
 ### 3.6 Observability(Actuator)
 - `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,prometheus`
@@ -103,7 +112,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 ## 5. Docker Compose 분리 전략
 
 ### 5.1 공통 `docker/compose.yaml`
-- postgres, redis, kafka, prometheus, grafana, server, nginx (jenkins는 선택)
+- postgres, redis, prometheus, grafana, server, nginx (jenkins는 선택)
 - 공통 네트워크/볼륨 정의
 
 ### 5.2 로컬 오버라이드 `docker/compose.local.yaml`

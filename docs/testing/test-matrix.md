@@ -2,10 +2,11 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 원칙:
 - FRD를 테스트로 환원한다.
+- TDD(RED→GREEN→REFACTOR)로 구현한다(테스트 없는 기능 구현 금지).
 - 주문/멱등/레이트리밋은 회귀 테스트로 고정한다.
 
 ---
@@ -14,7 +15,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### Backend
 - Unit: JUnit5 + AssertJ
-- Integration: SpringBootTest + Testcontainers(Postgres/Redis/Kafka)
+- Integration: SpringBootTest + Testcontainers(Postgres/Redis)
 - Contract/Stub: WireMock(Upbit REST), WS mock(가능하면)
 - Performance: k6 또는 Gatling
 - Security: secret scan + dependency scan(최소)

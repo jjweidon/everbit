@@ -2,7 +2,7 @@
 
 Status: **Ready for Operation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 운영 환경에서 “누가 하더라도 동일하게” 대응할 수 있도록 최소 절차를 고정한다.
@@ -68,7 +68,7 @@ docker compose -f docker/compose.yaml -f docker/compose.prod.yaml exec nginx ngi
 1) 최근 배포가 있으면 즉시 롤백
 2) 지속되면:
    - DB 연결/디스크 용량
-   - Kafka 상태/lag
+   - Outbox/Queue backlog(적체) + 워커 처리 지연
    - JVM 메모리/CPU
 
 ### 5.2 주문 파이프라인 이상(429/418/UNKNOWN/중복 의심)
@@ -77,7 +77,7 @@ docker compose -f docker/compose.yaml -f docker/compose.prod.yaml exec nginx ngi
 3) 원인 제거 후 재개(Kill Switch ON)
 
 ### 5.3 디스크 부족
-- Postgres/Kafka는 디스크 의존도가 높다.
+- Postgres는 디스크 의존도가 높다(Outbox backlog 포함).
 - 로그/백테스트 산출물/불필요 이미지 정리
 - Always Free 한도 내에서 볼륨 확장 검토
 

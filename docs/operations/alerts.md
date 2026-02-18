@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - “장애를 빨리 아는 것”보다 “손실/중복 주문을 먼저 막는 것”을 우선한다.
@@ -12,6 +12,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 관련 문서(SoT):
 - `docs/operations/admin-surface-policy.md` (Grafana/Prometheus 노출 정책)
 - `docs/architecture/order-pipeline.md` (UNKNOWN/THROTTLED/SUSPENDED)
+- `docs/architecture/event-bus.md` (Outbox/Queue backlog)
 - `docs/integrations/upbit.md` (429/418/WS 정책)
 - `docs/operations/runbook.md` (장애 조치 절차)
 
@@ -63,10 +64,18 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - `everbit_market_state{market,state}` (gauge)
 - `everbit_kill_switch_enabled{scope,strategyKey}` (gauge)
 
-### 3.3 Outbox/Kafka 적체(가능하면)
+### 3.3 Outbox/Queue backlog(필수)
+v2 MVP에서는 Kafka 대신 `outbox_event` 기반 워커 폴링 구조다. 따라서 “적체/지연”은 반드시 관측해야 한다.
+
 권장:
-- `everbit_outbox_pending` (gauge)
-- `everbit_kafka_consumer_lag{group,topic}` (gauge)
+- `everbit_outbox_pending{stream}` (gauge)
+- `everbit_outbox_processing{stream}` (gauge)
+- `everbit_outbox_dead{stream}` (gauge)
+- `everbit_outbox_oldest_pending_seconds{stream}` (gauge)
+
+스트림 예:
+- `everbit.trade.command` (주문 커맨드)
+- `everbit.trade.event` (알림 트리거)
 
 ---
 
@@ -86,20 +95,24 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 조건(예시): 5분 내 THROTTLED 3회 이상
 - 조치: 주문 빈도/동시성 축소 + 필요 시 Kill Switch OFF
 
+4) 주문 커맨드 적체(Outbox backlog)
+- 조건(예시): `everbit_outbox_oldest_pending_seconds{stream="everbit.trade.command"}` > 60 (1분 이상 지연)
+- 조치: Kill Switch OFF(안전 중단) + 워커 상태/DB 상태 확인
+
 ### 4.2 가용성
 
-4) 서버 Down (CRITICAL)
+5) 서버 Down (CRITICAL)
 - 조건(예시): scrape 실패 2분 지속
 
-5) 5xx 급증 (WARNING)
+6) 5xx 급증 (WARNING)
 - 조건(예시): 5분 이동 윈도우에서 5xx rate 증가
 
 ### 4.3 리소스
 
-6) 디스크 부족 (CRITICAL)
+7) 디스크 부족 (CRITICAL)
 - 조건(예시): `/` 남은 용량 10% 미만 10분 지속
 
-7) 메모리 부족 (WARNING)
+8) 메모리 부족 (WARNING)
 - 조건(예시): 가용 메모리 10% 미만 10분 지속
 
 ---

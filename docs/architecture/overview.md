@@ -2,9 +2,11 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 비용을 최소화하기 위해 **단일 VM(OCI Free Tier 우선) 올인원** 배포를 기본으로 한다.
+
+v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event` 기반 Outbox/Queue로 비동기 파이프라인을 구성한다.
 
 ---
 
@@ -45,9 +47,9 @@ v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 
 │                                                                │
 │  [Private Docker Network]                                      │
 │   - Spring Boot App (Java 21, Boot 4.x)                        │
-│   - PostgreSQL (SoT)                                           │
+│       - API + Background Workers(Outbox Polling)               │
+│   - PostgreSQL (SoT + Outbox/Queue)                            │
 │   - Redis (cache/locks/session/rate-state)                     │
-│   - Kafka (KRaft 단일 브로커)                                  │
 │   - Prometheus (scrape)                                        │
 │   - Grafana (dashboard)                                        │
 │   - Jenkins (선택, 기본 비공개)                                │
@@ -80,12 +82,15 @@ v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 
 - Upbit 레이트 상태(Remaining-Req 등), 락/세션(refresh_jti) 저장
 - (선택) 대시보드 read-model 캐시
 
-### 3.5 Kafka
-- 비동기 파이프라인/버퍼:
-  - 주문 실행 커맨드
-  - 백테스트 job
-  - 도메인 이벤트(주문/포지션/알림 트리거)
-- 시장 데이터 원본(ticker/orderbook)은 Kafka로 흘리지 않는다.
+### 3.5 Event Bus / Queue (PostgreSQL Outbox/Queue)
+- 비동기 파이프라인/버퍼를 PostgreSQL `outbox_event`로 구현한다.
+- 대표 스트림:
+  - `everbit.trade.command`: 주문 실행 커맨드(CreateOrderAttempt)
+  - `everbit.trade.event`: 주문/체결/포지션 이벤트(알림 트리거)
+  - `everbit.backtest.command`: 백테스트 job 커맨드
+- 워커는 `FOR UPDATE SKIP LOCKED`로 claim 후 처리한다.
+
+상세: `docs/architecture/event-bus.md`
 
 ### 3.6 Prometheus/Grafana
 - 메트릭 스크랩/대시보드 제공(기본 비공개, SSH 터널 접근)
@@ -106,9 +111,9 @@ v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 
 1) Market data(WebSocket) 수신  
 2) candle close 단위로 전략 평가(EXTREME_FLIP)  
 3) 리스크 게이트 통과 시 Signal/OrderIntent 저장  
-4) Outbox Relay → Kafka `CreateOrder` 발행  
-5) Order Executor → Upbit 주문 생성(Attempt 단위)  
-6) 성공(ACK): Order 저장 + 이벤트 발행  
+4) **EventBus(outbox_event)** 로 `CreateOrderAttempt` 커맨드 발행(트랜잭션 내 INSERT)  
+5) **Order Executor Worker** 가 커맨드를 claim → Upbit 주문 생성(Attempt 단위)  
+6) 성공(ACK): Order 저장 + `OrderAccepted` 이벤트 발행(outbox_event)  
 7) 이벤트 처리:
    - 대시보드 갱신(최소)
    - **푸시 알림 발송(OrderAccepted 시)**
@@ -117,7 +122,7 @@ v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 
 
 ### 4.3 백테스트
 1) Client → 요청  
-2) Job 저장 + 커맨드 발행  
+2) Job 저장 + `BacktestRun` 커맨드 발행(outbox_event)  
 3) Worker 실행 → 결과 저장/지표 산출  
 4) Client → 결과 조회
 
@@ -131,18 +136,19 @@ v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 
 - 22/tcp (SSH, 본인 IP /32 제한, 키 인증)
 
 절대 외부 노출 금지:
-- Postgres(5432), Redis(6379), Kafka(9092), Prometheus(9090), Grafana(3000), Jenkins 등
+- Postgres(5432), Redis(6379), Prometheus(9090), Grafana(3000), Jenkins 등
 
 ---
 
 ## 6. 운영 제약/확장
 
 - 단일 VM이므로 장애 시 전체 다운(v2에서 HA 목표 아님)
-- 부하 증가 시 분리 우선순위:
+- 부하 증가 시 분리 우선순위(권장):
   1) Jenkins 분리
   2) Grafana/Prometheus 분리
-  3) Kafka 분리(또는 관리형)
+  3) Backtest/Worker 프로세스 분리(동일 이미지, worker 모드)
   4) DB 분리
+  5) (P1+) Kafka 도입: `EventBus` 구현체 교체(ADR-0009)
 
 ---
 

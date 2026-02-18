@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 현실적으로 터질 가능성이 높은 위협을 선별하고,
@@ -52,7 +52,7 @@ P1
 
 ### 3.2 포트 오픈/관리 UI 노출
 원인:
-- compose에서 DB/Redis/Kafka/Admin 포트 publish
+- compose에서 DB/Redis/Admin 포트 publish
 - OCI NSG를 0.0.0.0/0으로 열어둠
 
 대응:

@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 이 문서는 “운영에서 깨지지 않기 위한” 최소 기준을 고정한다.  
 세부 구현 스펙은 `docs/architecture/*.md`, 운영 절차는 `docs/operations/*.md`가 최종 기준이다.
@@ -30,15 +30,15 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ### 1.3 노출 정책
 - 외부 공개 포트는 원칙적으로 80/443만 허용한다.
-- Admin Surface(Grafana/Jenkins/Prometheus/DB/Redis/Kafka)는 기본 비공개이며 SSH 터널이 표준이다. (ADR-0006)
+- Admin Surface(Grafana/Jenkins/Prometheus/DB/Redis)는 기본 비공개이며 SSH 터널이 표준이다. (ADR-0006)
 - `/actuator/**`는 외부 노출 금지(내부 스크랩만).
 
 ---
 
 ## 2. 신뢰성/장애 대응(Reliability)
 
-### 2.1 DB가 SoT, Kafka는 at-least-once
-- 정합성의 기준은 PostgreSQL이며, Kafka는 전달/버퍼 역할이다.
+### 2.1 DB가 SoT, Outbox/Queue는 at-least-once
+- 정합성의 기준은 PostgreSQL이며, Outbox/Queue(`outbox_event`)는 전달/버퍼 역할이다.
 - 소비자는 중복 수신을 전제로 idempotent하게 구현한다.
 
 ### 2.2 중복 주문 방지(필수)
@@ -74,10 +74,10 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 주문: 성공/실패/UNKNOWN/THROTTLED(429)/BLOCKED(418) 카운트
 - 레이트리밋: group별 429/418 카운트, Remaining-Req 관측(가능한 범위)
 - 전략: 마켓별 신호 빈도, 포지션 수, PnL
-- 인프라: JVM 메모리/GC, DB 커넥션, Kafka lag
+- 인프라: JVM 메모리/GC, DB 커넥션, Outbox/Queue backlog(적체)
 
 ### 4.2 로그(필수)
-- correlation id(traceId)로 API ↔ Kafka ↔ DB 이벤트를 연결한다.
+- correlation id(traceId)로 API ↔ OutboxWorker(EventBus) ↔ DB 이벤트를 연결한다.
 - 민감정보는 로그에 기록하지 않는다(키/토큰/쿠키/암호문/개인정보).
 
 ---

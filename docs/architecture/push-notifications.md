@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 주문 접수(Upbit ACK) 시 클라이언트에 **Web Push**로 즉시 알림을 보낸다. (FR-NOTI-001)
@@ -20,7 +20,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 연관 문서:
 - 기능 요구사항: `docs/requirements/functional.md` (FR-NOTI-001~003)
 - 시크릿: `docs/security/secrets.md` (VAPID_PRIVATE_KEY)
-- 이벤트/토픽: `docs/architecture/kafka-topics.md` (OrderAccepted 이벤트)
+- 이벤트/스트림(EventBus): `docs/architecture/event-bus.md` (OrderAccepted 이벤트)
 - 주문 파이프라인: `docs/architecture/order-pipeline.md` (OrderAccepted 정의)
 
 ---
