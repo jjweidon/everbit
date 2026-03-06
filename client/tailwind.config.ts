@@ -11,6 +11,10 @@ export default {
       borderWidth: {
         thin: "0.5px",
       },
+      borderRadius: {
+        "token-lg": "var(--radius-lg)",
+        "token-md": "var(--radius-md)",
+      },
       colors: {
         bg0: "rgb(var(--bg-0) / <alpha-value>)",
         bg1: "rgb(var(--bg-1) / <alpha-value>)",

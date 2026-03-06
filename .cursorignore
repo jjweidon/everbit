@@ -9,6 +9,8 @@
 **/*secret*
 **/*key*
 **/*credentials*
+!docs/ui/tokens.css
+!client/**/tokens.css
 **/*token*
 **/*private*
 **/*.pem
