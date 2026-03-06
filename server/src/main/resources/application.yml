@@ -1,15 +1,25 @@
-server:
-  port: 8080
+# everbit v2 — bootstrap stub
+# SoT: docs/operations/environments.md, docs/security/exposure-policy.md
 
 spring:
   application:
-    name: everbit
+    name: everbit-api
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
 
+server:
+  port: ${SERVER_PORT:8080}
+
+# Base path /api/v2 is on each controller; actuator stays /actuator (external exposure forbidden in prod)
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
   endpoint:
     health:
       show-details: when-authorized
