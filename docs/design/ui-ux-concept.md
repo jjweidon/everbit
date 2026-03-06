@@ -2,11 +2,11 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)
+Last updated: 2026-03-05 (Asia/Seoul)
 
 목표:
 - 퀀트 트레이딩 시스템으로서 “정밀함/신뢰/성능/차분함”을 전달한다.
-- 기본은 **다크(Black/Charcoal)**, 포인트는 **형광 계열(Neon Green/Red/Yellow)** 로 “상태/리스크/변화”를 빠르게 인지하게 한다.
+- 기본은 **다크(Black/Charcoal, blue cast 최소)**, 포인트는 **형광 계열(Neon Green/Red/Yellow)** 로 “상태/리스크/변화”를 빠르게 인지하게 한다.
 - 정보 밀도는 높되, UI는 과하지 않게. “차분한 HUD” 톤을 유지한다.
 
 범위:
@@ -26,7 +26,8 @@ Last updated: 2026-02-15 (Asia/Seoul)
 ## 1. 비주얼 키워드
 
 - **Modern / Minimal / Technical**: 과장된 그래픽 대신 규격화된 그리드와 정돈된 타이포
-- **Dark Tactical**: 순수 블랙(#000) 대신 “딥 차콜” 계열로 눈 피로를 낮춤
+- **Dark Neutral Ops**: 순수 블랙(#000) 대신 “딥 차콜” 레이어로 눈 피로를 낮춤
+- **Blue Cast 최소화**: 배경/보더/텍스트를 중립 회색(쿨그레이)로 맞춰 “푸른 느낌”을 제거
 - **Signal-Driven Accent**: 포인트 컬러는 “의미(상태/방향/위험)”에만 사용
 - **Calm Performance**: 과도한 애니메이션 금지, 빠른 반응과 미세한 피드백만
 
@@ -39,15 +40,17 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 포인트 컬러는 “의미 기반”으로 제한(장식용 금지)
 - **GREEN=긍정/진행/수익**, **RED=위험/손실/중단**, **YELLOW=주의/대기/제한**
 
-### 2.1 Neutral(기본)
-- BG-0 (App background): `#0B0F14`
-- BG-1 (Surface): `#0F1620`
-- BG-2 (Elevated): `#121C28`
-- Border (subtle): `#243244`
-- Divider: `#1A2635`
-- Text-Primary: `#E7EEF8`
-- Text-Secondary: `#A8B3C2`
-- Text-Tertiary: `#6D7A8D`
+### 2.1 Neutral(기본) — 거의 검정에 가까운 다크
+- BG-0 (App background / deepest): `#0A0A0A`
+- BG-1 (Base surface): `#111214`
+- BG-2 (Elevated cards/panels): `#17181B`
+- Border (subtle): `#2D2E32`
+- Divider: `#222326`
+- Text-Primary: `#E8E9EB`
+- Text-Secondary: `#B6BAC3`
+- Text-Tertiary: `#7C828F`
+
+> 의도: “검푸른 느낌”은 유지하되, 배경 자체는 **블루 채널이 튀지 않는 쿨그레이**로 맞춰 눈 피로/색 번짐을 최소화한다.
 
 ### 2.2 Accent(포인트)
 - Neon Green (Up/Success): `#39FF88`
@@ -153,7 +156,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 캔들/라인 색:
   - 상승: Green
   - 하락: Red
-- 보조선(Grid): Border(subtle)보다 약하게
+- 보조선(Grid): Divider보다 약하게
 - Tooltip:
   - BG-2 + Border
   - 숫자는 tabular-nums
@@ -190,7 +193,7 @@ Last updated: 2026-02-15 (Asia/Seoul)
 - 색상만으로 상태를 표현하지 않기:
   - 상태 칩에 아이콘/텍스트 병행
 - 중요한 토글(Kill Switch)은 실수 방지:
-  - 토글 + 1회 확인(옵션)
+  - 토글 + 1회 확인(필수)
   - 상태 변화 즉시 로그/타임스탬프 표시
 
 ---
@@ -199,28 +202,29 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 원칙:
 - 색상을 코드에 하드코딩하지 않고 CSS 변수 기반으로 토큰화한다.
+- SoT는 `docs/ui/tokens.css`.
+- 런타임 반영은 `client/src/styles/tokens.css`로 동기화하고, `client/src/app/globals.css`에서 import한다.
 
 예시(CSS 변수):
 ```css
 :root {
-  --bg-0: 11 15 20;
-  --bg-1: 15 22 32;
-  --bg-2: 18 28 40;
-  --border: 36 50 68;
-  --text-1: 231 238 248;
-  --text-2: 168 179 194;
-  --green: 57 255 136;
-  --red: 255 77 109;
-  --yellow: 255 209 102;
-  --cyan: 62 197 255;
+  --bg-0: 10 10 10;      /* #0A0A0A */
+  --bg-1: 17 18 20;      /* #111214 */
+  --bg-2: 23 24 27;      /* #17181B */
+  --border: 45 46 50;    /* #2D2E32 */
+  --divider: 34 35 38;   /* #222326 */
+  --text-1: 232 233 235; /* #E8E9EB */
+  --text-2: 182 186 195; /* #B6BAC3 */
+  --green: 57 255 136;   /* #39FF88 */
+  --red: 255 77 109;     /* #FF4D6D */
+  --yellow: 255 209 102; /* #FFD166 */
+  --cyan: 62 197 255;    /* #3EC5FF */
 }
 ```
 
 Tailwind 예시(의미 기반 클래스):
 - `bg-bg0`, `bg-surface`, `text-primary`, `text-secondary`
 - `text-up`, `text-down`, `text-warn`
-
-권장: 디자인 토큰은 `shared/ui/tokens` 또는 `styles/tokens.css`로 고정한다.
 
 ---
 
@@ -251,4 +255,4 @@ Tailwind 예시(의미 기반 클래스):
 - [ ] 색상 토큰이 코드에 하드코딩되지 않음
 - [ ] RUNNING/STOPPED/SUSPENDED/UNKNOWN 상태가 UI에서 일관 표시
 - [ ] 테이블 숫자 정렬/가독성 확보(tabular-nums)
-- [ ] Kill Switch UX가 실수 방지 형태
+- [ ] Kill Switch UX가 실수 방지 형태(confirm 포함)

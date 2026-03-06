@@ -2,11 +2,13 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 목표:
 - “어디에 어떤 코드가 있어야 하는지”를 고정한다.
 - 모듈 간 결합도를 낮춰, AI 생성 코드가 시스템 경계를 침범하지 않도록 한다.
+
+상위 설계(모듈러 모놀리식, 도메인 모듈 목록, 헥사고날·이벤트 원칙): `docs/architecture/modular-monolith.md`
 
 ---
 

@@ -2,10 +2,11 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 이 문서는 everbit v2 백엔드(Spring Boot)에서 **클래스/패키지/레이어/엔티티/DTO**를 어떤 규칙으로 작성할지 고정한다.
 
+- **상위 아키텍처**(모듈러 모놀리식, 도메인 모듈, 헥사고날·이벤트): `docs/architecture/modular-monolith.md`
 - DB 스키마/제약의 SoT: `docs/architecture/data-model.md`, `docs/db/schema-v2-mvp.sql`
 - JPA 복합키/공유PK 매핑 SoT: `docs/architecture/jpa-mapping.md`
 

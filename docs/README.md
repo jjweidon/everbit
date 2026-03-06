@@ -2,7 +2,7 @@
 
 Status: **Active**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-05 (Asia/Seoul)
 
 이 디렉터리는 everbit v2를 “문서 우선”으로 개발하기 위한 단일 소스 오브 트루스(Single Source of Truth)다.
 
@@ -40,6 +40,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ### Architecture
 - [아키텍처 개요](./architecture/overview.md)
+- [모듈러 모놀리식 + 헥사고날 + 이벤트 기반 백엔드 설계](./architecture/modular-monolith.md)
 - [컴포넌트/모듈 경계](./architecture/components.md)
 - [데이터 모델(테이블/인덱스/상태)](./architecture/data-model.md)
 - [Spring Boot 코드/클래스 규칙](./architecture/spring-boot-conventions.md)
@@ -77,7 +78,13 @@ Last updated: 2026-02-17 (Asia/Seoul)
 - [재해 복구(DR)](./operations/disaster-recovery.md)
 
 ### Design
-- [UI/UX 디자인 컨셉(모던 다크)](./design/ui-ux-concept.md)
+- [UI/UX 디자인 컨셉(다크 뉴트럴)](./design/ui-ux-concept.md)
+- [UI 구현 명세서(페이지/컴포넌트/상태)](./ui/everbit_ui_impl_spec.md)
+- [UI 토큰(CSS Variables)](./ui/tokens.css)
+- [UI 목업 이미지](./ui/mockups/)
+
+### Dev Experience (Cursor)
+- [Cursor Prompt Pack(v2 overwrite, client=pnpm)](./prompt-pack/00_README.md)
 
 ### Strategies
 - [EXTREME_FLIP(극점포착)](./strategies/EXTREME_FLIP/spec.md)

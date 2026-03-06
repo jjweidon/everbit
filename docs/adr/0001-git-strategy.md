@@ -92,13 +92,11 @@ type(scope): 변경 요약을 한글로 작성
 
 ### 허용 scope (모노레포 기준)
 
-* `server`
-* `client`
-* `infra`
-* `docs`
-* `ops`
-* `build`
-* `test`
+* **기본 스코프**: `server`, `client`, `infra`, `docs`, `ops`, `build`, `test`
+* **하위 스코프**: 기본 스코프 뒤에 `/하위도메인`을 붙여 구체화할 수 있다. 소문자·숫자·하이픈만 허용.
+  * server 예: `server/trade`, `server/auth`, `server/user`, `server/notification`, `server/outbox`
+  * client 예: `client/auth`, `client/dashboard`, `client/trading`, `client/notifications`
+  * docs 예: `docs/architecture`, `docs/adr`, `docs/requirements`
 
 ### 본문(body) 작성 기준
 
@@ -126,7 +124,11 @@ type(scope): 변경 요약을 한글로 작성
 ```
 feat(server): 주문 시도 멱등 제약 조건 추가
 
+feat(server/trade): OrderAttempt 멱등 제약 추가
+
 fix(client): 웹소켓 중복 구독 방지 로직 수정
+
+fix(client/dashboard): 잔고 새로고침 시 깜빡임 제거
 
 chore(infra): nginx 리버스 프록시 설정 정리
 ```
@@ -163,15 +165,15 @@ docs(docs): 문서 SoT 갱신 및 AGENTS.md 추가
   git config core.hooksPath .githooks
   ```
 
-* 효과: `client:`, `style:` 등 비표준 prefix 커밋은 로컬에서 즉시 실패한다.
+* 효과: `client:`, `style:` 등 비표준 prefix 커밋은 로컬에서 즉시 실패한다. scope는 기본 7종 + 하위 스코프(예: `server/trade`)만 허용한다.
 * 허용되지 않은 커밋 시 예시 출력:
 
   ```
   Invalid commit message (ADR-0001).
-  Use: <type>(optional-scope): <subject>
+  Use: <type>(optional-scope): <subject in Korean>
   Allowed types: docs, feat, fix, test, chore, refactor
-  Allowed scopes: server, client, infra, docs, ops, build, test
-  Example: chore(client): 로고 에셋 교체
+  Allowed scopes: server, client, infra, docs, ops, build, test (하위 스코프 허용: server/trade, client/auth 등)
+  Example: feat(server/trade): 주문 시도 멱등 제약 추가
   ```
 
 ---

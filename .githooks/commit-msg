@@ -1,21 +1,28 @@
 #!/bin/sh
 # ADR-0001 Git 커밋 전략 적용: docs/adr/0001-git-strategy.md
-# 비표준 prefix(client: 등) 커밋 시 로컬에서 실패하도록 차단
+# 비표준 prefix/scope 커밋 시 로컬에서 실패하도록 차단
 
 MSG_FILE="$1"
 FIRST_LINE="$(head -n 1 "$MSG_FILE")"
 
 # 허용 type: docs, feat, fix, test, chore, refactor
-# scope 옵션: type(scope): subject
-PATTERN='^(docs|feat|fix|test|chore|refactor)(\([a-z0-9._-]+\))?: .+'
+# 허용 scope: server, client, infra, docs, ops, build, test (선택)
+# 하위 스코프: base/하위도메인 (예: server/trade, client/auth) 허용. 소문자·숫자·하이픈만
+# 형식: type(scope): 한글 제목  또는  type(scope/sub): 한글 제목  또는  type: 한글 제목
+SCOPE_BASE='(server|client|infra|docs|ops|build|test)'
+SCOPE_SUB='(\/[a-z0-9-]+)+'
+# 하위 스코프는 괄호로 묶어 ? 로 선택(기본 스코프만 있으면 통과)
+PATTERN="^(docs|feat|fix|test|chore|refactor)(\(${SCOPE_BASE}(${SCOPE_SUB})?\))?: .+"
 
 echo "$FIRST_LINE" | grep -Eq "$PATTERN"
 if [ $? -ne 0 ]; then
   echo "Invalid commit message (ADR-0001)."
-  echo "Use: <type>(optional-scope): <subject>"
+  echo "Use: <type>(optional-scope): <subject in Korean>"
   echo "Allowed types: docs, feat, fix, test, chore, refactor"
-  echo "Allowed scopes: server, client, infra, docs, ops, build, test"
+  echo "Allowed scopes: server, client, infra, docs, ops, build, test (하위 스코프 허용: server/trade, client/auth 등)"
   echo "Example: chore(client): 로고 에셋 교체"
+  echo "Example: feat(server/trade): 주문 시도 멱등 제약 추가"
+  echo "Example: docs(docs/architecture): 모듈러 모놀리트 문서 추가"
   exit 1
 fi
 
