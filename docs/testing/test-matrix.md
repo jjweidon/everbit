@@ -50,7 +50,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 | Upbit 주문 생성(성공/4xx) | ◻︎ | ✅ | ✅ | ✅ | ◻︎ | WireMock |
 | Upbit 429 처리(THROTTLED) | ✅ | ✅ | ✅ | — | ✅ | 백오프/재시도(새 Attempt) |
 | Upbit 418 처리(BLOCKED) | ✅ | ✅ | ✅ | — | — | 차단 해제까지 중단 |
-| timeout/5xx → UNKNOWN 수렴 | ✅ | ✅ | ✅ | — | — | reconcile 실패 시 SUSPENDED |
+| timeout/5xx → UNKNOWN 수렴 | ✅ | ✅ | ✅ | — | — | reconcile 실패 시 market_state.trade_status = SUSPENDED |
 | Reconciliation 루프 | ✅ | ✅ | ✅ | — | ◻︎ | open orders/balance |
 | 백테스트(멀티 마켓/TF) | ✅ | ✅ | — | ✅ | ✅ | 지표 산식 고정 |
 | 대시보드(상태/주문/잔고/손익) | ◻︎ | ✅ | — | ✅ | ◻︎ | |
@@ -81,7 +81,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ### E2E-004: 429/UNKNOWN/418 안전 동작(회귀)
 - 429: THROTTLED 후 새 Attempt로 재시도
-- timeout/5xx: UNKNOWN 수렴 후 확정 실패 시 SUSPENDED
+- timeout/5xx: UNKNOWN 수렴 후 확정 실패 시 market_state.trade_status = SUSPENDED
 - 418: 차단 해제까지 호출 중단 + 자동매매 중단
 
 ### E2E-005: 푸시 알림 구독 + 주문 접수 알림

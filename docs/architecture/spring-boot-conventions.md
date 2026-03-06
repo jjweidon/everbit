@@ -101,7 +101,8 @@ com.everbit.everbit
   - `id`는 외부에 노출하지 않는다.
 
 ULID 생성 표준:
-- 저장 직전 `@PrePersist`에서 null이면 생성한다.
+- 생성 책임은 **서비스/팩토리 레이어**가 가진다.
+- `@PrePersist`는 “null이면 채워 넣는 fallback guard”로만 허용한다.
 - ULID 생성기는 thread-safe하게 제공한다(예: ThreadLocal).
 
 ```java
@@ -120,41 +121,27 @@ public final class Ulids {
 
 - DB는 `timestamptz(UTC)`다.
 - Java 타입은 `Instant`를 표준으로 한다(표시 시 KST 변환).
-
-스키마에 따라 base class를 분리한다.
-
-- `created_at`만 있는 테이블: `CreatedAtEntity`
-- `updated_at`만 있는 테이블: `UpdatedAtEntity`
-- 둘 다 있는 테이블: `AuditableEntity`
+- v2 MVP 엔티티는 원칙적으로 **`BaseEntity(createdAt, updatedAt)` 하나로 통일**한다.
+- 비즈니스 시각(`rotatedAt`, `suspendedAt`, `capturedAt`, `deliveredAt` 등)은 BaseEntity와 별도 컬럼으로 둔다.
 
 ```java
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-public abstract class CreatedAtEntity {
+public abstract class BaseEntity {
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
-}
 
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-@Getter
-public abstract class UpdatedAtEntity {
-  @LastModifiedDate
-  @Column(name = "updated_at", nullable = false)
-  private Instant updatedAt;
-}
-
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-@Getter
-public abstract class AuditableEntity extends CreatedAtEntity {
   @LastModifiedDate
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 }
 ```
+
+구현 메모:
+- append-only row라도 `updated_at`은 유지한다(일반적으로 insert 직후 `created_at == updated_at`).
+- 팀 내에서 `LocalDateTime`을 쓰더라도 애플리케이션/JDBC/Hibernate timezone을 **UTC로 고정**해야 한다.
 
 > 전제: `@EnableJpaAuditing` 활성화.
 
@@ -200,7 +187,7 @@ public abstract class AuditableEntity extends CreatedAtEntity {
 @Table(name = "app_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AppUser extends CreatedAtEntity {
+public class AppUser extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -255,7 +242,7 @@ public class AppUser extends CreatedAtEntity {
 @Table(name = "upbit_key")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UpbitKey {
+public class UpbitKey extends BaseEntity {
 
   @Id
   @Column(name = "owner_id")
@@ -275,8 +262,6 @@ public class UpbitKey {
   @Column(name = "key_version", nullable = false)
   private int keyVersion;
 
-  @Column(name = "created_at", nullable = false)
-  private Instant createdAt;
 
   @Column(name = "rotated_at")
   private Instant rotatedAt;
@@ -288,7 +273,6 @@ public class UpbitKey {
     k.accessKeyEnc = accessEnc;
     k.secretKeyEnc = secretEnc;
     k.keyVersion = keyVersion;
-    k.createdAt = Instant.now();
     return k;
   }
 
@@ -312,7 +296,7 @@ public class UpbitKey {
 @Table(name = "kill_switch")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class KillSwitch {
+public class KillSwitch extends BaseEntity {
 
   @Id
   @Column(name = "owner_id")
@@ -330,8 +314,6 @@ public class KillSwitch {
   @Column(name = "enabled_strategies", columnDefinition = "jsonb", nullable = false)
   private JsonNode enabledStrategies;
 
-  @Column(name = "updated_at", nullable = false)
-  private Instant updatedAt;
 
   public static KillSwitch init(AppUser owner) {
     KillSwitch ks = new KillSwitch();
@@ -339,24 +321,24 @@ public class KillSwitch {
     ks.ownerId = owner.getId();
     ks.accountEnabled = true;
     ks.enabledStrategies = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.arrayNode();
-    ks.updatedAt = Instant.now();
     return ks;
   }
 
   public void enableAccount() {
     this.accountEnabled = true;
-    this.updatedAt = Instant.now();
   }
 
   public void disableAccount() {
     this.accountEnabled = false;
-    this.updatedAt = Instant.now();
   }
 }
 ```
 
 > `KillSwitch`/`UpbitKey`처럼 1:1 테이블은 부모(`AppUser`)에서 양방향 필드를 두지 않는 편이 안전하다.
 > 필요한 경우 Repository로 `findById(ownerId)`로 조회한다.
+>
+> 시장 단위 실행 중단 상태는 `Position`이 아니라 `MarketState.tradeStatus`에 둔다.  
+> 즉, `position.status`는 보유 상태(FLAT/OPEN), `market_state.trade_status`는 실행 상태(ACTIVE/SUSPENDED)다.
 
 ---
 
@@ -367,9 +349,10 @@ public class KillSwitch {
 - Request는 record를 사용한다.
 - Builder는 기본 금지(입력은 명시적으로 받는다).
 - Bean Validation으로 형식/범위를 검증한다.
+- **내부 API JSON은 camelCase가 기본**이다. `@JsonNaming(SnakeCaseStrategy)`는 내부 API DTO에 사용하지 않는다.
+  - 예외: 외부 연동 DTO(외부 스펙이 snake_case일 때)만 허용
 
 ```java
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record UpdateEmailRequest(
     @Email String email
 ) {}
@@ -380,10 +363,10 @@ public record UpdateEmailRequest(
 - Response는 record를 사용한다.
 - 필드가 많아 가독성이 떨어지면 `@Builder` + `static from(...)`을 허용한다.
 - Response는 엔티티를 직접 들고 있지 않는다(지연로딩/민감정보 누수 방지).
+- 내부 API 응답도 camelCase를 기본으로 한다.
 
 ```java
 @Builder
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record AppUserResponse(
     String userId,     // publicId
     String kakaoId,

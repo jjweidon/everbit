@@ -91,6 +91,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 ### Dev Experience (Cursor)
 - [Cursor Prompt Pack(v2 overwrite, client=pnpm)](./prompt-pack/00_README.md)  
   ※ prompt-pack은 로컬/미배포용으로 `.gitignore` 대상일 수 있어, 새 클론에는 없을 수 있음.
+- [Server Prompt Pack(세션 단위 백엔드 구현)](./prompt-pack/server/00_README.md)
 
 ### Strategies
 - [EXTREME_FLIP(극점포착)](./strategies/EXTREME_FLIP/spec.md)

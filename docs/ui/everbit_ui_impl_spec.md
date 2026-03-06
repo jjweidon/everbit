@@ -297,7 +297,8 @@ FR: FR-TRADE-001
 - market
 - enabled(toggle)
 - priority(number)
-- positionStatus(FLAT/OPEN/SUSPENDED)
+- positionStatus(FLAT/OPEN)
+- tradeStatus(ACTIVE/SUSPENDED)
 - lastSignalAt
 - cooldownUntil
 - action: “SUSPENDED 해제”(조건부)
@@ -392,7 +393,7 @@ Row 클릭:
 3) Attempt 타임라인
 - attempt_no 별 상태(PREPARED→SENT→...)
 - 429이면 nextRetryAt
-- UNKNOWN이면 reconcile 결과/마켓 SUSPENDED 전환 여부 표시
+- UNKNOWN이면 reconcile 결과/마켓 tradeStatus=SUSPENDED 전환 여부 표시
 
 4) Fill(체결)
 - trade_time, price, volume, fee
@@ -473,7 +474,10 @@ API(계약 SoT: `docs/api/contracts.md`, 상세 DTO: `docs/architecture/push-not
 - SUSPENDED: Yellow(“SUSPENDED”) + 배너
 
 ### 6.2 마켓 상태
-- position.status = SUSPENDED 인 경우:
+- `positionStatus`와 `tradeStatus`는 분리한다.
+  - `positionStatus`: FLAT / OPEN
+  - `tradeStatus`: ACTIVE / SUSPENDED
+- `tradeStatus = SUSPENDED` 인 경우:
   - Markets 페이지에서만 “해제” 액션 제공(실수 방지)
 
 ---
@@ -509,6 +513,21 @@ type DashboardSummary = {
     realizedPnlKrw: string;
     unrealizedPnlKrw: string;
   };
+}
+```
+
+
+### MarketItem
+```ts
+type MarketItem = {
+  market: string;
+  enabled: boolean;
+  priority: number;
+  positionStatus: 'FLAT'|'OPEN';
+  tradeStatus: 'ACTIVE'|'SUSPENDED';
+  suspendReasonCode?: string;
+  lastSignalAt?: string;
+  cooldownUntil?: string;
 }
 ```
 

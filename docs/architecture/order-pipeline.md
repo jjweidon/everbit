@@ -22,7 +22,8 @@ Last updated: 2026-03-06 (Asia/Seoul)
 - **UpbitOrder**: Upbit UUID가 존재하는 주문 실체
 - **Fill**: 체결 이벤트(부분 체결 포함)
 - **Kill Switch**: 계정/전략 단위 주문 차단 스위치
-- **SUSPENDED**: 안전 중단 상태(불확실성/차단/정책 위반)
+- **OrderAttempt.status = SUSPENDED**: executor가 실행 직전 안전 게이트에 의해 기존 Attempt를 중단한 상태
+- **MarketState.trade_status = SUSPENDED**: 해당 마켓의 자동매매를 수동 해제 전까지 막는 시장 단위 안전 중단 상태
 
 ---
 
@@ -138,7 +139,7 @@ SoT: `docs/architecture/event-bus.md`
    - SENT → UNKNOWN
    - reconcile(조회) 루프 수행(짧은 기간)
    - 확인 성공 시 ACKED로 승격
-   - 확인 실패 시 **시장 단위 SUSPENDED**로 전환(자동매매 중단)
+   - 확인 실패 시 **`market_state.trade_status = SUSPENDED`** 로 전환(자동매매 중단)
 
 > 중요: UNKNOWN에서 “새 주문을 재주문”하는 자동화는 중복 주문 위험이 커서 금지한다.
 
@@ -190,12 +191,15 @@ Upbit REST 응답 헤더 `Remaining-Req`를 파싱하여 group/sec 기준으로 
 ## 8. Kill Switch 동작(필수)
 
 ### 8.1 계정 Kill Switch OFF
-- 신규 Signal → OrderIntent 생성 금지(또는 생성하되 실행 금지 중 하나로 고정)
-- 표준: **Intent 생성은 허용하되, Attempt 생성/발행을 금지** (운영 분석 가능)
-- executor는 커맨드를 소비하더라도 즉시 SKIPPED 처리
+- 신규 Signal/OrderIntent 기록은 허용한다(분석/감사 목적).
+- 표준: **Attempt 생성 및 `everbit.trade.command` outbox 발행은 금지** 한다.
+- 경합(race)으로 이미 생성된 PREPARED Attempt가 executor에 도달했으면,
+  - Upbit 호출 없이 `order_attempt.status = SUSPENDED` 로 종료한다.
+  - account kill switch는 운영자 의도에 따른 정지이므로, 이 경우 `market_state.trade_status`를 자동으로 SUSPENDED로 바꾸지는 않는다.
 
 ### 8.2 전략 Kill Switch OFF
-- 해당 전략Key의 Intent/Attempt 생성을 금지
+- 해당 전략Key의 신규 Intent/Attempt 생성 및 outbox 발행을 금지한다.
+- 경합으로 이미 생성된 PREPARED Attempt가 executor에 도달한 경우에는 계정 Kill Switch와 동일하게 `order_attempt.status = SUSPENDED` 로 종료한다.
 
 ---
 

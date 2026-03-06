@@ -246,6 +246,6 @@ public final class ThreadLocalUlidGenerator implements UlidGenerator {
 ### 9.1 RED(테스트 먼저)
 - Given: account_enabled=false
 - When: OrderExecutor가 OrderAttempt를 실행
-- Then: Upbit 호출이 일어나지 않고 attempt는 SUSPENDED(또는 CANCELED)로 수렴
+- Then: Upbit 호출이 일어나지 않고 attempt는 SUSPENDED로 수렴
 
 > 실제 코드는 `docs/testing/test-matrix.md`의 케이스로 관리한다. 이 섹션은 “루프” 예시를 위한 설명이다.

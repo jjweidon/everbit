@@ -93,7 +93,7 @@ P0에서는 “비교 가능성”을 우선한다.
 ### 4.3 장애/제한 시뮬레이션
 - 429: THROTTLED 재시도(새 Attempt)
 - 418: 차단 해제까지 호출 중단
-- timeout/5xx: UNKNOWN 수렴 → reconcile → 실패 시 SUSPENDED
+- timeout/5xx: UNKNOWN 수렴 → reconcile → 실패 시 market_state.trade_status = SUSPENDED
 
 ---
 

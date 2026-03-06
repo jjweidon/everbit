@@ -55,7 +55,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 | DELETE | /api/v2/upbit/key | 키 폐기 (FR-UPBIT-KEY-003) |
 | **대시보드/마켓/전략** | | |
 | GET | /api/v2/dashboard/summary | 대시보드 요약(실행·리스크·자산) |
-| GET | /api/v2/markets | 마켓 목록(enable/priority/position) |
+| GET | /api/v2/markets | 마켓 목록(enable/priority/position/runtime) |
 | PUT | /api/v2/markets/{market} | 마켓 설정 수정(enabled, priority) |
 | POST | /api/v2/markets/{market}/unsuspend | 마켓 SUSPENDED 수동 해제 |
 | GET | /api/v2/strategy/config | 전략 설정 조회 |
@@ -130,7 +130,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 
 ## 3. GET /api/v2/markets
 
-마켓 설정 및 포지션 상태.
+마켓 설정 및 포지션/실행 상태.
 
 ### 요청
 - Headers: `Authorization: Bearer <token>`
@@ -143,7 +143,9 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
     "market": "KRW-BTC",
     "enabled": true,
     "priority": 1,
-    "positionStatus": "SUSPENDED",
+    "positionStatus": "OPEN",
+    "tradeStatus": "SUSPENDED",
+    "suspendReasonCode": "UPBIT_UUID_UNKNOWN",
     "lastSignalAt": "2026-03-06T02:00:00.000Z",
     "cooldownUntil": "2026-03-06T04:00:00.000Z"
   },
@@ -152,6 +154,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
     "enabled": true,
     "priority": 2,
     "positionStatus": "OPEN",
+    "tradeStatus": "ACTIVE",
     "lastSignalAt": "2026-03-06T03:30:00.000Z"
   }
 ]
@@ -162,7 +165,9 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 | market | string | ✓ | KRW-BTC 등 |
 | enabled | boolean | ✓ | 활성 여부 |
 | priority | number | ✓ | 우선순위(동시 신호 시) |
-| positionStatus | enum | ✓ | FLAT / OPEN / SUSPENDED |
+| positionStatus | enum | ✓ | FLAT / OPEN |
+| tradeStatus | enum | ✓ | ACTIVE / SUSPENDED |
+| suspendReasonCode | string | | SUSPENDED 사유 코드 |
 | lastSignalAt | string | | 마지막 시그널 시각 |
 | cooldownUntil | string | | 쿨다운 만료 시각 |
 
@@ -427,7 +432,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 - Path: `market` — 예: KRW-BTC
 
 ### 응답 200 OK
-- 해제된 마켓의 positionStatus가 FLAT/OPEN으로 갱신됨을 반영한 마켓 정보
+- 해제된 마켓의 `tradeStatus=ACTIVE`가 반영된 마켓 정보
 
 ### 주의
 - 실수 방지를 위해 UI에서 확인(ConfirmDialog) 권장.

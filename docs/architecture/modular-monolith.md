@@ -122,7 +122,7 @@ Everbit 기준으로 자른다.
 물리 DB는 하나(PostgreSQL)여도 된다. 원칙만 지킨다.
 
 - **user**: `app_user`, `upbit_key`, `kill_switch` 등만 직접 접근  
-- **trade**: `signal`, `order_intent`, `order_attempt`, `upbit_order`, `fill`, `position` 등만 직접 접근  
+- **trade**: `signal`, `order_intent`, `order_attempt`, `upbit_order`, `fill`, `position`, `market_state` 등만 직접 접근  
 - **outbox**: `outbox_event` 발행/claim/상태 전이  
 - **다른 모듈의 Repository를 주입해 쓰지 않음**  
 - 조회가 필요하면 **공개 API(포트 인)** 또는 **이벤트 기반 read model**로 해결

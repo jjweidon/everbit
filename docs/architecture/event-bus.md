@@ -244,7 +244,7 @@ DB 반영:
 
 ### 8.2 푸시 알림(OrderAccepted)
 - 푸시는 best-effort이고 중복 가능하다.
-- 중복 방지(권장): `notification_log.event_id` UNIQUE로 1회만 전송되도록 만든다.
+- 중복 방지(권장): `notification_log(owner_id, event_id)` UNIQUE로 계정 기준 1회만 전송되도록 만든다.
 
 ---
 

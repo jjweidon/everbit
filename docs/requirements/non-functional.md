@@ -47,7 +47,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ### 2.3 UNKNOWN 수렴(필수)
 - timeout/네트워크/5xx 등 “생성 여부 불확실”은 자동 재주문으로 해결하지 않는다.
-- Attempt는 UNKNOWN으로 기록하고, reconcile 후에도 확정 불가 시 시장 단위 SUSPENDED로 안전 중단한다.
+- Attempt는 UNKNOWN으로 기록하고, reconcile 후에도 확정 불가 시 `market_state.trade_status = SUSPENDED`로 안전 중단한다.
 
 ### 2.4 레이트리밋/차단(필수)
 - 429: 해당 그룹 즉시 중단 + 백오프 + 이후 새 Attempt로 재시도

@@ -87,7 +87,8 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 **수용 기준**
 - 활성 마켓 목록을 설정할 수 있다(Enable/Disable).
-- 마켓별 상태(포지션/평균단가/보유수량/최근 신호/쿨다운)가 분리 관리된다.
+- 마켓별 상태(포지션/평균단가/보유수량/최근 신호/쿨다운/실행 상태)가 분리 관리된다.
+- 포지션 상태(FLAT/OPEN)와 시장 실행 상태(ACTIVE/SUSPENDED)는 별도로 관리된다.
 - 동시 포지션은 전략 파라미터(`maxOpenMarkets`)로 제한된다(기본 2).
 
 ### FR-TRADE-002 (P0) 전략 설정 CRUD
@@ -136,7 +137,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 **설명**: Outbox/Queue(at-least-once) 전제에서도 중복 주문이 발생하지 않도록 **DB가 멱등을 보장**한다.
 
 **수용 기준**
-- Signal 유니크: `(strategy_key, market, timeframe, candle_close_time, side)`
+- Signal 유니크: `(owner_id, strategy_key, market, timeframe, candle_close_time, side)`
 - OrderIntent 유니크: `(signal_id, intent_type)`
 - OrderAttempt는 “Upbit 호출 1회 = Attempt 1개”로 모델링한다.
 - 재기동/재처리 시 동일 Signal/Intent에 대해 중복 주문이 생성되지 않는다.
@@ -154,8 +155,8 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 **수용 기준**
 - CreateOrder timeout/5xx 발생 시 Attempt는 `UNKNOWN`으로 기록한다.
-- reconcile(조회) 후에도 확정 실패 시 해당 마켓은 `SUSPENDED`로 전환한다.
-- `SUSPENDED` 마켓은 수동 해제 전까지 신규 주문 생성이 금지된다.
+- reconcile(조회) 후에도 확정 실패 시 해당 마켓은 `market_state.trade_status = SUSPENDED`로 전환한다.
+- `SUSPENDED` 마켓은 수동 해제 전까지 신규 주문 생성/Attempt 발행이 금지된다.
 
 ### FR-ORDER-004 (P0) 레이트리밋 준수(429/418)
 **설명**: 레이트리밋 위반이 연쇄 장애/차단으로 이어지지 않도록 강제한다.
