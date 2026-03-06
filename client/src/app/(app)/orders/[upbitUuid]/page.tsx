@@ -30,11 +30,11 @@ function getAttemptStatusTone(s: AttemptStatus): "green" | "red" | "yellow" | "c
 }
 
 interface OrderDetailPageProps {
-  params: Promise<{ upbitUuid: string }>;
+  params: { upbitUuid: string };
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const { upbitUuid } = await params;
+  const { upbitUuid } = params;
 
   // Mock: uuid 일치 시 상세 반환
   const matched = mockOrderList.find((o) => o.latestAttempt.upbitUuid === upbitUuid);

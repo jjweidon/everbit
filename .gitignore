@@ -97,3 +97,4 @@ docs.zip
 docs/prompt-pack/
 .cursor/rules/
 docs/design/
+node_modules

@@ -13,11 +13,11 @@ function formatIso(iso: string) {
 }
 
 interface BacktestDetailPageProps {
-  params: Promise<{ jobPublicId: string }>;
+  params: { jobPublicId: string };
 }
 
 export default async function BacktestDetailPage({ params }: BacktestDetailPageProps) {
-  const { jobPublicId } = await params;
+  const { jobPublicId } = params;
 
   const detail =
     jobPublicId === mockBacktestDetail.jobPublicId
