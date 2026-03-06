@@ -1,118 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Itim&family=Noto+Sans+KR:wght@100..900&display=swap');
+@import "../styles/tokens.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes rotate-scale {
-  0% {
-    transform: perspective(1000px) rotateY(-10deg) scale(1);
-    filter: brightness(1) contrast(1.1) drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
-  }
-  50% {
-    transform: perspective(1000px) rotateY(10deg) scale(1.05);
-    filter: brightness(1.1) contrast(1.2) drop-shadow(0 0 5px rgba(0, 0, 0, 0.25));
-  }
-  100% {
-    transform: perspective(1000px) rotateY(-10deg) scale(1);
-    filter: brightness(1) contrast(1.1) drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
-  }
-}
-
-@keyframes hover-pulse {
-  0% {
-    transform: perspective(1000px) translateY(0) scale(1.1);
-    filter: brightness(1.1) contrast(1.2) drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
-  }
-  50% {
-    transform: perspective(1000px) translateY(-15px) scale(1.15);
-    filter: brightness(1.2) contrast(1.3) drop-shadow(0 0 8px rgba(0, 0, 0, 0.35));
-  }
-  100% {
-    transform: perspective(1000px) translateY(0) scale(1.1);
-    filter: brightness(1.1) contrast(1.2) drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
-  }
-}
-
-.login-logo-animation {
-  animation: rotate-scale 4s ease-in-out infinite;
-  transform-style: preserve-3d;
-  will-change: transform, filter;
-}
-
-.login-logo-animation:hover {
-  animation: hover-pulse 2s ease-in-out infinite;
-}
-
-@layer utilities {
-  .login-logo-hover {
-    filter: brightness(1.1);
-    transform: scale(1.1);
-  }
-}
-
-/* 거래 유형 배지 스타일 */
-@layer components {
-  .trade-badge-entry {
-    @apply bg-red-100 text-red-800 dark:bg-red-600/30 dark:text-red-300;
-  }
-  
-  .trade-badge-exit {
-    @apply bg-navy-100 text-navy-800 dark:bg-navy-300/30 dark:text-navy-100;
-  }
-}
-
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
-  --navy-light: #E6E8F0;
-  --navy-medium: #293E7D;
-  --navy-dark: #19254B;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
-html {
-  height: 100%;
-  background-color: rgb(var(--background-end-rgb));
+  --background: var(--bg-1);
+  --foreground: var(--text-1);
 }
 
 body {
-  min-height: 100vh;
-  background-color: rgb(15 21 42);
-  color: rgb(var(--foreground-rgb));
-  overflow-x: hidden;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-
-/* 스크롤바 스타일링 */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgb(51 65 85); /* bg-navy-700 */
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(71 85 105); /* bg-navy-600 */
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(100 116 139); /* bg-navy-500 */
-}
-
-/* 네이비 강조 효과 */
-.navy-gradient-text {
-  background: linear-gradient(to right, var(--navy-dark), var(--navy-medium));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background-color: rgb(var(--bg-1));
+  color: rgb(var(--text-1));
 }

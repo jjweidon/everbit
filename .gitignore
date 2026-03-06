@@ -94,3 +94,6 @@ docs.zip
 *.docx
 *.pptx
 *.pdf
+docs/prompt-pack/
+.cursor/rules/
+docs/design/
