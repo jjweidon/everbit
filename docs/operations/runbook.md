@@ -1,20 +1,22 @@
-# 런북 (단일 VM 올인원)
+# 런북 (E2.1.Micro + Supabase)
 
 Status: **Ready for Operation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 목표:
 - 운영 환경에서 “누가 하더라도 동일하게” 대응할 수 있도록 최소 절차를 고정한다.
+- **운영 아키텍처**: Backend(OCI E2.1.Micro) + DB/Auth/Storage(Supabase). VM에 DB 컨테이너 없음.
 
 ---
 
 ## 1. Day-0 요약
-- [ ] OCI VM 생성 + NSG 규칙(80/443, 22 제한)
+- [ ] OCI VM 생성(**E2.1.Micro**) + NSG 규칙(80/443, 22 제한) — 순서: NSG 붙인 뒤 Security List 정리(`docs/operations/oci-setup.md` v3 참고)
+- [ ] **Swap 2GB** 설정 + swappiness=10
 - [ ] OS 방화벽(iptables) 확인
 - [ ] Docker 설치
-- [ ] `/etc/everbit/everbit.env` 생성(600)
-- [ ] docker compose(prod) 구동
+- [ ] `/etc/everbit/everbit.env` 생성(600) — Supabase 연결 정보 포함
+- [ ] docker compose(prod) 구동 — **DB/Redis 서비스 없음**, Backend는 Supabase 연결
 - [ ] DNS `api.everbit.kr` → VM Public IP
 - [ ] Let's Encrypt 발급 + 자동 갱신
 - [ ] Admin 도구 외부 비공개 유지(SSH 터널)
@@ -67,9 +69,9 @@ docker compose -f docker/compose.yaml -f docker/compose.prod.yaml exec nginx ngi
 ### 5.1 API 5xx 급증
 1) 최근 배포가 있으면 즉시 롤백
 2) 지속되면:
-   - DB 연결/디스크 용량
+   - **DB 연결(Supabase)** / 디스크 용량
    - Outbox/Queue backlog(적체) + 워커 처리 지연
-   - JVM 메모리/CPU
+   - JVM 메모리/CPU(OOM 시 swap 확인)
 
 ### 5.2 주문 파이프라인 이상(429/418/UNKNOWN/중복 의심)
 1) 계정 Kill Switch OFF(웹 UI)
@@ -77,9 +79,9 @@ docker compose -f docker/compose.yaml -f docker/compose.prod.yaml exec nginx ngi
 3) 원인 제거 후 재개(Kill Switch ON)
 
 ### 5.3 디스크 부족
-- Postgres는 디스크 의존도가 높다(Outbox backlog 포함).
-- 로그/백테스트 산출물/불필요 이미지 정리
-- Always Free 한도 내에서 볼륨 확장 검토
+- VM에는 DB 데이터가 없으므로 디스크 부담은 로그/백테스트 산출물/이미지가 주 원인이다.
+- 로그/백테스트 산출물/불필요 이미지 정리.
+- **DB 백업**은 Supabase 측(PITR/백업) 정책을 확인한다. (`docs/operations/disaster-recovery.md`)
 
 ---
 

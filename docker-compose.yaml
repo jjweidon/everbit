@@ -26,5 +26,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - TZ=Asia/Seoul
-    networks: 
+      # E2.1.Micro(1GB) 운영 시 OOM 방지 — JVM 힙 상한. prod 오버라이드에서 env_file: [/etc/everbit/everbit.env] 사용.
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:MaxMetaspaceSize=96m
+    networks:
       - everbit-network

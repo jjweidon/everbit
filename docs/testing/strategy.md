@@ -16,6 +16,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 - 새 기능/버그 수정은 **실패하는 테스트(RED)** 부터 시작한다.
 - 테스트를 통과시키는 최소 구현으로 **GREEN**을 만들고, 그 다음에만 리팩토링한다.
 - 상세 규칙/DoD: `docs/testing/tdd.md`
+- 실무 구조·예시: `docs/testing/backend-tdd-template.md`
 
 2) **FRD → 테스트 케이스**로 추적 가능해야 한다.
 - 각 FR-ID는 최소 1개 이상의 테스트 케이스로 연결한다.
@@ -89,5 +90,6 @@ P1(권장):
 
 ## 6. 출력물
 - `docs/testing/tdd.md`가 백엔드 개발 루프(TDD)의 최종 기준이다.
+- `docs/testing/backend-tdd-template.md`가 테스트 구조·계층·예시의 실무 템플릿이다.
 - `docs/testing/test-matrix.md`가 케이스 목록의 최종 기준이다.
 - 성능/지표 산식은 `docs/testing/performance-plan.md`가 최종 기준이다.

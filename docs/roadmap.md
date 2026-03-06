@@ -2,7 +2,7 @@
 
 Status: **Active (Tracking)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 이 문서는 everbit v2 MVP를 **“개발 착수 → 기능 완성 → 운영 준비 → 실거래 ON”**까지 단계별로 추적하기 위한 **단일 체크리스트(SoT)** 이다.  
 작업은 이 문서의 체크박스를 기준으로 진행하며, 완료 여부는 각 항목의 **Definition of Done(DoD)** 로 판단한다.
@@ -44,30 +44,19 @@ Last updated: 2026-02-17 (Asia/Seoul)
   - DoD:
     - 사용할 버전(예: Boot 3.3.x, Java 21 등) 문서에 1곳으로 고정
     - ADR 또는 `operations/environments.md`에 명시
-- [ ] **Outbox 스테일 락 복구 전략 1안으로 고정**
-  - 선택지(둘 중 1개만 채택):
-    1) Claim 대상에 `PROCESSING AND locked_until < now()` 포함(재-claim)
-    2) Sweeper가 주기적으로 `PROCESSING(expired)` → `PENDING`으로 복구
-  - DoD:
-    - `architecture/event-bus.md`에 SQL/동작 규격을 1개로 고정
-    - 테스트(통합 또는 단위)로 “워커 죽음 후 복구” 재현 가능
-- [ ] **429(THROTTLED) 재시도 표준 고정**
-  - DoD:
-    - “429 수신 → 기존 attempt 종결 → 새 attempt(attempt_no+1, 새 identifier) 생성 → outbox 재발행”을 문서로 고정
-    - WireMock/Mock 기반 회귀 테스트 케이스 추가 계획까지 포함
-- [ ] **Attempt 요청 파라미터 스냅샷 정책 고정**
-  - 선택지:
-    1) `order_intent`에서 파생 규칙을 문서로 고정(완전 결정적이어야 함)
-    2) `order_attempt.request_json(jsonb)` 또는 outbox payload에 snapshot을 고정 저장
-  - DoD:
-    - 선택한 방식이 문서/스키마/코드 규칙에 반영됨
-- [ ] **백테스트 캔들 데이터 전략 결정**
-  - 선택지:
-    1) DB에 candle 캐시 테이블을 둔다(권장: (market,timeframe,candle_time) UNIQUE)
-    2) P0에서는 저장 없이 외부에서 매번 로딩(레이트리밋/재현성 리스크 수용)
-  - DoD:
-    - `requirements/functional.md`의 백테스트 범위와 정합
-    - `testing/performance-plan.md`과 충돌 없음
+- [x] **Outbox 스테일 락 복구 전략 1안으로 고정** ✅
+  - **채택**: 1안 — claim 쿼리가 만료된 PROCESSING을 직접 reclaim. 별도 sweeper 없음.
+  - claim 대상: `status='PENDING' AND next_retry_at <= now()` OR `status='PROCESSING' AND locked_until < now()`
+  - DoD: `architecture/event-bus.md`에 SQL/동작 규격 반영됨
+- [x] **429(THROTTLED) 재시도 표준 고정** ✅
+  - **채택**: 새 Attempt 생성 방식. 429 수신 시 현재 attempt → THROTTLED; 동일 트랜잭션에서 attempt_no+1·새 identifier·CreateOrderAttempt outbox 재발행; outbox_event.next_retry_at에 백오프 설정. attempt/identifier 재사용 금지.
+  - DoD: `architecture/order-pipeline.md` §5.2 등에 반영됨
+- [x] **Attempt 요청 파라미터 스냅샷 정책 고정** ✅
+  - **채택**: 2안 — order_attempt.request_json(jsonb)을 canonical snapshot으로 사용. 실제 Upbit CreateOrder payload 저장. outbox payload는 orderAttemptId만 전달.
+  - DoD: `architecture/order-pipeline.md`, `architecture/data-model.md`, `db/schema-v2-mvp.sql` 반영됨
+- [x] **백테스트 캔들 데이터 전략 결정** ✅
+  - **채택**: 1안 — DB candle cache 테이블을 canonical source. UNIQUE(market, timeframe, candle_time). 백테스트는 DB에서만 읽고, 누락 구간은 실행 전 fetch + upsert 후 진행.
+  - DoD: `architecture/data-model.md` §5.0, `db/schema-v2-mvp.sql`에 candle_cache 추가됨
 - [ ] **API 계약 최소치 고정(엔드포인트/DTO/에러)**
   - 범위(최소):
     - 로그인/세션, UpbitKey 등록/검증, KillSwitch, Strategy/Market config, Backtest job, Push subscription

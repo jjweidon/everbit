@@ -2,18 +2,23 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 everbit v2 백엔드는 **TDD(Test-Driven Development)**를 기본 개발 방식으로 채택한다.
 
 원칙: **실패(RED) → 성공(GREEN) → 리팩토링(REFACTOR)**  
 목표는 “테스트 커버리지”가 아니라, **실거래에서 사고를 내는 영역(멱등/상태머신/레이트리밋/외부 연동)을 회귀 테스트로 고정**하는 것이다.
 
+**실무 요약(한 줄):**  
+클래식 TDD + **상태 기반(state-based) 테스트** + slice/integration 분리 + 최소 E2E.  
+즉, “mock 잔뜩 쓰는 TDD”가 아니라 **“행동을 먼저 검증하고 경계만 통합으로 확인하는 TDD”**를 기본으로 한다.
+
 이 문서는 “테스트 작성 방식”이 아니라, 구현자가 흔들리지 않도록 **개발 루프/규칙/DoD**를 고정한다.
 
 관련 SoT:
 - 테스트 전략: `docs/testing/strategy.md`
 - 테스트 매트릭스: `docs/testing/test-matrix.md`
+- **실무 템플릿(구조·예시)**: `docs/testing/backend-tdd-template.md`
 - 주문 파이프라인(핵심 규칙): `docs/architecture/order-pipeline.md`
 - Outbox/Queue: `docs/architecture/event-bus.md`
 - 코드 컨벤션: `docs/architecture/spring-boot-conventions.md`
@@ -32,6 +37,31 @@ TDD는 아래 범위에서 **강제**한다.
 예외(허용):
 - 단순 Wiring(Controller 라우팅/DI)이나 UI 표시용 DTO 조립처럼 “규칙이 거의 없는” 부분은 TDD를 완화할 수 있다.  
   단, P0 기능의 경우 최종적으로 Integration/E2E 테스트가 반드시 존재해야 한다.
+
+---
+
+### 1.1 테스트 스타일(강제)
+
+- **행동 중심(behavior-focused)**: 테스트 대상은 **public interface(유스케이스/서비스 API)** 기준이다. private 메서드를 직접 테스트하지 않는다.
+- **상태 기반(state-based)**: 비즈니스 결과(저장된 상태, 반환값, 예외)를 검증한다.  
+  `verify(repository).save(...)` 같은 **상호작용(interaction) 검증은 기본값으로 쓰지 않는다** — 구현을 “lock in”해 리팩터링 내성을 떨어뜨린다.
+- **Test list 선작성**: 요구사항을 use case 기준으로 **테스트 목록**으로 쪼갠 뒤, 그중 하나를 골라 RED → GREEN → REFACTOR를 반복한다. 실패 테스트 하나만 던지고 들어가는 것이 아니라 목록을 보고 진행한다.
+
+### 1.2 TDD 시작점(강제)
+
+- **시작점은 항상 use case(서비스/애플리케이션 계층) 테스트**이다.
+- Controller부터 시작해서 아래 계층 호출 여부만 검증하는 방식은 **비추천**이다.
+- 비즈니스 규칙은 **Spring 컨텍스트 없이** plain JUnit으로 먼저 검증한다.  
+  가장 먼저 테스트할 대상은 Controller가 아니라 `PlaceOrderUseCase`, 주문 실행기 같은 유스케이스이다.
+
+### 1.3 Mock / Fake 정책(강제)
+
+- **Fake/Stub 우선**: 도메인·유스케이스 테스트에서는 Mockito를 기본값으로 쓰지 않고, **InMemory fake**(예: `InMemoryOrderRepository`) 또는 단순 stub으로 충분히 검증한다. 리팩터링 내성이 가장 크다.
+- **Mock은 경계에서만 제한적 사용**:
+  - **Controller slice(`@WebMvcTest`)**: 입력/응답/계약만 검증할 때 use case를 `@MockitoBean`으로 두는 것은 허용된다.
+  - **외부 REST client slice(`@RestClientTest`)**: `MockRestServiceServer` 등으로 계약 검증.
+- **비추천**: service/repository/client 전부 mock으로 격리하는 **mock-heavy London 스타일**을 기본값으로 쓰는 것.  
+  controller부터 시작해서 아래 계층 호출만 검증하는 테스트, **`@SpringBootTest`만 잔뜩 늘려서** 느리고 깨지기 쉬운 스위트를 만드는 것, **커버리지 숫자**를 TDD 성공 기준으로 보는 것.
 
 ---
 
@@ -123,6 +153,20 @@ everbit에서 “테스트가 없으면 곧 사고로 이어지는” 영역을 
 - `Awaitility`를 사용해 “조건이 만족될 때까지 기다리는 방식”으로 작성한다.
 - `Thread.sleep` 금지(테스트가 flaky해진다).
 
+### 4.6 실무 개발 순서(권장)
+
+TDD 진행 시 아래 순서를 따른다.
+
+1. **Use case 테스트** 작성(plain JUnit, Spring 없음, fake/stub)
+2. 최소 구현으로 GREEN
+3. 도메인 규칙(중복/정책) 추가
+4. **Controller slice** `@WebMvcTest`로 요청/응답/계약만 검증
+5. **Persistence slice** `@DataJpaTest`로 JPA 매핑·제약·쿼리 검증
+6. 외부 API가 있으면 **`@RestClientTest`** 로 계약 검증
+7. 마지막에 **`@SpringBootTest`** 로 핵심 happy path 1~3개만 flow 테스트
+
+요약: **use case → controller slice → persistence slice → external client slice → minimal flow**
+
 ---
 
 ## 5. 테스트 네이밍/구조 규칙(강제)
@@ -175,6 +219,14 @@ public final class ThreadLocalUlidGenerator implements UlidGenerator {
 - “모든 것을 Mockito로” 처리해서 DB 제약/락/트랜잭션을 검증하지 않는 테스트
 - Spring Context를 남발해서 Unit 테스트까지 느리게 만드는 방식
 - 임의 랜덤 데이터로 테스트(재현 불가)
+
+**추가로 지킬 것(실무):**
+- **private 메서드**를 직접 테스트하지 않는다(public behavior 기준).
+- **service 테스트에서 Spring을 띄우지 않는다**(plain JUnit + fake).
+- **service 테스트에서 mock을 남발하지 않는다**(fake/stub 우선).
+- **controller 테스트에서 비즈니스 로직 검증을 하지 않는다**(입력/응답/계약만).
+- **repository 테스트에서 API status code를 보지 않는다**(JPA/DB 관심사만).
+- **full context(`@SpringBootTest`) 테스트를 많이 만들지 않는다**(핵심 흐름만 최소 유지).
 
 ---
 

@@ -2,7 +2,9 @@
 
 Status: **Deferred (P1+)**  
 Date: 2026-02-14  
-Updated: 2026-02-17
+Updated: 2026-03-06
+
+> **현재 운영 형태**: VM은 E2.1.Micro + Supabase(DB/Auth/Storage 분리). SoT: `docs/operations/oci-setup.md` v3. 본 ADR의 "올인원"은 P1+에서 Kafka 도입 시 VM 내 배치 구상을 담은 것이며, 현재는 DB를 VM에 두지 않는다.
 
 ---
 

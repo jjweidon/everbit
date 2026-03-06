@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 실거래 시스템에서 가장 위험한 문제는 아래 3가지다.
 
@@ -65,17 +65,19 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ### 3.4 OrderIntent 생성 + EventBus publish
 - OrderIntent 저장(유니크: signal_id + intent_type)
-- **동일 트랜잭션 내** `CreateOrderAttempt` 커맨드(outbox_event) 생성
+- OrderAttempt 생성(attempt_no=1, 신규 identifier, **request_json에 Upbit CreateOrder payload 스냅샷 저장**)
+- **동일 트랜잭션 내** `CreateOrderAttempt` 커맨드(outbox_event) 생성  
+  - outbox payload는 **orderAttemptId만** 전달한다. 워커는 `order_attempt.request_json`에서 실행용 스냅샷을 읽는다.
 - 워커가 `everbit.trade.command` 스트림을 polling/claim하여 Attempt 실행을 트리거한다.
 
 SoT: `docs/architecture/event-bus.md`
 
 ### 3.5 Order Executor Worker(Attempt 실행)
-- 입력: `orderAttemptId`
+- 입력: outbox payload의 **orderAttemptId**
 - 소비 대상: `outbox_event.stream = everbit.trade.command` + `event_type = CreateOrderAttempt`
 - 동작:
-  - `orderAttemptId`로 DB 조회 → Upbit 호출
-  - 결과를 DB에 기록(Attempt 상태 전이)
+  - orderAttemptId로 DB 조회 → **order_attempt.request_json**에서 Upbit CreateOrder payload 로드
+  - Upbit 호출 → 결과를 DB에 기록(Attempt 상태 전이)
   - 이벤트(outbox_event) 발행
 
 ### 3.6 체결/정합성 처리
@@ -110,12 +112,16 @@ SoT: `docs/architecture/event-bus.md`
 - OrderIntent 1개는 여러 OrderAttempt를 가질 수 있다.
 - Attempt 생성 시:
   - attempt_no = 1..N
-  - identifier는 신규 생성(ULID/UUID 권장)
+  - identifier는 신규 생성(ULID/UUID 권장, 재사용 금지)
   - status = PREPARED
-- Attempt의 Upbit 요청 파라미터(side/ord_type/price/volume/time_in_force)는 “실행 시점 스냅샷”으로 고정한다(재현성).
+  - **request_json(jsonb)**: Upbit CreateOrder 호출에 쓸 **canonical snapshot**. 실제 Upbit API 요청 body를 그대로 저장한다.
+- **역할 분리(고정)**:
+  - order_intent: semantic intent(의도·금액·사유)
+  - order_attempt.request_json: executable snapshot(실행 시점의 Upbit payload)
+- outbox CreateOrderAttempt payload는 **orderAttemptId만** 전달한다. 워커는 DB에서 request_json을 읽어 호출한다.
 
 ### 5.2 Attempt 실행 규칙(상태 전이)
-1) PREPARED → SENT: Upbit CreateOrder 요청을 보냄
+1) PREPARED → SENT: `order_attempt.request_json` 기반으로 Upbit CreateOrder 요청을 보냄
 2) 요청 성공(2xx) + uuid 확보:
    - SENT → ACKED
    - UpbitOrder 저장/갱신
@@ -123,10 +129,11 @@ SoT: `docs/architecture/event-bus.md`
 3) 비즈니스 오류(4xx 파라미터/권한/잔고 등):
    - SENT → REJECTED
    - 자동 재시도 금지
-4) 429(레이트리밋):
-   - SENT → THROTTLED
-   - next_retry_at 설정
-   - 이후 **새 Attempt(attempt_no+1, 새 identifier)**로 재시도
+4) **429(레이트리밋) — 새 Attempt 방식(고정)**:
+   - 현재 Attempt는 **THROTTLED**로 종료
+   - **동일 트랜잭션에서**: attempt_no+1인 새 OrderAttempt 생성(새 identifier, request_json은 intent 기준으로 동일 스냅샷)
+   - 새 Attempt에 대한 CreateOrderAttempt outbox_event 발행, **outbox_event.next_retry_at**에 백오프 시각 설정
+   - 기존 attempt/identifier 재사용 금지
 5) timeout/네트워크/5xx:
    - SENT → UNKNOWN
    - reconcile(조회) 루프 수행(짧은 기간)

@@ -18,7 +18,7 @@ Scope: **개발/기획/문서/테스트/운영 전 과정**
 - 사용자 모델: **1인 전용(OWNER 단일)**, 로그인은 **카카오 OAuth2 단일 수단**
 - 거래소: **Upbit** 단일
 - DB: **PostgreSQL**
-- 실행: **단일 VM 올인원(OCI 우선)**
+- 실행: **OCI E2.1.Micro(API) + Supabase(DB/Auth/Storage)** — VM에 DB 컨테이너 금지. SoT: `docs/operations/oci-setup.md` v3.
 
 ---
 

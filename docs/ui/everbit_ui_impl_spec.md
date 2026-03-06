@@ -280,7 +280,7 @@ FR: FR-UI-001~002, FR-TRADE-005, FR-ORDER-003~004
 권장 API:
 - GET `/api/v2/dashboard/summary`
 - GET `/api/v2/orders?limit=20&onlyAcked=true`
-- GET `/api/v2/markets/status`
+- GET `/api/v2/markets` (대시보드 하단 마켓 상태 포함; 계약 SoT: `docs/api/contracts.md`)
 
 ---
 
@@ -336,9 +336,9 @@ FR: FR-TRADE-002~004
 - maxOpenMarkets >= 1
 - min/max 주문금액: min <= max
 
-권장 API:
-- GET `/api/v2/strategy-configs/EXTREME_FLIP`
-- PUT `/api/v2/strategy-configs/EXTREME_FLIP`
+권장 API(계약 SoT: `docs/api/contracts.md`):
+- GET `/api/v2/strategy/config`
+- PUT `/api/v2/strategy/config`
 
 ---
 
@@ -453,7 +453,7 @@ FR: FR-NOTI-001~003
 - message + deepLink 입력
 - 결과(요청/성공/실패) 표시
 
-API(문서 고정):
+API(계약 SoT: `docs/api/contracts.md`, 상세 DTO: `docs/architecture/push-notifications.md` §4):
 - POST `/api/v2/push/subscriptions`
 - GET `/api/v2/push/subscriptions`
 - DELETE `/api/v2/push/subscriptions/{id}`
@@ -479,6 +479,8 @@ API(문서 고정):
 ---
 
 ## 7. 프론트-백 API 계약(초안)
+
+**API 계약 SoT**: `docs/api/contracts.md`. 아래 DTO 예시는 계약 문서와 동일해야 한다.
 
 현재 문서에 명시된 API는 Push 영역만이다. 나머지는 프론트 구현을 위해 아래 read-model 중심으로 정리한다.
 

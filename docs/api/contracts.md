@@ -42,15 +42,40 @@ Last updated: 2026-03-06 (Asia/Seoul)
 
 ## 1. 엔드포인트 목록
 
+API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의 "권장 API"는 아래 경로를 따른다.
+
 | Method | Path | 설명 |
 |--------|------|------|
+| **인증** | | |
+| POST | /api/v2/auth/refresh | Refresh 쿠키로 Access Token 재발급 (ADR-0007) |
+| POST | /api/v2/auth/logout | 로그아웃(Refresh 쿠키/Redis 폐기) |
+| **Upbit 키** | | |
+| GET | /api/v2/upbit/key/status | 키 등록 여부·마지막 검증 결과 |
+| POST | /api/v2/upbit/key | 키 등록+검증 (FR-UPBIT-KEY-001) |
+| DELETE | /api/v2/upbit/key | 키 폐기 (FR-UPBIT-KEY-003) |
+| **대시보드/마켓/전략** | | |
 | GET | /api/v2/dashboard/summary | 대시보드 요약(실행·리스크·자산) |
 | GET | /api/v2/markets | 마켓 목록(enable/priority/position) |
+| PUT | /api/v2/markets/{market} | 마켓 설정 수정(enabled, priority) |
+| POST | /api/v2/markets/{market}/unsuspend | 마켓 SUSPENDED 수동 해제 |
 | GET | /api/v2/strategy/config | 전략 설정 조회 |
 | PUT | /api/v2/strategy/config | 전략 설정 수정 |
+| **주문** | | |
 | GET | /api/v2/orders | 주문 목록(페이징) |
 | GET | /api/v2/orders/{upbitUuid} | 주문 상세 |
 | POST | /api/v2/reconcile | reconcile 트리거(운영용, 옵션) |
+| **푸시** | | |
+| POST | /api/v2/push/subscriptions | 구독 등록/갱신 |
+| GET | /api/v2/push/subscriptions | 구독 목록 |
+| DELETE | /api/v2/push/subscriptions/{id} | 구독 해지 |
+| POST | /api/v2/push/test | 테스트 푸시 발송 |
+| **백테스트** | | |
+| GET | /api/v2/backtests | 백테스트 job 목록 |
+| POST | /api/v2/backtests | 백테스트 실행 |
+| GET | /api/v2/backtests/{jobPublicId} | 백테스트 결과 상세 |
+
+푸시 API 요청/응답 상세: `docs/architecture/push-notifications.md` §4.  
+인증/세션 상세: ADR-0007, `docs/requirements/non-functional.md` §1.2.
 
 ---
 
@@ -379,9 +404,39 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 
 ---
 
-## 9. 에러 정책 및 UX 동작
+## 9. PUT /api/v2/markets/{market}
 
-### 9.1 표준 에러 본문
+마켓 설정 수정(enabled, priority). FR-TRADE-001.
+
+### 요청
+- Headers: `Authorization: Bearer <token>`
+- Path: `market` — 예: KRW-BTC
+- Body(optional): `{ "enabled": boolean, "priority": number }` — 일부만 보내도 됨
+
+### 응답 200 OK
+- 수정된 마켓 정보(GET /api/v2/markets 항목과 동일 형식 1개)
+
+---
+
+## 10. POST /api/v2/markets/{market}/unsuspend
+
+마켓 SUSPENDED 수동 해제. UNKNOWN 확정 실패 등으로 SUSPENDED된 마켓만 대상.
+
+### 요청
+- Headers: `Authorization: Bearer <token>`
+- Path: `market` — 예: KRW-BTC
+
+### 응답 200 OK
+- 해제된 마켓의 positionStatus가 FLAT/OPEN으로 갱신됨을 반영한 마켓 정보
+
+### 주의
+- 실수 방지를 위해 UI에서 확인(ConfirmDialog) 권장.
+
+---
+
+## 11. 에러 정책 및 UX 동작
+
+### 11.1 표준 에러 본문
 
 ```json
 {
@@ -399,7 +454,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 | reasonCode | string | 운영/디버깅용 상세 코드 |
 | details | object | 추가 정보(선택) |
 
-### 9.2 HTTP 상태별 동작
+### 11.2 HTTP 상태별 동작
 
 | HTTP | 의미 | UX 동작 |
 |------|------|---------|
@@ -409,7 +464,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 | **418** | Upbit 차단(서버 내부) | API 직접 반환은 드물고, dashboard/orders 응답의 `risk.blocked418Until`로 전달. 418 시 서버가 503 등으로 대체 반환 가능 |
 | **5xx** | 서버 오류 | "일시적 오류입니다. 잠시 후 다시 시도해 주세요." + 재시도 가능(멱등 요청만) |
 
-### 9.3 에러 응답 예시
+### 11.3 에러 응답 예시
 
 **401 Unauthorized**
 ```json
@@ -462,7 +517,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 }
 ```
 
-### 9.4 프론트 처리 체크리스트
+### 11.4 프론트 처리 체크리스트
 - [ ] 401 수신 시 refresh 1회 + 원 요청 1회 재시도
 - [ ] 403 시 로그인 페이지 유도
 - [ ] 429 시 사용자 안내 + 지수 백오프
@@ -471,7 +526,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 
 ---
 
-## 10. Reason Code 참조
+## 12. Reason Code 참조
 
 | reasonCode | 설명 |
 |------------|------|
@@ -486,8 +541,9 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 
 ---
 
-## 11. 변경 이력
+## 13. 변경 이력
 
 | 날짜 | 변경 내용 |
 |------|----------|
-| 2026-03-06 | 초안 작성: dashboard, markets, strategy, orders, reconcile, 에러 정책 |
+| 2026-03-06 | 초안: dashboard, markets, strategy, orders, reconcile, 에러 정책 |
+| 2026-03-06 | 엔드포인트 목록 확장: auth/refresh·logout, upbit/key, push, backtests, PUT markets, POST unsuspend. 마켓 수정·unsuspend 계약 추가. |

@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS order_attempt (
   order_intent_id bigint NOT NULL REFERENCES order_intent(id) ON DELETE CASCADE,
   attempt_no      int NOT NULL CHECK (attempt_no >= 1),
   identifier      varchar(64) NOT NULL,
+  request_json    jsonb NOT NULL,
   upbit_uuid      uuid,
   status          varchar(16) NOT NULL CHECK (status IN ('PREPARED','SENT','ACKED','REJECTED','THROTTLED','UNKNOWN','SUSPENDED')),
   error_code      varchar(64),
@@ -185,6 +186,22 @@ CREATE TABLE IF NOT EXISTS pnl_snapshot (
 );
 
 CREATE INDEX IF NOT EXISTS ix_pnl_snapshot_owner_captured_at ON pnl_snapshot(owner_id, captured_at);
+
+-- -----------------------------------------------------------------------------
+-- 2.8) Candle cache (backtest canonical source; UNIQUE(market, timeframe, candle_time))
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS candle_cache (
+  market      varchar(32) NOT NULL,
+  timeframe   varchar(16) NOT NULL,
+  candle_time timestamptz NOT NULL,
+  open        numeric(38,18) NOT NULL,
+  high        numeric(38,18) NOT NULL,
+  low         numeric(38,18) NOT NULL,
+  close       numeric(38,18) NOT NULL,
+  volume      numeric(38,18) NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (market, timeframe, candle_time)
+);
 
 -- -----------------------------------------------------------------------------
 -- 3) Outbox / Queue

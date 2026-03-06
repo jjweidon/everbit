@@ -1,10 +1,12 @@
-# Everbit v2 아키텍처 개요 (단일 VM 올인원)
+# Everbit v2 아키텍처 개요 (E2.1.Micro + Supabase)
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
-v2는 1인 전용(싱글 테넌트) 자동매매 시스템이며, 초기 운영 비용을 최소화하기 위해 **단일 VM(OCI Free Tier 우선) 올인원** 배포를 기본으로 한다.
+v2는 1인 전용(싱글 테넌트) 자동매매 시스템이다.  
+운영 아키텍처(SoT): **Frontend(Vercel) + Backend(OCI E2.1.Micro) + DB/Auth/Storage(Supabase)**.  
+VM에는 DB 컨테이너를 띄우지 않으며, 비동기 파이프라인은 PostgreSQL Outbox/Queue(`outbox_event`) + 워커 폴링으로 구성한다.
 
 v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event` 기반 Outbox/Queue로 비동기 파이프라인을 구성한다.
 
@@ -21,7 +23,7 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
 
 ---
 
-## 2. 배포 토폴로지(단일 VM)
+## 2. 배포 토폴로지(E2.1.Micro + Supabase)
 
 ```
                     ┌──────────────────────────┐
@@ -32,12 +34,12 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
                                 ▼
                     ┌──────────────────────────┐
                     │     VM Public IP         │
-                    │  api.everbit.kr (DNS)    │
+                    │  api.everbit.kr (DNS)     │
                     └───────────┬──────────────┘
                                 │ 80/443
                                 ▼
 ┌────────────────────────────────────────────────────────────────┐
-│                        Single VM (Docker)                       │
+│              OCI VM (E2.1.Micro, 1GB) — Backend only            │
 │                                                                │
 │  [Public]                                                      │
 │   - Nginx (TLS 종료, Reverse Proxy, ACL/RateLimit)             │
@@ -48,13 +50,21 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
 │  [Private Docker Network]                                      │
 │   - Spring Boot App (Java 21, Boot 4.x)                        │
 │       - API + Background Workers(Outbox Polling)               │
-│   - PostgreSQL (SoT + Outbox/Queue)                            │
-│   - Redis (cache/locks/session/rate-state)                     │
+│       - JVM 메모리 상한: -Xms128m -Xmx256m                     │
 │   - Prometheus (scrape)                                        │
 │   - Grafana (dashboard)                                        │
 │   - Jenkins (선택, 기본 비공개)                                │
 │                                                                │
+│   ※ VM에는 Postgres/Redis 컨테이너를 띄우지 않음               │
 └────────────────────────────────────────────────────────────────┘
+                                │
+                                │ HTTPS (Session pooler / API)
+                                ▼
+                    ┌──────────────────────────┐
+                    │       Supabase           │
+                    │  Postgres / Auth /       │
+                    │  Storage (DB SoT)        │
+                    └──────────────────────────┘
 ```
 
 ---
@@ -75,12 +85,14 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
 - 푸시 알림: 주문 접수(ACK) 시 Web Push 발송(구독 관리 포함)
 - 대시보드 API: 실행 상태/최근 주문/잔고/손익
 
-### 3.3 PostgreSQL(SoT)
+### 3.3 PostgreSQL(SoT) — Supabase
 - 주문/체결/포지션/설정/키 암호문/Outbox/백테스트 결과 저장
+- **운영**: Supabase(Postgres) Session pooler 연결. VM에 DB 컨테이너 없음.
+- **로컬**: 개발 시에만 VM/로컬 Postgres 컨테이너 사용 가능.
 
-### 3.4 Redis
-- Upbit 레이트 상태(Remaining-Req 등), 락/세션(refresh_jti) 저장
-- (선택) 대시보드 read-model 캐시
+### 3.4 Redis(로컬/선택)
+- **운영**: E2.1.Micro에서는 VM에 Redis를 두지 않는다. Upbit 레이트 상태/락/세션은 애플리케이션 메모리 또는 Supabase 활용으로 처리(구현 정책에 따름).
+- **로컬**: 개발용 Redis 사용 시 캐시/락/세션 저장.
 
 ### 3.5 Event Bus / Queue (PostgreSQL Outbox/Queue)
 - 비동기 파이프라인/버퍼를 PostgreSQL `outbox_event`로 구현한다.
@@ -136,18 +148,20 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
 - 22/tcp (SSH, 본인 IP /32 제한, 키 인증)
 
 절대 외부 노출 금지:
-- Postgres(5432), Redis(6379), Prometheus(9090), Grafana(3000), Jenkins 등
+- Postgres(5432), Redis(6379), Prometheus(9090), Grafana(3000), Jenkins 등  
+  (운영에서는 VM에 Postgres/Redis를 두지 않으며, DB는 Supabase로 연결한다.)
 
 ---
 
 ## 6. 운영 제약/확장
 
-- 단일 VM이므로 장애 시 전체 다운(v2에서 HA 목표 아님)
+- 운영 VM은 E2.1.Micro(1GB) 기준이며, **DB는 Supabase로 분리**되어 있다.
+- 단일 VM이므로 장애 시 API 레이어 다운(v2에서 HA 목표 아님). DB는 Supabase 가용성에 따름.
 - 부하 증가 시 분리 우선순위(권장):
   1) Jenkins 분리
   2) Grafana/Prometheus 분리
   3) Backtest/Worker 프로세스 분리(동일 이미지, worker 모드)
-  4) DB 분리
+  4) (이미 적용) DB는 Supabase
   5) (P1+) Kafka 도입: `EventBus` 구현체 교체(ADR-0009)
 
 ---

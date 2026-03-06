@@ -464,12 +464,15 @@ interface StrategyConfigRepository extends JpaRepository<StrategyConfig, Strateg
 
 관련 SoT:
 - TDD 개발 규칙: `docs/testing/tdd.md`
+- **실무 템플릿(구조·예시)**: `docs/testing/backend-tdd-template.md`
 - 테스트 전략/게이트: `docs/testing/strategy.md`
 
 규칙:
 - 개발은 **RED → GREEN → REFACTOR** 루프를 따른다(테스트 없이 구현부터 시작 금지).
+- **시작점은 use case(서비스) 테스트**이다. Controller부터 시작하지 않는다.
 - 테스트 코드는 `src/test/java`에서 `src/main/java` 패키지 구조를 그대로 미러링한다.
 - 한 테스트는 한 규칙만 검증한다(Given/When/Then 또는 AAA).
+- 비즈니스 규칙은 **상태 기반(state-based)** 검증. mock은 controller/external client slice에서만 제한적 사용.
 
 ### 10.1 테스트 타입/어노테이션 표준
 

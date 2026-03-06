@@ -2,7 +2,7 @@
 
 Status: **Active**  
 Owner: everbit  
-Last updated: 2026-03-05 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 이 디렉터리는 everbit v2를 “문서 우선”으로 개발하기 위한 단일 소스 오브 트루스(Single Source of Truth)다.
 
@@ -65,13 +65,14 @@ Last updated: 2026-03-05 (Asia/Seoul)
 
 ### Testing
 - [TDD 개발 규칙(RED→GREEN→REFACTOR)](./testing/tdd.md)
+- [Backend TDD 실무 템플릿(구조·예시)](./testing/backend-tdd-template.md)
 - [테스트 전략](./testing/strategy.md)
 - [테스트 매트릭스](./testing/test-matrix.md)
 - [성능/검증 계획](./testing/performance-plan.md)
 
 ### Operations
 - [환경 표준(local/prod)](./operations/environments.md)
-- [OCI 세팅(Day-0)](./operations/oci-setup.md)
+- [OCI 세팅(Day-0, v3: E2.1.Micro + Supabase)](./operations/oci-setup.md)
 - [Nginx/TLS(HTTPS) 세팅](./operations/nginx-tls.md)
 - [Admin Surface 정책(Grafana/Jenkins)](./operations/admin-surface-policy.md)
 - [CI/CD (Jenkins)](./operations/ci-cd-jenkins.md)
@@ -88,10 +89,11 @@ Last updated: 2026-03-05 (Asia/Seoul)
 - [UI 목업 이미지](./ui/mockups/)
 
 ### Dev Experience (Cursor)
-- [Cursor Prompt Pack(v2 overwrite, client=pnpm)](./prompt-pack/00_README.md)
+- [Cursor Prompt Pack(v2 overwrite, client=pnpm)](./prompt-pack/00_README.md)  
+  ※ prompt-pack은 로컬/미배포용으로 `.gitignore` 대상일 수 있어, 새 클론에는 없을 수 있음.
 
 ### Strategies
 - [EXTREME_FLIP(극점포착)](./strategies/EXTREME_FLIP/spec.md)
 
 ### ADR(Architecture Decision Records)
-- [ADR 목록](./adr/)
+- [ADR 목록](./adr/README.md)

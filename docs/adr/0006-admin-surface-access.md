@@ -7,7 +7,7 @@ Date: 2026-02-14
 
 ## Context
 Grafana/Jenkins/Prometheus 같은 Admin Surface를 인터넷에 직접 노출하면 공격면이 급증한다.  
-v2는 단일 VM 올인원이고 1인 운영이므로 “안전한 기본값”이 필요하다.
+v2는 API 단일 VM(E2.1.Micro) + Supabase(DB 분리)이고 1인 운영이므로 “안전한 기본값”이 필요하다.
 
 ---
 

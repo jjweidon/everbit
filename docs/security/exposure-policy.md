@@ -6,7 +6,8 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 목표:
 - 인터넷에 노출되는 공격면(Attack Surface)을 최소화한다.
-- 단일 VM 올인원 구조에서도 “최소 포트/최소 경로/최소 권한” 원칙을 강제한다.
+- **운영**: Backend(OCI E2.1.Micro) + DB(Supabase). VM에는 DB/Redis를 두지 않으며, 외부 노출 포트는 최소로 유지한다.
+- 단일 VM API 서버에서도 “최소 포트/최소 경로/최소 권한” 원칙을 강제한다.
 
 ---
 
@@ -36,7 +37,8 @@ Last updated: 2026-02-17 (Asia/Seoul)
 - 비밀번호 로그인 금지, 키 인증만 허용
 
 ### 2.3 절대 열지 않는 포트(고정)
-- 5432(Postgres), 6379(Redis), 9090(Prometheus), 3000(Grafana), Jenkins port 등
+- 5432(Postgres), 6379(Redis), 9090(Prometheus), 3000(Grafana), Jenkins port 등  
+  (운영에서는 VM에 Postgres/Redis를 두지 않으며, DB는 Supabase로 연결한다.)
 - 이유: 스캐닝/취약점/크리덴셜 공격에 직접 노출
 
 ---
