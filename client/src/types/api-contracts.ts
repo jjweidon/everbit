@@ -1,7 +1,16 @@
 /**
  * API 계약 타입 정의 (실 API 연동 전 mock용)
- * SoT: docs/ui/everbit_ui_impl_spec.md §7, docs/architecture/data-model.md
+ * SoT: docs/ui/everbit_ui_impl_spec.md §7, docs/api/contracts.md
  */
+
+// --- 공통 ---
+/** 표준 에러 응답 본문 (docs/api/contracts.md §9) */
+export interface ApiErrorBody {
+  code: string;
+  message: string;
+  reasonCode?: string;
+  details?: Record<string, unknown>;
+}
 
 // --- Dashboard ---
 export type WsStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
@@ -59,7 +68,14 @@ export interface OrderListItem {
     upbitUuid?: string;
     nextRetryAt?: string;
     errorCode?: string;
+    errorMessage?: string;
   };
+}
+
+/** GET /api/v2/orders 응답 */
+export interface OrderListResponse {
+  items: OrderListItem[];
+  nextCursor: string | null;
 }
 
 export interface OrderAttemptItem {
@@ -69,6 +85,7 @@ export interface OrderAttemptItem {
   upbitUuid?: string;
   nextRetryAt?: string;
   errorCode?: string;
+  errorMessage?: string;
   createdAt: string;
 }
 

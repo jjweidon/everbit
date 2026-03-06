@@ -52,6 +52,9 @@ Last updated: 2026-03-05 (Asia/Seoul)
 - [푸시 알림(Web Push)](./architecture/push-notifications.md)
 - [Kafka 토픽/메시지(P1+ 선택)](./architecture/kafka-topics.md)
 
+### API
+- [API 계약(엔드포인트/에러/예시)](./api/contracts.md)
+
 ### Integrations
 - [Upbit 연동 스펙(REST + WebSocket)](./integrations/upbit.md)
 
