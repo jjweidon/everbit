@@ -8,7 +8,7 @@ group = 'com.everbit'
 version = '0.2.0-SNAPSHOT'
 
 java {
-	sourceCompatibility = '17'
+	sourceCompatibility = '21'
 }
 
 repositories {
@@ -20,6 +20,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.flywaydb:flyway-core'
+	implementation 'com.github.f4b6a3:uuid-creator:6.1.1'
 	runtimeOnly 'org.postgresql:postgresql'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -27,8 +28,29 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers'
 	testImplementation 'org.testcontainers:postgresql'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// .env.local 로드 (프로젝트 루트 = server/ 상위)
+def envFile = file("${projectDir}/../.env.local")
+tasks.named('bootRun') {
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			def trimmed = line.trim()
+			if (trimmed && !trimmed.startsWith('#')) {
+				def eq = trimmed.indexOf('=')
+				if (eq > 0) {
+					def key = trimmed.substring(0, eq).trim()
+					def value = trimmed.substring(eq + 1).trim()
+					environment key, value
+				}
+			}
+		}
+	}
 }

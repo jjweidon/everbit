@@ -146,7 +146,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 **설명**: Upbit `identifier`는 조회/상관관계 용도이며, 멱등키가 아니다.
 
 **수용 기준**
-- identifier는 Attempt 생성 시 신규 생성(예: ULID/UUID).
+- identifier는 Attempt 생성 시 신규 생성(예: UUID v7).
 - 동일 identifier 재사용 금지.
 - 주문 조회는 uuid 또는 identifier로 수행 가능하다(필요 시).
 

@@ -20,4 +20,8 @@ public record ApiErrorBody(
 	public static ApiErrorBody of(String code, String message, String reasonCode, java.util.Map<String, Object> details) {
 		return new ApiErrorBody(code, message, reasonCode, details);
 	}
+
+	public static ApiErrorBody of(ErrorCode code, String message, String reasonCode) {
+		return new ApiErrorBody(code.name(), message, reasonCode, null);
+	}
 }

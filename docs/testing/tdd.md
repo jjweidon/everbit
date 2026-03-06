@@ -122,7 +122,7 @@ everbit에서 “테스트가 없으면 곧 사고로 이어지는” 영역을 
 규칙:
 - Spring Context 없이 JUnit5 + AssertJ로 작성한다.
 - 시간은 `Clock`을 주입해서 고정한다.
-- ULID/랜덤 값은 테스트에서 결정적으로 만든다(섹션 6 참고).
+- UUID v7/랜덤 값은 테스트에서 결정적으로 만든다(섹션 6 참고).
 
 ### 4.2 Repository / DB 제약
 대상:
@@ -191,21 +191,21 @@ TDD 진행 시 아래 순서를 따른다.
 ### 6.1 시간 고정
 - `Clock`을 Bean으로 제공하고, 테스트에서는 `Clock.fixed(...)`로 주입한다.
 
-### 6.2 ULID/식별자 고정
-- 프로덕션에서 ULID를 쓰더라도, 테스트에서는 결정적으로 생성할 수 있어야 한다.
+### 6.2 UUID v7/식별자 고정
+- 프로덕션에서 UUID v7을 쓰더라도, 테스트에서는 결정적으로 생성할 수 있어야 한다.
 - 권장:
-  - `UlidGenerator` 인터페이스를 두고,
-  - 테스트에서는 `FixedUlidGenerator("01J...")`로 고정한다.
+  - `PublicIdGenerator` 인터페이스를 두고,
+  - 테스트에서는 `FixedPublicIdGenerator`로 고정한다.
 
 ```java
-public interface UlidGenerator {
-  String next();
+public interface PublicIdGenerator {
+  java.util.UUID next();
 }
 
-public final class ThreadLocalUlidGenerator implements UlidGenerator {
-  private static final ThreadLocal<de.huxhorn.sulky.ulid.ULID> TL =
-      ThreadLocal.withInitial(de.huxhorn.sulky.ulid.ULID::new);
-  @Override public String next() { return TL.get().nextULID(); }
+public final class UuidV7Generator implements PublicIdGenerator {
+  @Override public java.util.UUID next() {
+    return UuidCreator.getTimeOrderedEpoch();
+  }
 }
 ```
 

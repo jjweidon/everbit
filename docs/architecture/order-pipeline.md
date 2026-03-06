@@ -113,7 +113,7 @@ SoT: `docs/architecture/event-bus.md`
 - OrderIntent 1개는 여러 OrderAttempt를 가질 수 있다.
 - Attempt 생성 시:
   - attempt_no = 1..N
-  - identifier는 신규 생성(ULID/UUID 권장, 재사용 금지)
+  - identifier는 신규 생성(UUID v7 권장, 재사용 금지)
   - status = PREPARED
   - **request_json(jsonb)**: Upbit CreateOrder 호출에 쓸 **canonical snapshot**. 실제 Upbit API 요청 body를 그대로 저장한다.
 - **역할 분리(고정)**:

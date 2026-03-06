@@ -12,7 +12,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 - JPA는 저장/조회 편의 계층이다. DB에 이미 존재하는 제약을 코드로 “대체”하지 않는다.
 - 키 전략은 v2 MVP 기준으로 다음을 사용한다.
   - 내부 조인/성능 기준 PK: `bigint identity` → JPA `Long`
-  - 외부 노출/추적용: `public_id(ULID)` → JPA `String`
+  - 외부 노출/추적용: `public_id(uuid)` → JPA `UUID`
   - 외부 시스템/이벤트 식별: `uuid` → JPA `java.util.UUID`
 
 ---
@@ -31,7 +31,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 
 | 테이블 | DB 키 전략 | JPA ID 타입 | 매핑 패턴 |
 |---|---:|---|---|
-| `app_user` | `id bigint identity` | `Long` | 단일 PK + `public_id(ULID)` |
+| `app_user` | `id bigint identity` | `Long` | 단일 PK + `public_id(uuid)` |
 | `upbit_key` | `owner_id bigint PK = FK(app_user.id)` | `Long` | **공유 PK**: `@MapsId` |
 | `kill_switch` | `owner_id bigint PK = FK(app_user.id)` | `Long` | **공유 PK**: `@MapsId` |
 | `strategy_config` | `(owner_id, strategy_key)` 복합 PK | `StrategyConfigId` | **복합키**: `@EmbeddedId` + `@MapsId(ownerId)` |
@@ -67,20 +67,20 @@ private Long id;
   - (권장) 부모를 먼저 저장/flush 후 자식을 생성하거나
   - 애초에 “부모가 선행 생성”이라는 도메인 규칙을 지킨다.
 
-### 3.2 `public_id(ULID)`
+### 3.2 `public_id(uuid)`
 
 - `public_id`는 DB 생성이 아니라 **애플리케이션에서 생성**한다.
 - 표준 매핑:
 
 ```java
-@Column(name = "public_id", nullable = false, unique = true, length = 26, columnDefinition = "char(26)")
-private String publicId;
+@Column(name = "public_id", nullable = false, unique = true, columnDefinition = "uuid")
+private UUID publicId;
 ```
 
 운영 규칙:
 - 생성 책임은 **서비스/팩토리 레이어**가 가진다.
 - `@PrePersist`는 “null이면 채워 넣는 fallback guard”로만 허용한다.
-- 동일 밀리초 다량 생성 가능성이 있으면 **monotonic ULID 생성기**를 사용한다.
+- UUID v7은 시간순 정렬 가능하므로 monotonic 특성이 필요하다.
 
 ### 3.3 `uuid` 컬럼
 
@@ -104,7 +104,7 @@ private JsonNode configJson;
 
 ### 3.5 BaseEntity(공통 감사 컬럼)
 
-v2 MVP 엔티티는 원칙적으로 아래 `BaseEntity`를 상속한다.
+v2 MVP 엔티티는 원칙적으로 아래 `BaseEntity`를 상속한다. Lombok `@Getter`로 보일러플레이트 제거.
 
 ```java
 @MappedSuperclass
@@ -406,8 +406,8 @@ public class OrderIntent extends BaseEntity {
   @Column(name = "id")
   private Long id;
 
-  @Column(name = "public_id", nullable = false, unique = true, length = 26, columnDefinition = "char(26)")
-  private String publicId;
+  @Column(name = "public_id", nullable = false, unique = true, columnDefinition = "uuid")
+  private UUID publicId;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "owner_id", nullable = false)

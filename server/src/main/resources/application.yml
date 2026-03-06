@@ -1,15 +1,26 @@
 # everbit v2 — bootstrap stub
 # SoT: docs/operations/environments.md, docs/security/exposure-policy.md
+# Timezone: docs/prompt-pack/server/00_source_map_and_decisions.md §D
 
 spring:
   application:
     name: everbit-api
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:54322/postgres
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
   flyway:
     enabled: true
+    locations: classpath:db/migration
 
 server:
   port: ${SERVER_PORT:8080}

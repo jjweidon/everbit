@@ -257,7 +257,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 {
   "items": [
     {
-      "intentPublicId": "01JCEXAMPLE001",
+      "intentPublicId": "018e1234-5678-7000-8000-000000000001",
       "createdAt": "2026-03-06T03:45:00.000Z",
       "market": "KRW-BTC",
       "side": "BUY",
@@ -265,7 +265,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
       "requestedKrw": "500000",
       "reasonCode": "SIGNAL_STRENGTH_HIGH",
       "latestAttempt": {
-        "attemptPublicId": "01JCEXAMPLE002",
+        "attemptPublicId": "018e1234-5678-7000-8000-000000000002",
         "attemptNo": 1,
         "status": "ACKED",
         "upbitUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -275,7 +275,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
       }
     },
     {
-      "intentPublicId": "01JCEXAMPLE003",
+      "intentPublicId": "018e1234-5678-7000-8000-000000000003",
       "createdAt": "2026-03-06T03:30:00.000Z",
       "market": "KRW-ETH",
       "side": "SELL",
@@ -283,7 +283,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
       "requestedVolume": "0.5",
       "reasonCode": "TP_HIT",
       "latestAttempt": {
-        "attemptPublicId": "01JCEXAMPLE004",
+        "attemptPublicId": "018e1234-5678-7000-8000-000000000004",
         "attemptNo": 1,
         "status": "THROTTLED",
         "nextRetryAt": "2026-03-06T03:35:00.000Z",
@@ -292,14 +292,14 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
       }
     },
     {
-      "intentPublicId": "01JCEXAMPLE005",
+      "intentPublicId": "018e1234-5678-7000-8000-000000000005",
       "createdAt": "2026-03-06T02:00:00.000Z",
       "market": "KRW-BTC",
       "side": "BUY",
       "intentType": "ENTRY",
       "requestedKrw": "300000",
       "latestAttempt": {
-        "attemptPublicId": "01JCEXAMPLE006",
+        "attemptPublicId": "018e1234-5678-7000-8000-000000000006",
         "attemptNo": 1,
         "status": "UNKNOWN",
         "errorCode": "TIMEOUT",
@@ -307,7 +307,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
       }
     }
   ],
-  "nextCursor": "01JCEXAMPLE005"
+  "nextCursor": "018e1234-5678-7000-8000-000000000005"
 }
 ```
 
@@ -349,7 +349,7 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
   },
   "attempts": [
     {
-      "attemptPublicId": "01JCEXAMPLE002",
+      "attemptPublicId": "018e1234-5678-7000-8000-000000000002",
       "attemptNo": 1,
       "status": "ACKED",
       "upbitUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -397,7 +397,7 @@ UNKNOWN Attempt 확정을 위한 수동 reconcile 실행. `docs/architecture/ord
 
 ```json
 {
-  "jobId": "01JCRECONCILE01",
+  "jobId": "018e1234-5678-7000-8000-00000000abcd",
   "status": "ACCEPTED",
   "message": "Reconcile 요청이 접수되었습니다."
 }

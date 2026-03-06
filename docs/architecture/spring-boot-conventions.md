@@ -25,7 +25,7 @@ com.everbit.everbit
     crypto/            # 암복호화(AES-GCM), Key management
     error/             # ErrorCode, 예외 계층, ExceptionHandler
     jpa/               # Auditing, converters, base entities
-    util/              # ULID, 시간, 공용 유틸
+    util/              # UUID v7, 시간, 공용 유틸
 
   user/
     entity/
@@ -53,6 +53,35 @@ com.everbit.everbit
     kakao/
     webpush/
 ```
+
+---
+
+## 1.5 Lombok 사용 규칙(가독성)
+
+가독성을 위해 **생성자·게터·세터·빌더** 등 Lombok으로 동일 표현이 가능한 보일러플레이트는 Lombok으로 간소화한다.
+
+### 허용
+| 어노테이션 | 용도 |
+|-----------|------|
+| `@Getter` | 엔티티, BaseEntity 등 읽기 전용 필드 |
+| `@NoArgsConstructor(access = AccessLevel.PROTECTED)` | JPA 엔티티(프록시용) |
+| `@AllArgsConstructor(access = AccessLevel.PRIVATE)` | 빌더와 함께 사용 시 |
+| `@Builder(access = AccessLevel.PRIVATE)` | private 생성자 + static factory 패턴 |
+| `@RequiredArgsConstructor` | `@Configuration`, 서비스 등 final 필드 주입 |
+| `@Value` | 불변 설정/값 객체(필드 final, 생성자, equals/hashCode) |
+| `@UtilityClass` | 유틸리티 클래스(private 생성자 + final class) |
+
+### 금지
+| 어노테이션 | 사유 |
+|-----------|------|
+| `@Data` | toString/equals/hashCode가 민감정보·지연로딩을 터뜨림 |
+| `@Setter` (엔티티) | 상태 변경은 의도가 드러나는 메서드로만 |
+
+### Record vs Lombok
+- **Request/Response DTO**: Java record 우선(생성자·게터·equals/hashCode 자동).
+- **엔티티**: record 불가(JPA 제약). Lombok `@Getter` + `@NoArgsConstructor` + `@Builder` 조합.
+
+---
 
 규칙:
 - `controller`는 API 레이어에만 존재한다.
@@ -96,23 +125,20 @@ com.everbit.everbit
 ### 3.2 키 정책(엔티티에 반영)
 
 - 내부 PK: `bigint identity` → `Long id` + `@GeneratedValue(IDENTITY)`
-- 외부 노출/추적용: `public_id char(26)`(ULID) → `String publicId`
-  - API/URL/로그에는 `publicId`를 사용한다.
+- 외부 노출/추적용: `public_id uuid`(UUID v7) → `UUID publicId`
+  - API/URL/로그에는 `publicId.toString()`을 사용한다.
   - `id`는 외부에 노출하지 않는다.
 
-ULID 생성 표준:
+UUID v7 생성 표준:
 - 생성 책임은 **서비스/팩토리 레이어**가 가진다.
 - `@PrePersist`는 “null이면 채워 넣는 fallback guard”로만 허용한다.
-- ULID 생성기는 thread-safe하게 제공한다(예: ThreadLocal).
+- UUID v7 생성기는 thread-safe하게 제공한다(예: `com.github.f4b6a3.uuid.UuidCreator`).
 
 ```java
-public final class Ulids {
-  private Ulids() {}
-  private static final ThreadLocal<de.huxhorn.sulky.ulid.ULID> TL =
-      ThreadLocal.withInitial(de.huxhorn.sulky.ulid.ULID::new);
-
-  public static String next() {
-    return TL.get().nextULID();
+public final class Uuids {
+  private Uuids() {}
+  public static UUID next() {
+    return UuidCreator.getTimeOrderedEpoch();
   }
 }
 ```
@@ -167,9 +193,9 @@ public abstract class BaseEntity {
 
 기존 `User` 엔티티에서 아래는 v2 기준으로 금지한다.
 
-1) **PK를 ULID String으로 직접 보유**
+1) **PK를 UUID String으로 직접 보유**
 - v2는 내부 PK를 `Long(identity)`로 고정했다.
-- ULID는 `publicId`로 별도 컬럼으로 둔다.
+- UUID v7은 `publicId`로 별도 컬럼(uuid 타입)으로 둔다.
 
 2) **Upbit Access/Secret을 평문 컬럼으로 저장**
 - 키는 반드시 `upbit_key` 테이블에 **암호문(bytea)** 으로 저장한다.
@@ -193,8 +219,8 @@ public class AppUser extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "public_id", nullable = false, unique = true, length = 26, columnDefinition = "char(26)")
-  private String publicId;
+  @Column(name = "public_id", nullable = false, unique = true, columnDefinition = "uuid")
+  private UUID publicId;
 
   @Column(name = "kakao_id", nullable = false, unique = true, length = 64)
   private String kakaoId;
@@ -205,7 +231,7 @@ public class AppUser extends BaseEntity {
   @PrePersist
   void prePersist() {
     if (publicId == null) {
-      publicId = Ulids.next();
+      publicId = Uuids.next();
     }
   }
 
@@ -368,7 +394,7 @@ public record UpdateEmailRequest(
 ```java
 @Builder
 public record AppUserResponse(
-    String userId,     // publicId
+    String userId,     // publicId.toString()
     String kakaoId,
     String email
 ) {
@@ -474,7 +500,7 @@ interface StrategyConfigRepository extends JpaRepository<StrategyConfig, Strateg
 ### 10.2 결정적(Deterministic) 테스트 필수
 
 - 시간은 `Clock` 주입을 표준으로 하고, 테스트에서 `Clock.fixed(...)`를 사용한다.
-- ULID/식별자 생성은 인터페이스로 분리해 테스트에서 고정한다.
+- UUID v7/식별자 생성은 인터페이스로 분리해 테스트에서 고정한다.
 - 랜덤 데이터 기반 테스트 금지(재현 불가).
 
 ### 10.3 PR/리뷰 기준(테스트 관점)

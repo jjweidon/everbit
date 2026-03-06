@@ -534,7 +534,7 @@ type MarketItem = {
 ### OrderListItem (Intent + Latest Attempt)
 ```ts
 type OrderListItem = {
-  intentPublicId: string;     // ULID
+  intentPublicId: string;     // UUID v7
   createdAt: string;
   market: string;
   side: 'BUY'|'SELL';

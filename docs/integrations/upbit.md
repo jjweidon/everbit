@@ -121,7 +121,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 ### 6.1 공통
 - `market`: `KRW-BTC`
 - `side`: `bid`(매수) / `ask`(매도)
-- `identifier`: Attempt별 신규 생성(ULID/UUID)
+- `identifier`: Attempt별 신규 생성(UUID v7 권장)
 
 주의(강제):
 - identifier는 **멱등키가 아니다.**

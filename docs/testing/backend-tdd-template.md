@@ -83,9 +83,9 @@ src/test/java/com.everbit.everbit/
 class PlaceOrderServiceTest {
 
     private final OrderRepository orderRepository = new InMemoryOrderRepository();
-    private final UlidGenerator ulidGenerator = () -> "01J fixed";
+    private final UuidGenerator uuidGenerator = () -> java.util.UUID.fromString("018e1234-5678-7000-8000-000000000000");
     private final PlaceOrderUseCase useCase =
-            new PlaceOrderService(orderRepository, ulidGenerator);
+            new PlaceOrderService(orderRepository, uuidGenerator);
 
     @Test
     void 정상_조건이면_주문이_저장된다() {

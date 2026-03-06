@@ -2,6 +2,7 @@
 .DS_Store
 .env
 .env.**
+!.env.example
 .env.development.local
 .env.test.local
 .env.production.local
@@ -53,6 +54,7 @@ server/nbdist/
 server/.nb-gradle/
 server/**/application.yaml
 server/**/application-dev.yaml
+server/**/application-local.yaml
 
 # 예외 처리 (서버)
 !server/gradle/wrapper/gradle-wrapper.jar
