@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-03-05 (Asia/Seoul)
+Last updated: 2026-03-06 (Asia/Seoul)
 
 목표:
 - 퀀트 트레이딩 시스템으로서 “정밀함/신뢰/성능/차분함”을 전달한다.
@@ -27,7 +27,8 @@ Last updated: 2026-03-05 (Asia/Seoul)
 
 - **Modern / Minimal / Technical**: 과장된 그래픽 대신 규격화된 그리드와 정돈된 타이포
 - **Dark Neutral Ops**: 순수 블랙(#000) 대신 “딥 차콜” 레이어로 눈 피로를 낮춤
-- **Blue Cast 최소화**: 배경/보더/텍스트를 중립 회색(쿨그레이)로 맞춰 “푸른 느낌”을 제거
+- **고대비 보더**: 모노톤 완화를 위해 보더는 밝은 흰색(#DCDEE4)으로 해 카드/패널 구분을 세련되게 강조
+- **Blue Cast 최소화**: 배경/텍스트를 중립 회색(쿨그레이)로 맞춰 “푸른 느낌”을 제거
 - **Signal-Driven Accent**: 포인트 컬러는 “의미(상태/방향/위험)”에만 사용
 - **Calm Performance**: 과도한 애니메이션 금지, 빠른 반응과 미세한 피드백만
 
@@ -44,13 +45,13 @@ Last updated: 2026-03-05 (Asia/Seoul)
 - BG-0 (App background / deepest): `#0A0A0A`
 - BG-1 (Base surface): `#111214`
 - BG-2 (Elevated cards/panels): `#17181B`
-- Border (subtle): `#2D2E32`
+- Border (고대비·밝은 흰색): `#DCDEE4`
 - Divider: `#222326`
 - Text-Primary: `#E8E9EB`
 - Text-Secondary: `#B6BAC3`
 - Text-Tertiary: `#7C828F`
 
-> 의도: “검푸른 느낌”은 유지하되, 배경 자체는 **블루 채널이 튀지 않는 쿨그레이**로 맞춰 눈 피로/색 번짐을 최소화한다.
+> 의도: “검푸른 느낌”은 유지하되, 배경 자체는 **블루 채널이 튀지 않는 쿨그레이**로 눈 피로를 낮추고, **보더는 밝은 흰색(#DCDEE4)** 으로 고대비를 줘 세련된 구분감을 확보한다.
 
 ### 2.2 Accent(포인트)
 - Neon Green (Up/Success): `#39FF88`
@@ -118,19 +119,19 @@ Last updated: 2026-03-05 (Asia/Seoul)
 
 ### 5.1 Surface/Card
 - 배경: BG-1 또는 BG-2
-- Border: 1px Border(subtle)
+- Border: 1px Border(고대비 밝은 흰색 #DCDEE4) — 레이아웃·카드·섹션 구분에 필수
 - Radius: 10~12
 - Shadow: 아주 약하게(깊은 그림자 금지)
 
 ### 5.2 Button
 - Primary: Green 배경 + Dark 텍스트(또는 반전)
-- Secondary: BG-2 + Border
+- Secondary: BG-2 + Border(고대비)
 - Destructive: Red
 - Disabled: 투명도 + 커서
 
 ### 5.3 Form
 - Input 배경: BG-2
-- Border: Border(subtle)
+- Border: Border(고대비 밝은 흰색)
 - Focus: Cyan/Green outline(접근성)
 - Error: Red + helper text
 
@@ -139,7 +140,10 @@ Last updated: 2026-03-05 (Asia/Seoul)
 - 텍스트: 12~13
 - 색상은 상태에 의미 부여(2.3 규칙)
 
-### 5.5 Table
+### 5.5 도움말 툴팁(InfoTooltip)
+- 용어 옆 ⓘ 호버 시 표시. **테두리(border) 없음** — 눈에 덜 띄게, shadow만으로 구분.
+
+### 5.6 Table
 - 헤더는 BG-2, 본문 row hover는 BG-2로 살짝 상승
 - 숫자 컬럼은 우측 정렬
 - 중요한 컬럼(시장/상태/PnL)은 고정 폭 또는 강조
@@ -158,7 +162,7 @@ Last updated: 2026-03-05 (Asia/Seoul)
   - 하락: Red
 - 보조선(Grid): Divider보다 약하게
 - Tooltip:
-  - BG-2 + Border
+  - BG-2 + Border(고대비)
   - 숫자는 tabular-nums
 
 지표 카드:
@@ -211,7 +215,7 @@ Last updated: 2026-03-05 (Asia/Seoul)
   --bg-0: 10 10 10;      /* #0A0A0A */
   --bg-1: 17 18 20;      /* #111214 */
   --bg-2: 23 24 27;      /* #17181B */
-  --border: 45 46 50;    /* #2D2E32 */
+  --border: 220 222 228;    /* #DCDEE4 고대비 밝은 흰색 */
   --divider: 34 35 38;   /* #222326 */
   --text-1: 232 233 235; /* #E8E9EB */
   --text-2: 182 186 195; /* #B6BAC3 */

@@ -135,7 +135,7 @@ styles/
 - `--bg-0`: `#0A0A0A` (deepest)
 - `--bg-1`: `#111214` (default surface)
 - `--bg-2`: `#17181B` (elevated)
-- `--border`: `#2D2E32`
+- `--border`: `#DCDEE4` (고대비 밝은 흰색)
 - `--divider`: `#222326`
 - `--text-1`: `#E8E9EB`
 - `--text-2`: `#B6BAC3`

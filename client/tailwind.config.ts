@@ -8,6 +8,9 @@ export default {
   ],
   theme: {
     extend: {
+      borderWidth: {
+        thin: "0.5px",
+      },
       colors: {
         bg0: "rgb(var(--bg-0) / <alpha-value>)",
         bg1: "rgb(var(--bg-1) / <alpha-value>)",

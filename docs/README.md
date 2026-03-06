@@ -79,6 +79,7 @@ Last updated: 2026-03-05 (Asia/Seoul)
 
 ### Design
 - [UI/UX 디자인 컨셉(다크 뉴트럴)](./design/ui-ux-concept.md)
+- [UI 용어 도움말(Glossary)](./design/glossary.md)
 - [UI 구현 명세서(페이지/컴포넌트/상태)](./ui/everbit_ui_impl_spec.md)
 - [UI 토큰(CSS Variables)](./ui/tokens.css)
 - [UI 목업 이미지](./ui/mockups/)
