@@ -1,16 +1,18 @@
+"use client";
+
 /**
  * 대시보드 — 실행·리스크, 자산·손익, 최근 주문, 마켓 상태
  * docs/ui/everbit_ui_impl_spec.md §5.3
- * Mock 데이터 사용, 실 API 호출 금지
+ * API: GET /api/v2/dashboard/summary, /orders, /markets
  */
 import Link from "next/link";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SeverityBanner } from "@/components/ui/SeverityBanner";
 import { StatusChip, TagBadge, OnOffBadge, SideBadge, IntentTypeBadge } from "@/components/ui";
 import { TERM_TOOLTIPS } from "@/lib/term-tooltips";
-import { mockDashboardSummary } from "@/lib/mocks/dashboard";
-import { mockOrderList } from "@/lib/mocks/orders";
-import { mockMarketStatusList } from "@/lib/mocks/markets";
+import { useApiData } from "@/hooks/useApiData";
+import { useApiOpts } from "@/hooks/useApiOpts";
+import { getDashboardSummary, getOrders, getMarkets } from "@/lib/api/endpoints";
 import type { AttemptStatus } from "@/types/api-contracts";
 
 function formatKrw(v: string) {
@@ -35,17 +37,64 @@ function getAttemptStatusTone(s: AttemptStatus): "green" | "red" | "yellow" | "c
 }
 
 export default function DashboardPage() {
-  const { risk, equity, strategyKey, strategyEnabled, accountEnabled, lastErrorAt, lastReconcileAt } =
-    mockDashboardSummary;
-  const hasUnknown = risk.unknownAttempts24h > 0;
-  const hasSuspended = risk.suspendedMarkets.length > 0;
+  const opts = useApiOpts();
+  const dashboard = useApiData({
+    fetch: () => getDashboardSummary(opts),
+    enabled: true,
+  });
+  const orders = useApiData({
+    fetch: () => getOrders({ limit: 20, onlyAcked: true }, opts),
+    enabled: true,
+  });
+  const markets = useApiData({
+    fetch: () => getMarkets(opts),
+    enabled: true,
+  });
+
+  const summary = dashboard.data;
+  const orderList = orders.data?.items ?? [];
+  const marketList = markets.data ?? [];
+
+  if (dashboard.loading && !summary) {
+    return (
+      <div className="flex items-center justify-center p-12 text-text-3">
+        로딩 중…
+      </div>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-xl font-semibold text-text-1">대시보드</h1>
+        {dashboard.ErrorBanner()}
+        <p className="text-text-3">데이터를 불러올 수 없습니다.</p>
+      </div>
+    );
+  }
+
+  const risk = summary.risk;
+  const equity = summary.equity;
+  const strategyKey = summary.strategyKey;
+  const strategyEnabled = summary.strategyEnabled ?? false;
+  const accountEnabled = summary.accountEnabled ?? false;
+  const lastErrorAt = summary.lastErrorAt;
+  const lastReconcileAt = summary.lastReconcileAt;
+
+  const hasUnknown = (risk.unknownAttempts24h ?? 0) > 0;
+  const hasSuspended = (risk.suspendedMarkets?.length ?? 0) > 0;
   const has418 = !!risk.blocked418Until;
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">대시보드</h1>
 
-      {/* 위험 배너 — UNKNOWN/SUSPENDED/418 */}
+      {/* API 에러 배너 (403/429/418) */}
+      {dashboard.ErrorBanner()}
+      {orders.ErrorBanner()}
+      {markets.ErrorBanner()}
+
+      {/* 위험 배너 — UNKNOWN/SUSPENDED/418 (데이터 기반, 정책 위반 UX 아님) */}
       <div className="space-y-2">
         {hasUnknown && (
           <SeverityBanner
@@ -80,14 +129,14 @@ export default function DashboardPage() {
               <InfoTooltip content={TERM_TOOLTIPS.KILL_SWITCH} ariaLabel="킬 스위치 설명" />
             </p>
             <p className="mt-1">
-              <OnOffBadge value={accountEnabled} />
+              <OnOffBadge value={accountEnabled ?? false} />
             </p>
           </div>
           <div className="rounded border border-border bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">전략</p>
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-text-1">
               <TagBadge>{strategyKey}</TagBadge>
-              <OnOffBadge value={strategyEnabled} />
+              <OnOffBadge value={strategyEnabled ?? false} />
             </p>
           </div>
           <div className="rounded border border-border bg-bg1 p-3">
@@ -160,7 +209,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="text-text-2">
-              {mockOrderList.slice(0, 5).map((o) => (
+              {orderList.slice(0, 5).map((o) => (
                 <tr key={o.intentPublicId} className="border-b border-divider">
                   <td className="py-2 pr-4 tabular-nums">{formatIso(o.createdAt)}</td>
                   <td className="py-2 pr-4">
@@ -215,7 +264,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="text-text-2">
-              {mockMarketStatusList.map((m) => (
+              {marketList.map((m) => (
                 <tr key={m.market} className="border-b border-divider">
                   <td className="py-2 pr-4">
                     <TagBadge>{m.market}</TagBadge>

@@ -3,7 +3,7 @@
 /**
  * 주문 목록 — 필터 + 테이블, THROTTLED next_retry_at 노출
  * docs/ui/everbit_ui_impl_spec.md §5.6
- * Mock 데이터 사용, 실 API 호출 금지
+ * API: GET /api/v2/orders, /dashboard/summary(risk 배너용)
  */
 import { useState } from "react";
 import Link from "next/link";
@@ -11,8 +11,9 @@ import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SeverityBanner } from "@/components/ui/SeverityBanner";
 import { StatusChip, TagBadge, SideBadge, IntentTypeBadge, Drawer } from "@/components/ui";
 import { TERM_TOOLTIPS } from "@/lib/term-tooltips";
-import { mockOrderList } from "@/lib/mocks/orders";
-import { mockDashboardSummary } from "@/lib/mocks/dashboard";
+import { useApiData } from "@/hooks/useApiData";
+import { useApiOpts } from "@/hooks/useApiOpts";
+import { getOrders, getDashboardSummary } from "@/lib/api/endpoints";
 import type { OrderListItem, AttemptStatus } from "@/types/api-contracts";
 
 function formatIso(iso: string) {
@@ -71,23 +72,38 @@ function OrderDrawerContent({ order }: { order: OrderListItem }) {
 
 export default function OrdersPage() {
   const [selected, setSelected] = useState<OrderListItem | null>(null);
-  const { risk } = mockDashboardSummary;
-  const hasUnknown = risk.unknownAttempts24h > 0;
-  const hasSuspended = risk.suspendedMarkets.length > 0;
+  const opts = useApiOpts();
+  const ordersRes = useApiData({
+    fetch: () => getOrders({ limit: 50 }, opts),
+    enabled: true,
+  });
+  const dashboardRes = useApiData({
+    fetch: () => getDashboardSummary(opts),
+    enabled: true,
+  });
+
+  const orderList = ordersRes.data?.items ?? [];
+  const risk = dashboardRes.data?.risk;
+  const hasUnknown = (risk?.unknownAttempts24h ?? 0) > 0;
+  const hasSuspended = (risk?.suspendedMarkets?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">주문</h1>
 
-      {/* 위험 배너 */}
+      {/* API 에러 배너 */}
+      {ordersRes.ErrorBanner()}
+      {dashboardRes.ErrorBanner()}
+
+      {/* 위험 배너 (데이터 기반) */}
       <div className="space-y-2">
-        {hasUnknown && (
+        {hasUnknown && risk && (
           <SeverityBanner
             type="UNKNOWN"
             detail={`24h 내 ${risk.unknownAttempts24h}건. reconcile로 확정.`}
           />
         )}
-        {hasSuspended && (
+        {hasSuspended && risk && (
           <SeverityBanner
             type="SUSPENDED"
             detail={`마켓: ${risk.suspendedMarkets.join(", ")}`}
@@ -104,6 +120,11 @@ export default function OrdersPage() {
 
       <section aria-label="주문 목록" className="rounded-lg border border-border bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">주문 목록</h2>
+        {ordersRes.loading && orderList.length === 0 ? (
+          <p className="mt-3 text-text-3">로딩 중…</p>
+        ) : ordersRes.error && orderList.length === 0 ? (
+          <p className="mt-3 text-text-3">데이터를 불러올 수 없습니다.</p>
+        ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -130,7 +151,7 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="text-text-2">
-              {mockOrderList.map((o) => (
+              {orderList.map((o) => (
                 <tr
                   key={o.intentPublicId}
                   className="cursor-pointer border-b border-divider transition-colors hover:bg-bg2"
@@ -181,6 +202,7 @@ export default function OrdersPage() {
             </tbody>
           </table>
         </div>
+        )}
       </section>
 
       <Drawer

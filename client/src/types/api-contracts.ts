@@ -12,6 +12,11 @@ export interface ApiErrorBody {
   details?: Record<string, unknown>;
 }
 
+/** POST /api/v2/auth/refresh 응답 (ADR-0007) */
+export interface AuthRefreshResponse {
+  accessToken: string;
+}
+
 // --- Dashboard ---
 export type WsStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
 

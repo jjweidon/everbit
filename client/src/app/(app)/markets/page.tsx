@@ -1,32 +1,47 @@
+"use client";
+
 /**
  * 마켓 — 사용 여부/우선순위/SUSPENDED 관리
  * docs/ui/everbit_ui_impl_spec.md §5.4
- * SUSPENDED 해제는 Markets 화면에서만 가능(현재 disabled 표시)
- * Mock 데이터 사용, 실 API 호출 금지
+ * API: GET /api/v2/markets, /dashboard/summary(risk 배너용)
  */
-"use client";
-
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SeverityBanner } from "@/components/ui/SeverityBanner";
 import { StatusChip, TagBadge, OnOffBadge, Button } from "@/components/ui";
 import { TERM_TOOLTIPS } from "@/lib/term-tooltips";
-import { mockMarketStatusList } from "@/lib/mocks/markets";
-import { mockDashboardSummary } from "@/lib/mocks/dashboard";
+import { useApiData } from "@/hooks/useApiData";
+import { useApiOpts } from "@/hooks/useApiOpts";
+import { getMarkets, getDashboardSummary } from "@/lib/api/endpoints";
 
 function formatIso(iso: string) {
   return new Date(iso).toLocaleString("ko-KR");
 }
 
 export default function MarketsPage() {
-  const { risk } = mockDashboardSummary;
-  const hasSuspended = risk.suspendedMarkets.length > 0;
+  const opts = useApiOpts();
+  const marketsRes = useApiData({
+    fetch: () => getMarkets(opts),
+    enabled: true,
+  });
+  const dashboardRes = useApiData({
+    fetch: () => getDashboardSummary(opts),
+    enabled: true,
+  });
+
+  const marketList = marketsRes.data ?? [];
+  const risk = dashboardRes.data?.risk;
+  const hasSuspended = (risk?.suspendedMarkets?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">마켓</h1>
 
-      {/* SUSPENDED 배너 */}
-      {hasSuspended && (
+      {/* API 에러 배너 */}
+      {marketsRes.ErrorBanner()}
+      {dashboardRes.ErrorBanner()}
+
+      {/* SUSPENDED 배너 (데이터 기반) */}
+      {hasSuspended && risk && (
         <SeverityBanner
           type="SUSPENDED"
           detail={`마켓: ${risk.suspendedMarkets.join(", ")}. 아래에서 수동 해제 가능.`}
@@ -35,6 +50,11 @@ export default function MarketsPage() {
 
       <section aria-label="마켓 목록" className="rounded-lg border border-border bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">마켓 목록</h2>
+        {marketsRes.loading && marketList.length === 0 ? (
+          <p className="mt-3 text-text-3">로딩 중…</p>
+        ) : marketsRes.error && marketList.length === 0 ? (
+          <p className="mt-3 text-text-3">데이터를 불러올 수 없습니다.</p>
+        ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -59,7 +79,7 @@ export default function MarketsPage() {
               </tr>
             </thead>
             <tbody className="text-text-2">
-              {mockMarketStatusList.map((m) => (
+              {marketList.map((m) => (
                 <tr key={m.market} className="border-b border-divider">
                   <td className="py-2 pr-4">
                     <TagBadge>{m.market}</TagBadge>
@@ -98,6 +118,7 @@ export default function MarketsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </section>
     </div>
   );
