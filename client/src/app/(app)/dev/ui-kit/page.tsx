@@ -7,6 +7,10 @@ import {
   Select,
   Card,
   StatusChip,
+  TagBadge,
+  OnOffBadge,
+  SideBadge,
+  IntentTypeBadge,
   Table,
   ConfirmModal,
   Drawer,
@@ -65,7 +69,7 @@ export default function UiKitPage() {
           </div>
         </Card>
 
-        <Card title="StatusChip (색 + 텍스트)">
+        <Card title="StatusChip (Lucide 아이콘 + 톤)">
           <div className="flex flex-wrap gap-2">
             <StatusChip tone="green" label="RUNNING" />
             <StatusChip tone="red" label="STOPPED" />
@@ -75,11 +79,43 @@ export default function UiKitPage() {
           </div>
         </Card>
 
+        <Card title="TagBadge (마켓/전략)">
+          <div className="flex flex-wrap gap-2">
+            <TagBadge>KRW-BTC</TagBadge>
+            <TagBadge>KRW-ETH</TagBadge>
+            <TagBadge>EXTREME_FLIP</TagBadge>
+          </div>
+        </Card>
+
+        <Card title="OnOffBadge">
+          <div className="flex flex-wrap gap-2">
+            <OnOffBadge value={true} />
+            <OnOffBadge value={false} />
+          </div>
+        </Card>
+
+        <Card title="SideBadge (BUY/SELL)">
+          <div className="flex flex-wrap gap-2">
+            <SideBadge side="BUY" />
+            <SideBadge side="SELL" />
+          </div>
+        </Card>
+
+        <Card title="IntentTypeBadge">
+          <div className="flex flex-wrap gap-2">
+            <IntentTypeBadge intentType="ENTRY" />
+            <IntentTypeBadge intentType="EXIT_STOPLOSS" />
+            <IntentTypeBadge intentType="EXIT_TP" />
+            <IntentTypeBadge intentType="EXIT_TRAIL" />
+            <IntentTypeBadge intentType="EXIT_TIME" />
+          </div>
+        </Card>
+
         <Card title="Table (숫자 tabular-nums)">
           <Table<DemoRow>
             columns={[
-              { key: "market", header: "마켓" },
-              { key: "side", header: "방향" },
+              { key: "market", header: "마켓", render: (row) => <TagBadge>{row.market}</TagBadge> },
+              { key: "side", header: "방향", render: (row) => <SideBadge side={row.side as "BUY" | "SELL"} /> },
               { key: "amount", header: "금액", numeric: true },
               {
                 key: "status",

@@ -27,6 +27,8 @@ export const TERM_TOOLTIPS = {
   KILL_SWITCH:
     "자동매매 전원. OFF면 새 주문 시도가 나가지 않습니다. 이미 접수된 주문은 별도로 취소할 수 있습니다.",
 
+  LAST_ERROR: "가장 최근 발생한 오류 시각. 주문 실패, API 오류 등.",
+
   /** 주문/마켓 */
   INTENT_TYPE:
     "주문 의도 유형: 진입(ENTRY), 손절(EXIT_STOPLOSS), 목표가(EXIT_TP), 트레일링(EXIT_TRAIL), 시간(EXIT_TIME) 등.",

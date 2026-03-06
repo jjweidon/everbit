@@ -1,29 +1,33 @@
 "use client";
 
-/** StatusChip: 색 + 텍스트 동시 표시 (색만으로 의미 전달 금지) */
-export type StatusChipTone =
-  | "green"
-  | "red"
-  | "yellow"
-  | "cyan"
-  | "neutral";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Send,
+  Minus,
+  type LucideIcon,
+} from "lucide-react";
+import { StatusBadge } from "./Badge";
+import type { BadgeTone } from "./Badge";
+
+/** StatusChip: 색 + 텍스트 동시 표시 (색만으로 의미 전달 금지). StatusBadge 기반. */
+export type StatusChipTone = BadgeTone;
 
 export interface StatusChipProps {
-  /** 톤(배경/테두리 색) */
   tone: StatusChipTone;
-  /** 필수: 항상 텍스트로 상태를 표시 */
   label: string;
-  /** 선택: 아이콘 */
+  /** 선택: 아이콘. 미지정 시 톤별 기본 Lucide 아이콘 사용 */
   icon?: React.ReactNode;
   className?: string;
 }
 
-const toneClasses: Record<StatusChipTone, string> = {
-  green: "border-green bg-green/15 text-green",
-  red: "border-red bg-red/15 text-red",
-  yellow: "border-yellow bg-yellow/15 text-yellow",
-  cyan: "border-cyan bg-cyan/15 text-cyan",
-  neutral: "border-border bg-bg2 text-text-2",
+const defaultIcons: Record<StatusChipTone, LucideIcon> = {
+  green: CheckCircle2,
+  red: XCircle,
+  yellow: AlertTriangle,
+  cyan: Send,
+  neutral: Minus,
 };
 
 export function StatusChip({
@@ -32,14 +36,13 @@ export function StatusChip({
   icon,
   className = "",
 }: StatusChipProps) {
+  const iconProp = icon ?? defaultIcons[tone];
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-token-md border px-2 py-0.5 text-xs font-medium tabular-nums ${toneClasses[tone]} ${className}`}
-      role="status"
-      aria-label={label}
-    >
-      {icon}
-      <span>{label}</span>
-    </span>
+    <StatusBadge
+      tone={tone}
+      label={label}
+      icon={iconProp}
+      className={className}
+    />
   );
 }

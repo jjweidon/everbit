@@ -29,7 +29,7 @@ export function InfoTooltip({ content, ariaLabel = "도움말", className = "" }
         role="img"
         aria-label={ariaLabel}
         aria-describedby={visible ? id : undefined}
-        className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border-thin border-border bg-bg2 text-text-3 transition-colors hover:border-cyan hover:text-cyan"
+        className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-text-3 transition-colors hover:text-cyan"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

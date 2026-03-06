@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Bell } from "lucide-react";
+import { OnOffBadge } from "@/components/ui";
+import type { UpbitKeyStatus } from "@/types/api-contracts";
+import { mockDashboardSummary } from "@/lib/mocks/dashboard";
+import { mockUpbitKeyStatus } from "@/lib/mocks/upbit-key";
 
 /** Kill Switch placeholder — OFF 전환 시 confirm 필수(규칙). 실제 동작은 추후 연동. */
 function KillSwitchPlaceholder() {
@@ -47,7 +52,7 @@ function KillSwitchPlaceholder() {
           }`}
         />
       </button>
-      <span className="text-xs text-text-3">{on ? "ON" : "OFF"}</span>
+      <OnOffBadge value={on} />
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-bg0/80"
@@ -85,29 +90,57 @@ function KillSwitchPlaceholder() {
   );
 }
 
-/** 연결 상태 placeholder — WS/Upbit 키 상태 등. */
-function ConnectionStatusPlaceholder() {
+/** WS 상태 — mock 데이터 기반 */
+function WsStatusBadge() {
+  const { wsStatus } = mockDashboardSummary;
+  const config = {
+    CONNECTED: { dot: "bg-green", label: "WS 연결됨" },
+    DEGRADED: { dot: "bg-yellow", label: "WS 불안정" },
+    DISCONNECTED: { dot: "bg-red", label: "WS 끊김" },
+  } as const;
+  const { dot, label } = config[wsStatus];
   return (
     <div className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5">
-      <span
-        className="h-2 w-2 rounded-full bg-green"
-        aria-hidden
-        title="연결됨"
-      />
-      <span className="text-sm text-text-2">연결됨 (placeholder)</span>
+      <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden title={label} />
+      <span className="text-sm text-text-2">{label}</span>
     </div>
   );
 }
 
-/** 알림 슬롯 — 아이콘 + 배지 등. */
+/** Upbit 키 상태 — mock 데이터 기반 */
+function UpbitKeyBadge() {
+  const { status, lastVerifiedAt } = mockUpbitKeyStatus;
+  const config: Record<UpbitKeyStatus, { label: string }> = {
+    REGISTERED: { label: "키 등록됨" },
+    NOT_REGISTERED: { label: "키 미등록" },
+    VERIFICATION_FAILED: { label: "검증 실패" },
+  };
+  const label = config[status as UpbitKeyStatus].label;
+  return (
+    <Link
+      href="/settings/upbit-key"
+      className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5 text-sm text-text-2 transition-colors hover:bg-border hover:text-text-1"
+      aria-label="Upbit 키 설정"
+    >
+      <span className="text-sm">{label}</span>
+      {lastVerifiedAt && (
+        <span className="text-xs text-text-3">
+          검증 {new Date(lastVerifiedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+/** 알림 슬롯 — Lucide Bell 아이콘 */
 function NotificationsSlotPlaceholder() {
   return (
     <Link
       href="/notifications"
-      className="flex items-center gap-1.5 rounded-md border border-border bg-bg2 px-3 py-1.5 text-text-2 transition-colors hover:bg-border hover:text-text-1"
+      className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5 text-text-2 transition-colors hover:bg-border hover:text-text-1"
       aria-label="알림 설정"
     >
-      <span className="text-sm">🔔</span>
+      <Bell className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
       <span className="text-sm">알림</span>
     </Link>
   );
@@ -119,9 +152,10 @@ export function Topbar() {
       className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-bg2 px-4"
       role="banner"
     >
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-4">
         <KillSwitchPlaceholder />
-        <ConnectionStatusPlaceholder />
+        <UpbitKeyBadge />
+        <WsStatusBadge />
       </div>
       <div className="flex items-center gap-2">
         <NotificationsSlotPlaceholder />

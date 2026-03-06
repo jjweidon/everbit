@@ -1,18 +1,30 @@
 /**
- * 전략 설정 — 그룹/폼 영역 구조만.
- * 실 API 호출 금지(mock/placeholder).
+ * 전략 설정 — 그룹/폼 영역
+ * docs/ui/everbit_ui_impl_spec.md §5.5
+ * Mock 데이터 사용, 실 API 호출 금지
  */
+import { TagBadge } from "@/components/ui";
+import { mockStrategyConfig } from "@/lib/mocks/strategy";
+
+function formatIso(iso: string) {
+  return new Date(iso).toLocaleString("ko-KR");
+}
+
 export default function StrategyPage() {
+  const { strategyKey, configVersion, updatedAt, configJson } = mockStrategyConfig;
+
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">전략</h1>
 
       <section aria-label="전략 메타" className="rounded-lg border border-border bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">전략 정보</h2>
-        <div className="mt-3 flex flex-wrap gap-4 text-sm text-text-2">
-          <span>strategyKey: EXTREME_FLIP</span>
-          <span>config_version: —</span>
-          <span>마지막 업데이트: —</span>
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-text-2">
+          <span className="inline-flex items-center gap-1.5">
+            strategyKey: <TagBadge>{strategyKey}</TagBadge>
+          </span>
+          <span>config_version: {configVersion}</span>
+          <span>마지막 업데이트: {formatIso(updatedAt)}</span>
         </div>
       </section>
 
@@ -28,7 +40,10 @@ export default function StrategyPage() {
         <section aria-label="파라미터 폼" className="rounded-lg border border-border bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">파라미터</h2>
           <div className="mt-3 space-y-4">
-            <p className="text-text-3">(폼 placeholder)</p>
+            <pre className="overflow-x-auto rounded border border-border bg-bg1 p-3 text-xs text-text-2">
+              {JSON.stringify(configJson, null, 2)}
+            </pre>
+            <p className="text-sm text-text-3">(실제 편집 폼은 API 연동 후 구현)</p>
           </div>
         </section>
       </div>
