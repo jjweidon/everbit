@@ -1,0 +1,32 @@
+# 테스트 전용 설정. @ActiveProfiles("test") 시 로드.
+# SoT: docs/testing/backend-tdd-template.md §10, docs/testing/tdd.md
+# 운영 DB와 격리. Testcontainers Postgres(ephemeral) 사용.
+# 설정값은 raw string 대신 이 파일을 참조한다.
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    root: WARN
+    com.everbit: INFO
+    org.hibernate.SQL: WARN
+
+auth:
+  jwt-access-secret: test-access-secret-min-32-chars-required
+  jwt-refresh-secret: test-refresh-secret-min-32-chars-required
+  jwt-access-ttl-seconds: 900
+  jwt-refresh-ttl-seconds: 1209600
+  kakao-client-id: test-client-id
+  kakao-client-secret: test-client-secret
+  kakao-redirect-uri: http://localhost:8080/api/v2/auth/callback
+  frontend-base-url: http://localhost:3000
+  allowed-origins: http://localhost:3000,http://127.0.0.1:3000

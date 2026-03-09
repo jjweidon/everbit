@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * GET /actuator/health 200 검증.
  * SoT: docs/prompt-pack/server/02_foundation_bootstrap.md.
- * Docker 필요. Docker 없으면 DashboardControllerTest만 실행.
+ * Docker 필요. Docker 없으면 스킵.
  */
 @Testcontainers
 @SpringBootTest

@@ -10,7 +10,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Spring context + Flyway + JPA 로드 검증. Postgres는 Testcontainers 사용.
+ * Spring context + JPA(ddl-auto) + Postgres 로드 검증. Postgres는 Testcontainers 사용.
  * Docker 필요. Docker 없이 stub 검증만 하려면 DashboardControllerTest만 실행.
  */
 @Testcontainers
@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class EverbitApplicationTests {
 
 	@Container
+	@SuppressWarnings("resource") // Testcontainers @Container manages lifecycle
 	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
 		.withDatabaseName("everbit")
 		.withUsername("everbit")

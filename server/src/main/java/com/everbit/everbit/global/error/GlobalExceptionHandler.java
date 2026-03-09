@@ -1,5 +1,6 @@
 package com.everbit.everbit.global.error;
 
+import com.everbit.everbit.auth.api.AuthController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,6 +12,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	@ExceptionHandler(AuthController.InvalidOriginException.class)
+	public ResponseEntity<ApiErrorBody> handleInvalidOrigin() {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+			.body(ApiErrorBody.of(ErrorCode.FORBIDDEN, "유효하지 않은 요청입니다.", "INVALID_ORIGIN"));
+	}
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorBody> handleException(Exception ex) {
