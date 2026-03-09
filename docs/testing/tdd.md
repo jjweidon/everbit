@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-03-06 (Asia/Seoul)
+Last updated: 2026-03-09 (Asia/Seoul)
 
 everbit v2 백엔드는 **TDD(Test-Driven Development)**를 기본 개발 방식으로 채택한다.
 
@@ -14,6 +14,17 @@ everbit v2 백엔드는 **TDD(Test-Driven Development)**를 기본 개발 방식
 즉, “mock 잔뜩 쓰는 TDD”가 아니라 **“행동을 먼저 검증하고 경계만 통합으로 확인하는 TDD”**를 기본으로 한다.
 
 이 문서는 “테스트 작성 방식”이 아니라, 구현자가 흔들리지 않도록 **개발 루프/규칙/DoD**를 고정한다.
+
+### 테스트 계층(강제 — @SpringBootTest 남발 금지)
+
+처음 TDD를 도입할 때는 `@SpringBootTest`로 모든 것을 검증하지 않는다. 아래 순서로 계층을 나눈다.
+
+1. **서비스/도메인 단위 테스트** — Spring Context 없음, plain JUnit + Mockito
+2. **컨트롤러 슬라이스 테스트** — `@WebMvcTest` + MockMvc
+3. **리포지토리 슬라이스 테스트** — `@DataJpaTest` + Testcontainers(Postgres)
+4. **소수의 전체 통합 테스트** — `@SpringBootTest` + `@ActiveProfiles("test")`
+
+이 순서가 현재 스택(Spring MVC + JPA + Security)에 가장 맞다.
 
 관련 SoT:
 - 테스트 전략: `docs/testing/strategy.md`
@@ -167,6 +178,60 @@ TDD 진행 시 아래 순서를 따른다.
 
 요약: **use case → controller slice → persistence slice → external client slice → minimal flow**
 
+### 4.7 테스트 인프라/도구(고정)
+
+- **spring-boot-starter-test**: JUnit Jupiter, AssertJ, Hamcrest, Mockito 포함. 순수 단위 테스트는 바로 작성 가능.
+- **spring-security-test**: 별도 의존성 필요. `@WithMockUser`, `csrf()` 등 보안 테스트용.
+- **웹 테스트 축**: `spring-boot-starter-web` + `spring-boot-starter-webflux` 둘 다 있을 때 Spring Boot는 **Spring MVC**를 자동 구성. 따라서 **MockMvc**가 기본. `@WebMvcTest`는 MockMvc를 자동 구성.
+- **CSRF**: POST/PUT/DELETE 등 non-safe 메서드 테스트 시 CSRF가 켜져 있으면 `with(csrf())` 포함.
+- **보안 설정 분리**: `@WebMvcTest`는 전체 `@Configuration`을 자동 스캔하지 않음. 보안 설정 클래스는 `@Import(SecurityConfig.class)`로 명시적으로 가져온다. 보안 설정과 데이터소스 설정이 한 클래스에 섞이면 슬라이스 테스트가 불필요하게 무거워진다.
+
+### 4.8 Security / Config 테스트 원칙(강제)
+
+**핵심: Security와 config를 한 덩어리로 테스트하지 않는다.**  
+프레임워크가 보장하는 동작은 믿고, **우리가 추가한 규칙·정책·배선만** 분리해서 검증한다.
+
+#### Security 3단 분리
+
+1. **인가 규칙** — `@WebMvcTest` + `@Import(SecurityConfig.class)`  
+   엔드포인트별로 "비인증 401", "권한 없으면 403", "권한 맞으면 200"만 고정. `@WithMockUser`로 모의 인증.
+
+2. **JWT 자체** — 순수 단위 테스트  
+   `JwtTokenProvider` 등에서 토큰 생성/만료/서명/클레임 파싱 검증. `@WebMvcTest`에서 실제 토큰을 만들지 않는다.
+
+3. **필터 체인 통합** — `@SpringBootTest` + `@AutoConfigureMockMvc` 소수만(3~4개)  
+   예: 토큰 없음 → 401, 잘못된 토큰 → 401, 유효하지만 ROLE 부족 → 403, 유효한 토큰 → 200.
+
+#### addFilters = false
+
+컨트롤러의 JSON 스펙, validation, status code만 보고 싶을 때는 `@AutoConfigureMockMvc(addFilters = false)`로 보안 필터를 끈다. 보안 테스트와 API 스펙 테스트를 **분리**한다는 뜻이다.
+
+#### Config 테스트
+
+- **빈 wiring·존재 여부**는 테스트하지 않는다.
+- **ApplicationContextRunner**로 속성 바인딩·부팅 실패만 검증한다.
+  - 필요한 속성이 바인딩되는가
+  - 필수값이 빠지면 시작이 실패하는가
+  - 프로필/테스트 속성으로 오버라이드되는가
+
+#### Security/config가 어렵다면
+
+구조가 과하게 결합된 신호다. `AuthProperties`, `SecurityBeansConfig`, `ApiSecurityConfig`, `JwtTokenProvider`, `JwtAuthenticationFilter`를 분리하면 테스트도 자동으로 분리된다.
+
+### 4.9 초보자 TDD 진행 순서(기능 1개 예시)
+
+회원 가입 또는 리프레시 토큰 재발급 같은 기능 하나를 예로 들면:
+
+1. **서비스 단위 테스트 1개** 작성 — 예: 중복 이메일이면 예외 발생
+2. 테스트가 깨지는 것 확인(RED)
+3. 최소 구현으로 통과(GREEN)
+4. 리팩터링
+5. **컨트롤러 슬라이스 테스트 1개** 추가 — 예: 성공 시 201 반환
+6. **리포지토리 테스트 1개** 추가 — 예: existsByEmail 또는 Querydsl 조회
+7. 마지막으로 **통합 테스트 1개** — 예: 요청부터 DB 반영까지 happy path
+
+처음에는 기능당 테스트를 많이 쓰지 않는다. **기능당 3~5개 핵심 테스트**로 시작하는 것이 낫다.
+
 ---
 
 ## 5. 테스트 네이밍/구조 규칙(강제)
@@ -211,7 +276,14 @@ public final class UuidV7Generator implements PublicIdGenerator {
 
 ---
 
-## 7. 금지 사항(실전에서 사고나는 패턴)
+## 7. 초보자가 자주 하는 실수
+
+- **모든 테스트를 `@SpringBootTest`로 작성** — 느리고, 실패 원인이 흐려진다.
+- **컨트롤러에서 비즈니스 규칙까지 다 검증하려고 함** — 비즈니스는 서비스 단위 테스트에서 끝내야 한다.
+- **Postgres 프로젝트인데 H2로만 JPA 테스트** — SQL, 타입, 인덱스, Querydsl 결과가 실제와 어긋날 수 있다.
+- **보안 설정 클래스를 한 군데에 다 몰아넣음** — `@WebMvcTest`에서 필요한 보안 설정만 골라 가져오기 어렵다.
+
+## 8. 금지 사항(실전에서 사고나는 패턴)
 
 - 테스트 없이 구현부터 시작(=TDD 위반)
 - flaky 테스트 방치
@@ -230,7 +302,7 @@ public final class UuidV7Generator implements PublicIdGenerator {
 
 ---
 
-## 8. PR / DoD(완료 기준) 규칙
+## 9. PR / DoD(완료 기준) 규칙
 
 - 모든 기능 PR은 최소 1개 이상의 테스트를 포함한다.
 - 버그 수정은 **재현 테스트(RED) → 수정(GREEN)** 순서로 진행한다.
@@ -241,9 +313,9 @@ public final class UuidV7Generator implements PublicIdGenerator {
 
 ---
 
-## 9. 예시: Kill Switch가 주문을 차단해야 한다(RED → GREEN)
+## 10. 예시: Kill Switch가 주문을 차단해야 한다(RED → GREEN)
 
-### 9.1 RED(테스트 먼저)
+### 10.1 RED(테스트 먼저)
 - Given: account_enabled=false
 - When: OrderExecutor가 OrderAttempt를 실행
 - Then: Upbit 호출이 일어나지 않고 attempt는 SUSPENDED로 수렴

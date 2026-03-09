@@ -7,6 +7,8 @@ Last updated: 2026-03-06 (Asia/Seoul)
 이 문서는 `docs/architecture/data-model.md`와 `docs/db/schema-v2-mvp.sql`에 고정된 스키마를 **Spring Data JPA(Hibernate)** 로 구현할 때,
 복합키(Composite Key), 공유 PK(Shared Primary Key), owner 일치 강제를 위한 **복합 FK** 를 안전하게 매핑하는 표준 패턴을 정의한다.
 
+**스키마 생성**: v2 MVP에서는 Flyway/Liquibase 대신 **Hibernate ddl-auto(`update`)** 로 테이블을 생성·갱신한다. 엔티티 정의가 곧 스키마 변경의 기준이다(ADR-0003).
+
 핵심 원칙:
 - 정합성/멱등성은 **DB 제약(UNIQUE/PK/CHECK/FK)** 이 최종 기준(SoT)이다.
 - JPA는 저장/조회 편의 계층이다. DB에 이미 존재하는 제약을 코드로 “대체”하지 않는다.
@@ -230,6 +232,8 @@ public interface StrategyConfigRepository extends JpaRepository<StrategyConfig, 
   Optional<StrategyConfig> findByIdOwnerIdAndIdStrategyKey(Long ownerId, String strategyKey);
 }
 ```
+
+> 복잡한 조인·동적 조건·쿼리 성능: `docs/architecture/spring-boot-conventions.md` §8.1 (QueryDSL, Fetch Join).
 
 ### 4.4 `market_config`, `market_state`, `position` 적용
 

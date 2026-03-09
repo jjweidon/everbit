@@ -2,13 +2,20 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-03-06 (Asia/Seoul)
+Last updated: 2026-03-09 (Asia/Seoul)
 
 이 문서는 **Spring Boot 백엔드에서 TDD를 실무적으로 적용하기 위한 패키지 구조·테스트 계층 규칙·예시**를 고정한다.  
 TDD 루프/적용 범위/P0 우선순위는 `docs/testing/tdd.md`가 SoT이다.
 
 **한 줄 요약:**  
 비즈니스는 plain JUnit으로 빨리 검증하고, 기술 경계는 slice test로 자르고, 전체 흐름은 몇 개만 `@SpringBootTest`로 확인하는 구조.
+
+**테스트 계층(순서 고정):**
+
+1. 서비스/도메인 단위 테스트
+2. 컨트롤러 슬라이스 테스트
+3. 리포지토리 슬라이스 테스트
+4. 소수의 전체 통합 테스트
 
 ---
 
@@ -78,6 +85,8 @@ src/test/java/com.everbit.everbit/
 
 비즈니스 규칙을 **가장 먼저** 검증한다. Controller가 아니다.
 
+**예시 1: InMemory fake 사용**
+
 ```java
 // 예: 주문 유스케이스 또는 회원가입 유스케이스
 class PlaceOrderServiceTest {
@@ -109,45 +118,110 @@ class PlaceOrderServiceTest {
 }
 ```
 
+**예시 2: Mockito 사용(경계 검증)**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class RegisterUserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private RegisterUserService registerUserService;
+
+    @Test
+    void register_throws_exception_when_email_already_exists() {
+        // given
+        String email = "test@everbit.com";
+        given(userRepository.existsByEmail(email)).willReturn(true);
+
+        // when / then
+        assertThatThrownBy(() -> registerUserService.register(email, "홍길동"))
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessage("이미 가입된 이메일입니다.");
+
+        then(userRepository).should().existsByEmail(email);
+        then(userRepository).should(never()).save(any());
+    }
+}
+```
+
 핵심: `verify(repository).save(...)` 같은 **상호작용 검증이 아니라**, 저장된 **상태(결과)**를 검증한다.  
-이 테스트가 먼저 있어야 하며, **회원가입/주문의 핵심 규칙은 Spring 없이 검증 가능해야 한다.**
+이 테스트가 먼저 있어야 하며, **회원가입/주문의 핵심 규칙은 Spring 없이 검증 가능해야 한다.**  
+여기서는 HTTP, JSON, SecurityFilter, DB는 신경 쓰지 않는다.
 
 ---
 
-## 5. Controller slice 예시(@WebMvcTest)
+## 5. Controller slice 예시(@WebMvcTest + MockMvc)
 
-입력 검증, 상태 코드, JSON 계약만 확인한다. use case는 `@MockitoBean`으로 대체.
+입력 검증, 상태 코드, JSON 계약만 확인한다. use case는 `@MockBean`으로 대체.
+
+- **MockMvc**: 현재 프로젝트는 Spring MVC 기준이므로 `@WebMvcTest`가 MockMvc를 자동 구성.
+- **보안 설정**: `@Import(SecurityConfig.class)`로 명시적으로 가져온다. 보안 설정이 별도 클래스라면 필수.
+- **CSRF**: POST/PUT/DELETE 시 `with(csrf())` 포함(CSRF가 켜져 있을 때).
+- **인증 테스트**: `@WithMockUser(username = "admin", roles = "ADMIN")` 사용. `spring-security-test` 의존성 필요.
+- **addFilters = false**: JSON 스펙·validation·status code만 볼 때 보안 필터를 끈다. 보안 테스트와 API 스펙 테스트를 분리.
+
+**예시 1: 인가 규칙만 검증(보안 필터 포함)**
 
 ```java
-@WebMvcTest(OrderController.class)
-class OrderControllerTest {
+@WebMvcTest(DashboardController.class)
+@Import(SecurityConfig.class)
+class DashboardControllerSecurityTest {
 
     @Autowired
     MockMvc mockMvc;
 
-    @MockitoBean
-    PlaceOrderUseCase placeOrderUseCase;
+    @MockBean
+    DashboardService dashboardService;
 
     @Test
-    void 주문_요청을_받으면_201을_반환한다() throws Exception {
-        given(placeOrderUseCase.handle(any())).willReturn(1L);
-
-        mockMvc.perform(post("/api/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""" {"market":"KRW-BTC", ...} """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.orderId").exists());
+    void 인증없으면_401() throws Exception {
+        mockMvc.perform(get("/api/v2/dashboard/summary").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void 마켓_형식이_잘못되면_400을_반환한다() throws Exception {
-        mockMvc.perform(post("/api/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""" {"market":"invalid"} """))
-                .andExpect(status().isBadRequest());
+    @WithMockUser(roles = "USER")
+    void 인증있으면_200() throws Exception {
+        given(dashboardService.getSummary(any())).willReturn(new DashboardSummary(...));
+
+        mockMvc.perform(get("/api/v2/dashboard/summary").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 }
 ```
+
+**예시 2: API 스펙만 검증(보안 필터 제외)**
+
+```java
+@WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class UserControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    RegisterUserUseCase registerUserUseCase;
+
+    @Test
+    void create_user_returns_201() throws Exception {
+        given(registerUserUseCase.register(any()))
+                .willReturn(new RegisterUserResult("user-1"));
+
+        mockMvc.perform(post("/api/v2/users")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""" {"email":"test@everbit.com","name":"홍길동"} """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("user-1"));
+    }
+}
+```
+
+검증 대상: 요청/응답 스펙, validation, 상태 코드, 인증/인가 결과, 예외가 어떤 HTTP 응답으로 번역되는지.
 
 ---
 
@@ -155,28 +229,46 @@ class OrderControllerTest {
 
 JPA 매핑, unique 제약, 쿼리만 검증한다. Adapter를 쓸 경우 `@Import(Adapter.class)`로 포함.
 
+- **Postgres 사용**: H2 대체 금지. SQL, JSONB, SKIP LOCKED, 인덱스 동작이 다름.
+- **설정**: `@ActiveProfiles("test")`로 `application-test.yml` 로드. DB 연결은 Testcontainers가 `@DynamicPropertySource` 또는 `@ServiceConnection`으로 주입.
+- **@DynamicPropertySource**: 테스트 컨텍스트에 동적 속성 등록 시 공식 방식.
+
 ```java
-@Testcontainers
 @DataJpaTest
-@Import(OrderRepositoryAdapter.class)
-@AutoConfigureTestDatabase(replace = Replace.NONE)
-class OrderRepositoryAdapterTest {
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Testcontainers
+@ActiveProfiles("test")
+class UserRepositoryTest {
 
     @Container
-    @ServiceConnection
     static PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>("postgres:16-alpine");
+            new PostgreSQLContainer<>("postgres:16-alpine")
+                    .withDatabaseName("testdb")
+                    .withUsername("postgres")
+                    .withPassword("postgres");
+
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
 
     @Autowired
-    OrderRepository orderRepository;
+    private UserRepository userRepository;
 
     @Test
-    void 주문을_저장하고_식별자로_다시_조회할_수_있다() {
-        Order saved = orderRepository.save(Order.create(...));
-        assertThat(orderRepository.findById(saved.getId())).isPresent();
+    void exists_by_email_returns_true_when_user_exists() {
+        userRepository.save(User.create("test@everbit.com", "홍길동"));
+
+        boolean result = userRepository.existsByEmail("test@everbit.com");
+
+        assertThat(result).isTrue();
     }
 }
 ```
+
+검증 대상: Querydsl 커스텀 조회, 정렬/페이징, unique 제약/인덱스 기대 동작, soft delete 조건, 시간대/UTC 저장.
 
 ---
 
@@ -184,16 +276,24 @@ class OrderRepositoryAdapterTest {
 
 전체 컨텍스트 + MockMvc로 핵심 happy path 1~3개만 유지한다.
 
+- **프로필**: `@ActiveProfiles("test")`로 `application-test.yml` 로드.
+- **@ServiceConnection**: Spring Boot 3.1+ service connection이 connection-related property보다 우선. `spring-boot-testcontainers` 있으면 사용 가능.
+- **설정값**: raw string 대신 `application-test.yml`의 값을 참조한다.
+
 ```java
 @Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
-class OrderFlowTest extends IntegrationTestSupport {
+@ActiveProfiles("test")
+abstract class IntegrationTestSupport {
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>("postgres:16-alpine");
+}
+
+class OrderFlowTest extends IntegrationTestSupport {
 
     @Autowired
     MockMvc mockMvc;
@@ -206,6 +306,8 @@ class OrderFlowTest extends IntegrationTestSupport {
     }
 }
 ```
+
+권장 대상: 로그인 성공/실패, JWT 재발급, 권한 없는 요청 401/403, DB 마이그레이션 이후 핵심 플로우 1개, 카카오 OAuth 콜백 핵심 플로우 1개.
 
 ---
 
@@ -234,10 +336,75 @@ class OrderFlowTest extends IntegrationTestSupport {
 
 ---
 
-## 10. 참고
+## 10. Config 테스트(ApplicationContextRunner)
+
+Config 테스트는 **빈 wiring**이 아니라 **속성 바인딩·부팅 실패**만 검증한다.
+
+- `@Value` 대신 `@ConfigurationProperties` 사용 권장.
+- `ApplicationContextRunner`로 property 주입 후 context 성공/실패를 검증.
+
+```java
+class AuthPropertiesTest {
+
+    private final ApplicationContextRunner contextRunner =
+            new ApplicationContextRunner()
+                    .withUserConfiguration(EnableAuthPropertiesConfig.class)
+                    .withPropertyValues(
+                            "auth.jwt-access-secret=test-access-secret-min-32-chars-required",
+                            "auth.jwt-refresh-secret=test-refresh-secret-min-32-chars-required",
+                            "auth.jwt-access-ttl-seconds=900",
+                            "auth.jwt-refresh-ttl-seconds=1209600",
+                            "auth.allowed-origins=http://localhost:3000"
+                    );
+
+    @Test
+    void auth_properties_정상_바인딩() {
+        contextRunner.run(context -> {
+            assertThat(context).hasNotFailed();
+            AuthProperties props = context.getBean(AuthProperties.class);
+            assertThat(props.jwtAccessTtlSeconds()).isEqualTo(900);
+        });
+    }
+
+    @Test
+    void 필수값_없으면_부팅_실패() {
+        new ApplicationContextRunner()
+                .withUserConfiguration(EnableAuthPropertiesConfig.class)
+                .withPropertyValues("auth.jwt-access-ttl-seconds=900")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableConfigurationProperties(AuthProperties.class)
+    static class EnableAuthPropertiesConfig {}
+}
+```
+
+검증 대상: 필요한 속성 바인딩, 필수값 누락 시 실패, 프로필/테스트 속성 오버라이드.
+
+## 11. 테스트 설정(application-test.yml)
+
+테스트 전용 설정은 `application-test.yml`에 두고, raw string 대신 이 값을 참조한다.
+
+- **DB**: 운영과 격리. Testcontainers Postgres(ephemeral) 사용. `@ActiveProfiles("test")`로 로드.
+- **JPA**: `ddl-auto: create-drop` 등 테스트용 값. validate는 Flyway 없이 빈 DB에서는 막힌다.
+- **인증/외부 연동**: 테스트용 시크릿·URL. `auth.*` 등 `@ConfigurationProperties`로 주입.
+- **로깅**: 테스트 시 불필요한 로그 억제.
+
+**정적 vs 동적 속성:**
+
+- **정적**: `@TestPropertySource(properties = { "auth.jwt-access-secret=...", ... })` — 인라인 값은 높은 우선순위.
+- **동적**: `@DynamicPropertySource` — Testcontainers 포트처럼 런타임에 결정되는 값.
+
+## 12. 의존성
+
+- `spring-boot-starter-test`: JUnit Jupiter, AssertJ, Hamcrest, Mockito 포함.
+- `spring-security-test`: `@WithMockUser`, `csrf()` 등 보안 테스트용. **별도 추가 필요.**
+
+## 13. 참고
 
 - TDD 루프/범위/P0: `docs/testing/tdd.md`
 - 테스트 전략/CI 게이트: `docs/testing/strategy.md`
 - Spring Boot 코드/패키지 규칙: `docs/architecture/spring-boot-conventions.md`
-- Spring Boot 3.5.x 기준 slice test: [Spring Boot Testing](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html)  
+- Spring Boot 3.x 기준 slice test: [Spring Boot Testing](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html)  
 - Testcontainers `@ServiceConnection`: Spring Boot 3.1+ 사용 시 datasource 자동 주입 가능.

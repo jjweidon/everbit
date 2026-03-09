@@ -47,6 +47,8 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 | Method | Path | 설명 |
 |--------|------|------|
 | **인증** | | |
+| GET | /api/v2/auth/start | OAuth 시작. state 생성 후 Kakao redirect URL로 302 |
+| GET | /api/v2/auth/callback | OAuth 콜백. code 교환, 회원 매핑, 토큰 발급 |
 | POST | /api/v2/auth/refresh | Refresh 쿠키로 Access Token 재발급 (ADR-0007) |
 | POST | /api/v2/auth/logout | 로그아웃(Refresh 쿠키/Redis 폐기) |
 | **Upbit 키** | | |
@@ -75,7 +77,8 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 | GET | /api/v2/backtests/{jobPublicId} | 백테스트 결과 상세 |
 
 푸시 API 요청/응답 상세: `docs/architecture/push-notifications.md` §4.  
-인증/세션 상세: ADR-0007, `docs/requirements/non-functional.md` §1.2.
+인증/세션 상세: ADR-0007, `docs/requirements/non-functional.md` §1.2.  
+카카오 OAuth 로그인 플로우: `docs/integrations/kakao-oauth-auth-flow.md`.
 
 ---
 

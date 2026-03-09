@@ -57,6 +57,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 
 ### Integrations
 - [Upbit 연동 스펙(REST + WebSocket)](./integrations/upbit.md)
+- [카카오 OAuth 인증/인가 설계](./integrations/kakao-oauth-auth-flow.md)
 
 ### Security
 - [시크릿 관리](./security/secrets.md)

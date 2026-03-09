@@ -7,7 +7,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 이 문서는 everbit v2 백엔드(Spring Boot)에서 **클래스/패키지/레이어/엔티티/DTO**를 어떤 규칙으로 작성할지 고정한다.
 
 - **상위 아키텍처**(모듈러 모놀리식, 도메인 모듈, 헥사고날·이벤트): `docs/architecture/modular-monolith.md`
-- DB 스키마/제약의 SoT: `docs/architecture/data-model.md`, `docs/db/schema-v2-mvp.sql`
+- DB 스키마/제약의 SoT: `docs/architecture/data-model.md`, `docs/db/schema-v2-mvp.sql`. 런타임 스키마는 Hibernate ddl-auto(`update`)로 생성·갱신(ADR-0003).
 - JPA 복합키/공유PK 매핑 SoT: `docs/architecture/jpa-mapping.md`
 
 ---
@@ -457,6 +457,22 @@ interface AppUserRepository extends JpaRepository<AppUser, Long> {
 ```java
 interface StrategyConfigRepository extends JpaRepository<StrategyConfig, StrategyConfigId> {}
 ```
+
+### 8.1 복잡한 쿼리·조인·성능
+
+기본 CRUD 외에 **조인이 필요하거나 조건이 복잡한 쿼리**는 아래 규칙을 따른다.
+
+| 상황 | 권장 방식 | 비고 |
+|------|-----------|------|
+| 단일 엔티티 단순 조회 | `JpaRepository` 메서드(`findById`, `findByXxx`) | |
+| 연관 엔티티 함께 로딩 | **Fetch Join** | N+1 방지. `@Query("SELECT e FROM Entity e JOIN FETCH e.relation")` |
+| 동적 조건·복잡한 조인 | **QueryDSL** | 타입 안전, 조건 조합 용이. `JPAQueryFactory` 사용 |
+| 페이징 + 조인 | QueryDSL + `fetchJoin()` + `offset/limit` | count 쿼리 분리 검토 |
+
+규칙:
+- **N+1 방지**: 연관 엔티티를 반복 접근할 때는 Fetch Join 또는 `@EntityGraph`로 한 번에 로딩한다.
+- **QueryDSL 도입**: `@Query` 문자열이 길어지거나 동적 조건이 많아지면 QueryDSL로 전환한다.
+- **성능 검증**: 대량 조회·복잡한 조인 쿼리는 실행 계획(EXPLAIN) 또는 테스트 데이터로 성능을 확인한다.
 
 ---
 

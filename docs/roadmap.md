@@ -78,10 +78,10 @@ Last updated: 2026-03-06 (Asia/Seoul)
     - P0 영역(주문/Outbox/레이트리밋) 대표 회귀 테스트 1세트가 CI에서 항상 실행된다
     - `docs/testing/strategy.md`의 CI 게이트(P0)가 실제 파이프라인에 반영된다
 
-- [ ] **DB 마이그레이션 체계(Flyway 또는 Liquibase) 도입**
+- [x] **DB 스키마 관리 방식 확정 — Hibernate ddl-auto 사용**
   - DoD:
-    - `db/schema-v2-mvp.sql`을 마이그레이션 파일로 이행
-    - 로컬에서 `clean -> migrate -> app boot` 재현 가능
+    - `spring.jpa.hibernate.ddl-auto: update`로 엔티티 기준 테이블 생성·갱신
+    - 로컬에서 Postgres 기동 후 앱 부트 시 스키마 자동 반영
 - [ ] **로컬 개발 환경(docker-compose) 표준화**
   - DoD:
     - Postgres, (선택) Redis, (선택) Grafana/Prometheus 구성이 문서화

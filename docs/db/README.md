@@ -12,7 +12,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 - v2 MVP 엔티티 테이블은 원칙적으로 `created_at`, `updated_at`를 모두 가진다(BaseEntity).
 - owner 중복 컬럼을 두는 핵심 자식 테이블은 복합 FK로 parent owner 일치를 강제한다.
 - JPA 엔티티 매핑(복합키/공유PK)은 `docs/architecture/jpa-mapping.md`를 따른다.
-- 마이그레이션 도구(Flyway/Liquibase)는 코드 착수 전에 1개로 고정한다(ADR-0003).
+- v2 MVP 스키마는 Hibernate ddl-auto(`update`)로 생성·갱신된다(ADR-0003). 참고용 DDL은 `schema-v2-mvp.sql`에 둔다.
 
 ## 파일
 - `schema-v2-mvp.sql`: v2 MVP 초기 스키마 DDL(초안)
