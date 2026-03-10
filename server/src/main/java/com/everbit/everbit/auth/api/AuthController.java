@@ -36,7 +36,7 @@ public class AuthController {
 		response.sendRedirect(redirectUrl);
 	}
 
-	@GetMapping("/callback")
+	@GetMapping(value = {"/callback", "/login/oauth2/code/kakao"})
 	public void callback(
 		@RequestParam(required = false) String code,
 		@RequestParam(required = false) String state,

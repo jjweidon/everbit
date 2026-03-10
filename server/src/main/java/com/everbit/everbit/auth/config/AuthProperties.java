@@ -1,26 +1,50 @@
 package com.everbit.everbit.auth.config;
 
-import jakarta.validation.constraints.NotBlank;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.stereotype.Component;
 
 /**
- * 인증 설정. SoT: docs/operations/environments.md §3.2.
+ * 인증 설정 facade. JwtProperties, OAuth2Properties, KakaoOAuth2Properties를 통합.
+ * SoT: docs/operations/environments.md §3.2.
  */
-@Validated
-@ConfigurationProperties(prefix = "auth")
+@Component
 public record AuthProperties(
-	@NotBlank String jwtAccessSecret,
-	@NotBlank String jwtRefreshSecret,
-	int jwtAccessTtlSeconds,
-	int jwtRefreshTtlSeconds,
-	String kakaoClientId,
-	String kakaoClientSecret,
-	String kakaoRedirectUri,
-	String frontendBaseUrl,
-	String allowedOrigins  // comma-separated, e.g. "http://localhost:3000,https://everbit.kr"
+	JwtProperties jwt,
+	OAuth2Properties oauth2,
+	KakaoOAuth2Properties kakao
 ) {
+	public String jwtAccessSecret() {
+		return jwt.accessSecret();
+	}
+
+	public String jwtRefreshSecret() {
+		return jwt.refreshSecret();
+	}
+
+	public int jwtAccessTtlSeconds() {
+		return jwt.accessTtlSeconds();
+	}
+
+	public int jwtRefreshTtlSeconds() {
+		return jwt.refreshTtlSeconds();
+	}
+
+	public String kakaoClientId() {
+		return kakao.clientId();
+	}
+
+	public String kakaoClientSecret() {
+		return kakao.clientSecret();
+	}
+
+	public String kakaoRedirectUri() {
+		return kakao.redirectUri();
+	}
+
+	public String frontendBaseUrl() {
+		return oauth2.authenticatedRedirectUri();
+	}
+
 	public String[] getAllowedOriginsArray() {
-		return allowedOrigins == null ? new String[0] : allowedOrigins.split(",\\s*");
+		return oauth2.getAllowedOriginsArray();
 	}
 }
