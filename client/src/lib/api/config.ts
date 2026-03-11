@@ -17,3 +17,18 @@ export function getApiBase(): string {
 }
 
 export const API_BASE_PATH = "/api/v2";
+
+/**
+ * 카카오 OAuth2 시작 엔드포인트 (커스텀 — Spring Security 기본값 아님).
+ * GET /api/v2/auth/start → state 생성 후 Kakao 인증 URL로 리다이렉트.
+ */
+export const KAKAO_AUTH_START_PATH = `${API_BASE_PATH}/auth/start`;
+
+/**
+ * 카카오 로그인 시작 URL 반환.
+ * - NEXT_PUBLIC_API_BASE="" (프록시 모드): /api/v2/* rewrite → http://localhost:8080
+ * - NEXT_PUBLIC_API_BASE=URL (직접 모드): 백엔드 절대 URL
+ */
+export function getKakaoAuthUrl(): string {
+  return `${getApiBase()}${KAKAO_AUTH_START_PATH}`;
+}
