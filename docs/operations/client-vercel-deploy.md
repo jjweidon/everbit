@@ -35,8 +35,9 @@ Last updated: 2026-03-11 (Asia/Seoul)
    - **Framework Preset**: Next.js (자동 감지됨).
    - **Build Command**: `pnpm run build` (또는 기본값 유지).
    - **Output Directory**: 비워 둠(Next.js는 Vercel이 자동 처리).
-4. **Environment Variables**에 운영용 변수 설정(예: `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY` 등).  
-   → SoT: `docs/operations/environments.md` § 3.7.
+4. **Environment Variables**에 운영용 변수 설정(필수: `NEXT_PUBLIC_API_BASE`, 권장: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` 등).  
+   - `NEXT_PUBLIC_API_BASE=https://api.everbit.kr` (미설정 시 localhost:8080 사용 → 배포 환경에서 무한 요청 발생)
+   - SoT: `docs/operations/environments.md` § 3.7.
 5. **Deploy** 실행.
 
 이후 **지정한 브랜치**(예: `v2`)에 push가 되면 해당 브랜치 기준으로 자동 빌드·배포된다.

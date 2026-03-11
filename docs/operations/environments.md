@@ -124,7 +124,8 @@ POSTGRES_PASSWORD=<로컬 전용 비밀번호>
 - `MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true`
 
 ### 3.7 Client(Next.js / Vercel)
-- `NEXT_PUBLIC_API_BASE_URL=https://api.everbit.kr`
+- `NEXT_PUBLIC_API_BASE=https://api.everbit.kr`  # 운영 API URL (미설정 시 localhost 사용 → Vercel 배포 시 무한 요청)
+- `NEXT_PUBLIC_API_BASE_URL`  # 호환용 (동일 용도, NEXT_PUBLIC_API_BASE 우선)
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY=...`  # 푸시 구독 생성에 필요(공개키)
 
 ---
