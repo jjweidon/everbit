@@ -37,12 +37,13 @@ public class AuthService {
 	public String buildOAuthStartRedirectUrl() {
 		String state = UUID.randomUUID().toString();
 		oauthStateStore.save(state, Instant.now().plusSeconds(600)); // 10분
-		return "https://kauth.kakao.com/oauth/authorize"
+		String scope = authProperties.kakaoScope().replace(", ", ",").replace(" ,", ",");
+		return authProperties.kakaoAuthorizationUri()
 			+ "?client_id=" + authProperties.kakaoClientId()
 			+ "&redirect_uri=" + authProperties.kakaoRedirectUri()
 			+ "&response_type=code"
 			+ "&state=" + state
-			+ "&scope=profile_nickname,account_email";
+			+ "&scope=" + scope;
 	}
 
 	/**

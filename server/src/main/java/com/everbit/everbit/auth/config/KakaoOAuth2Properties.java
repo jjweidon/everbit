@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 public record KakaoOAuth2Properties(
 	String clientId,
 	String clientSecret,
-	String redirectUri
+	String redirectUri,
+	String scope
 ) {
 }

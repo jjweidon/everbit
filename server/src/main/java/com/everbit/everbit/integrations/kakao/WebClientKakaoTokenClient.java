@@ -29,7 +29,7 @@ public class WebClientKakaoTokenClient implements KakaoTokenClient {
 
 		return webClientBuilder.build()
 			.post()
-			.uri("https://kauth.kakao.com/oauth/token")
+			.uri(authProperties.kakaoTokenUri())
 			.contentType(Objects.requireNonNull(MediaType.APPLICATION_FORM_URLENCODED))
 			.bodyValue(form)
 			.retrieve()
@@ -41,7 +41,7 @@ public class WebClientKakaoTokenClient implements KakaoTokenClient {
 	public KakaoUserResponse getUserInfo(String accessToken) {
 		return webClientBuilder.build()
 			.get()
-			.uri("https://kapi.kakao.com/v2/user/me")
+			.uri(authProperties.kakaoUserInfoUri())
 			.header("Authorization", "Bearer " + accessToken)
 			.retrieve()
 			.bodyToMono(KakaoUserResponse.class)

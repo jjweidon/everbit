@@ -105,7 +105,7 @@ public class AuthController {
 	private void addRefreshCookie(HttpServletResponse response, String jti, Instant expiresAt) {
 		Cookie cookie = new Cookie(REFRESH_COOKIE_NAME, jti);
 		cookie.setHttpOnly(true);
-		cookie.setSecure(true);
+		// cookie.setSecure(true); // TODO: 로컬 테스트용 임시 비활성화 — 운영 배포 전 반드시 복구
 		cookie.setPath("/api/v2/auth");
 		cookie.setMaxAge(COOKIE_MAX_AGE_14_DAYS);
 		cookie.setAttribute("SameSite", "Lax");
