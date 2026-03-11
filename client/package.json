@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "npx vercel --prod",
+    "deploy:preview": "npx vercel"
   },
   "engines": {
     "node": ">=18"

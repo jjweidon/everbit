@@ -10,6 +10,8 @@ Last updated: 2026-02-15 (Asia/Seoul)
 
 ---
 
+**프론트엔드(Client) 배포**는 Vercel 기준이며, 자동(Git push) 및 수동(CLI) 절차는 `docs/operations/client-vercel-deploy.md`를 따른다.
+
 ## 1. 기본 원칙
 
 - 운영 배포는 `v2` 브랜치 기준이며, 이미지 태그는 **Git SHA**를 사용한다.
