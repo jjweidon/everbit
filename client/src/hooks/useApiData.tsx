@@ -4,7 +4,7 @@
  * API 데이터 + 에러 UX 훅.
  * 5xx는 toast, 403/429/418은 배너로 처리.
  */
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ApiError } from "@/lib/api/errors";
 import { ApiErrorBanner } from "@/components/errors/ApiErrorBanner";
@@ -33,28 +33,33 @@ export function useApiData<T>({
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
+  const fetchRef = useRef(fetch);
+  const toastRef = useRef(toast);
+  fetchRef.current = fetch;
+  toastRef.current = toast;
+
   const doFetch = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetch();
+      const result = await fetchRef.current();
       setData(result);
     } catch (e) {
       if (e instanceof ApiError) {
         setError(e);
         if (e.is5xx) {
-          toast.add(
+          toastRef.current.add(
             e.body.message + " 잠시 후 다시 시도해 주세요.",
             "error"
           );
         }
       } else {
-        toast.add("네트워크 오류가 발생했습니다.", "error");
+        toastRef.current.add("네트워크 오류가 발생했습니다.", "error");
       }
     } finally {
       setLoading(false);
     }
-  }, [fetch, toast]);
+  }, []);
 
   useEffect(() => {
     if (enabled) doFetch();
