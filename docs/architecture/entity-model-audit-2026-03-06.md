@@ -2,7 +2,7 @@
 
 Status: **Applied**  
 Owner: everbit  
-Date: 2026-03-06 (Asia/Seoul)
+Last updated: 2026-03-11 (Asia/Seoul)
 
 이 문서는 2026-03-06 기준으로 v2 MVP 문서를 점검하면서 반영한 **엔티티/ERD 보완 사항**을 요약한다.
 

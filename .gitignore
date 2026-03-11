@@ -56,6 +56,9 @@ server/**/application.yaml
 server/**/application-dev.yaml
 server/**/application-local.yaml
 
+# QueryDSL 빌드 산출물
+server/src/main/generated/
+
 # 예외 처리 (서버)
 !server/gradle/wrapper/gradle-wrapper.jar
 !server/**/src/main/**/build/

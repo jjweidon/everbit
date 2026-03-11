@@ -108,6 +108,17 @@ com.everbit.everbit
 
 ## 3. 엔티티(Entity) 작성 규칙
 
+### 3.0 테이블/컬럼 네이밍(Spring Boot 자동 매핑)
+
+Spring Boot 기본 `SpringPhysicalNamingStrategy`가 **camelCase → snake_case**를 자동 적용한다.
+
+- 엔티티 `AppUser` → 테이블 `app_user`
+- 필드 `publicId` → 컬럼 `public_id`, `createdAt` → `created_at`
+- 따라서 `@Table(name = "...")`, `@Column(name = "...")`, `@JoinColumn(name = "...")`를 **명시하지 않는다**.
+- 예외: `@UniqueConstraint(columnNames = {...})`, 복합 `@JoinColumns` 등 구조적으로 필요할 때만 컬럼명 명시.
+
+SoT: `docs/architecture/jpa-mapping.md` §1
+
 ### 3.1 엔티티에 대한 기본 정책
 
 - 엔티티는 **Persistence 모델**이다. API 응답에 엔티티를 그대로 노출하지 않는다.
@@ -131,7 +142,7 @@ com.everbit.everbit
 
 UUID v7 생성 표준:
 - 생성 책임은 **서비스/팩토리 레이어**가 가진다.
-- `@PrePersist`는 “null이면 채워 넣는 fallback guard”로만 허용한다.
+- `@PrePersist`로 fallback 설정하지 않는다. 엔티티는 ID 생성 로직을 알지 않는다.
 - UUID v7 생성기는 thread-safe하게 제공한다(예: `com.github.f4b6a3.uuid.UuidCreator`).
 
 ```java
@@ -228,15 +239,9 @@ public class AppUser extends BaseEntity {
   @Column(name = "email")
   private String email;
 
-  @PrePersist
-  void prePersist() {
-    if (publicId == null) {
-      publicId = Uuids.next();
-    }
-  }
-
   @Builder(access = AccessLevel.PRIVATE)
-  private AppUser(String kakaoId, String email) {
+  private AppUser(UUID publicId, String kakaoId, String email) {
+    this.publicId = publicId;
     this.kakaoId = kakaoId;
     this.email = email;
   }
@@ -246,6 +251,7 @@ public class AppUser extends BaseEntity {
     // 예: kakao-12345
     String kakaoId = oAuth2Response.getProvider() + "-" + oAuth2Response.getProviderId();
     return AppUser.builder()
+        .publicId(Uuids.next())
         .kakaoId(kakaoId)
         .email(oAuth2Response.getEmail())
         .build();
