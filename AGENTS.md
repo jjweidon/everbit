@@ -2,7 +2,7 @@
 
 Status: **Mandatory**  
 Owner: everbit  
-Last updated: 2026-02-15 (Asia/Seoul)  
+Last updated: 2026-03-11 (Asia/Seoul)  
 Scope: **개발/기획/문서/테스트/운영 전 과정**
 
 이 문서는 Cursor(Composer/Auto 포함)가 everbit v2 작업을 수행할 때 **반드시 준수해야 하는 규칙**을 고정한다.  
@@ -15,7 +15,9 @@ Scope: **개발/기획/문서/테스트/운영 전 과정**
 - Branch SoT: **`v2` 브랜치**
 - 문서 SoT: **`docs/**`**
 - 코드 SoT: 문서 결정에 종속
-- 사용자 모델: **1인 전용(OWNER 단일)**, 로그인은 **카카오 OAuth2 단일 수단**
+- 사용자 모델: **멀티유저(ADMIN / USER)**, 로그인은 **카카오 OAuth2 단일 수단**
+  - ADMIN: 최초 가입자, 1명 고정, 모든 기능 접근 가능, Everbit Key 불필요
+  - USER: 카카오 OAuth2로 자유 회원가입, 실거래 전 **Everbit Key 필수**(ADR-0010)
 - 거래소: **Upbit** 단일
 - DB: **PostgreSQL**
 - 실행: **OCI E2.1.Micro(API) + Supabase(DB/Auth/Storage)** — VM에 DB 컨테이너 금지. SoT: `docs/operations/oci-setup.md` v3.

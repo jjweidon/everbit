@@ -2,7 +2,7 @@
 
 Status: **Ready for Implementation (v2 MVP)**  
 Owner: everbit  
-Last updated: 2026-02-17 (Asia/Seoul)
+Last updated: 2026-03-11 (Asia/Seoul)
 
 우선순위:
 - **P0**: MVP 런칭/운영에 필수(미구현 시 거래/운영 불가)
@@ -19,18 +19,20 @@ Last updated: 2026-02-17 (Asia/Seoul)
 ## 1. 목표
 
 - 업비트 기반 자동매매 시스템 v2 구축
-- 1인 전용(싱글 테넌트)으로 빠르게 안정화
+- 멀티유저(ADMIN/USER) 지원, Everbit Key 심사 기반 접근 제어
 - AI 의존 개발 전제: **요구사항/테스트/운영 문서가 코드보다 먼저 고정**되어야 한다.
 
 ---
 
 ## 2. 사용자/인증/세션
 
+> ADR: [ADR-0010](../adr/0010-multi-user-everbit-key.md)
+
 ### FR-AUTH-001 (P0) 카카오 OAuth2 로그인(유일 수단)
-**설명**: 로그인/회원가입은 카카오 OAuth2만 제공한다.
+**설명**: 로그인/회원가입은 카카오 OAuth2만 제공한다. 누구나 회원가입할 수 있다.
 
 **수용 기준**
-- 최초 로그인 계정이 OWNER로 고정된다(싱글 테넌트). 이후 다른 카카오 계정은 차단한다.
+- 최초 로그인 계정이 자동으로 `ADMIN` 역할로 등록된다. 이후 로그인하는 계정은 `USER` 역할로 등록된다.
 - 로그인 성공 시 서버는 **Access Token + Refresh Token**을 발급한다.
 - 토큰 전략(결정 고정):
   - Access Token: `Authorization: Bearer <token>` (클라이언트 저장: 메모리, 필요 시 상태 관리)
@@ -38,23 +40,77 @@ Last updated: 2026-02-17 (Asia/Seoul)
   - Refresh rotation: Refresh 사용 시 새 Refresh 발급(재사용 탐지), 서버는 Redis에 `refresh_jti`를 저장한다.
 - 로그아웃 시 Refresh 쿠키를 만료시키고 Redis의 `refresh_jti`를 폐기한다.
 
-### FR-AUTH-002 (P0) 1인 전용 계정 락
-**설명**: OWNER 계정 1개만 허용한다.
+### FR-AUTH-002 (P0) 역할(ADMIN / USER) 기반 계정 관리
+**설명**: 사용자 역할은 `ADMIN`과 `USER` 두 가지이며, 역할별로 접근 범위가 다르다.
 
 **수용 기준**
-- OWNER가 존재할 때, 다른 카카오 계정 로그인은 403이며 사유를 감사 로그로 남긴다(민감정보 제외).
+- `ADMIN`: 최초 가입자. 1명으로 고정. 모든 기능(Everbit Key 심사/발급 포함)에 접근 가능. Everbit Key 불필요.
+- `USER`: 일반 사용자. 카카오 OAuth2로 자유롭게 회원가입 가능.
+  - 실거래 기능 이용 전 **Everbit Key**를 발급받아야 한다(§3. Everbit Key 관리 참고).
+  - Everbit Key가 없거나 `ACTIVE`가 아닌 경우 실거래 관련 엔드포인트는 403으로 차단된다.
+- ADMIN이 이미 존재할 때 추가 ADMIN 등록은 허용하지 않는다(향후 검토).
 
-### FR-AUTH-003 (P0) API 인가(OWNER-only)
-**설명**: 모든 운영 기능은 OWNER만 호출 가능해야 한다.
+### FR-AUTH-003 (P0) API 인가(역할 기반)
+**설명**: 엔드포인트별로 필요한 역할/조건을 강제한다.
 
 **수용 기준**
 - 인증 미존재/만료: 401
-- 인증은 있으나 OWNER가 아님: 403
-- 관리자성 엔드포인트(키관리/설정/킬스위치/백테스트 실행 등)는 전부 OWNER-only로 고정한다.
+- 인증은 있으나 권한 부족: 403
+- 관리자성 엔드포인트(Everbit Key 심사/발급/폐기, 킬스위치 강제, 전략 설정 등)는 `ADMIN`-only로 고정한다.
+- 실거래 엔드포인트(주문 실행/전략 실행 관련)는 `ADMIN` 또는 `everbit_key_status = ACTIVE` USER만 허용한다.
+- 자기 데이터 조회/수정은 인증된 사용자 본인(`owner_id = 현재 로그인 사용자`) 범위만 허용한다.
 
 ---
 
-## 3. Upbit API 키 관리
+## 3. Everbit Key 관리
+
+> ADR: [ADR-0010](../adr/0010-multi-user-everbit-key.md)
+
+### FR-EVERBIT-KEY-001 (P0) Everbit Key 발급 요청
+**설명**: USER가 서비스 이용 목적과 개인 정보를 제출하여 ADMIN에게 Everbit Key 발급을 요청한다.
+
+**수용 기준**
+- 요청 제출 시 `everbit_key_request` 레코드가 생성된다(status = `PENDING`).
+- 동일 사용자가 이미 `PENDING` 또는 `APPROVED` 요청을 보유하면 중복 제출을 허용하지 않는다(409).
+- 요청 내용(목적/개인 정보)은 평문으로 DB에 저장한다. 단, 운영 상 민감한 개인 정보 수집은 최소화해야 한다.
+- 요청 상태(PENDING/APPROVED/REJECTED)를 사용자가 조회할 수 있어야 한다.
+
+### FR-EVERBIT-KEY-002 (P0) Everbit Key 심사(ADMIN)
+**설명**: ADMIN이 발급 요청을 조회하고 승인(APPROVE) 또는 거부(REJECT)한다.
+
+**수용 기준**
+- ADMIN 전용 엔드포인트(`ADMIN`-only)로 보호한다.
+- 승인(APPROVE) 시:
+  - `everbit_key_request.status = APPROVED`로 전환된다.
+  - `everbit_key` 레코드가 생성된다(UUID v7 기반 key_value, status = `ACTIVE`).
+  - `app_user.everbit_key_status = ACTIVE`로 갱신된다.
+  - 감사 로그를 남긴다(reviewed_by, reviewed_at).
+- 거부(REJECT) 시:
+  - `everbit_key_request.status = REJECTED`로 전환된다.
+  - 거부 사유(admin_note)를 선택적으로 입력할 수 있다.
+  - `app_user.everbit_key_status`는 `NONE`을 유지한다.
+- ADMIN은 대기 중인 요청 목록을 조회할 수 있어야 한다.
+
+### FR-EVERBIT-KEY-003 (P0) Everbit Key 조회(사용자)
+**설명**: 사용자가 자신의 Everbit Key 상태와 key_value를 확인한다.
+
+**수용 기준**
+- 발급된 key_value는 본인만 조회 가능하다.
+- key_value는 최초 발급 후에만 표시되며, 이후 재조회 시에도 표시된다(단, 로그에는 기록하지 않는다).
+
+### FR-EVERBIT-KEY-004 (P0) Everbit Key 폐기(ADMIN)
+**설명**: ADMIN이 특정 사용자의 Everbit Key를 폐기한다.
+
+**수용 기준**
+- 폐기 즉시 `everbit_key.status = REVOKED`, `app_user.everbit_key_status = REVOKED`로 갱신된다.
+- 폐기 즉시 해당 사용자의 실거래 기능이 차단된다.
+- 폐기는 감사 로그로 남긴다.
+- 폐기된 사용자가 재발급을 원할 경우 다시 FR-EVERBIT-KEY-001 흐름을 거친다.
+
+
+---
+
+## 4. Upbit API 키 관리
 
 ### FR-UPBIT-KEY-001 (P0) API 키 등록
 **설명**: Upbit Access/Secret Key를 등록한다.
@@ -80,7 +136,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 4. 전략/설정/실행(전략 1개 + 여러 마켓)
+## 5. 전략/설정/실행(전략 1개 + 여러 마켓)
 
 ### FR-TRADE-001 (P0) 전략 실행 단위(전략 1개 + 여러 마켓)
 **설명**: EXTREME_FLIP 1개 전략을 여러 마켓(KRW-*)에 대해 실행한다.
@@ -129,7 +185,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 5. 주문/멱등/재시도/정합성 (P0)
+## 6. 주문/멱등/재시도/정합성 (P0)
 
 > 최종 스펙: `docs/architecture/order-pipeline.md`
 
@@ -167,7 +223,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 6. 푸시 알림(필수)
+## 7. 푸시 알림(필수)
 
 > “시그널 발생으로 매수·매도 주문 접수 시” 클라이언트 푸시 알림 수신을 P0로 고정한다.
 
@@ -204,7 +260,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 7. 백테스트
+## 8. 백테스트
 
 ### FR-BT-001 (P0) 멀티 마켓/멀티 타임프레임 백테스트
 **설명**: 멀티 마켓/멀티 타임프레임 백테스트를 실행한다.
@@ -231,7 +287,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 8. 대시보드/조회
+## 9. 대시보드/조회
 
 ### FR-UI-001 (P0) 실행 상태
 - 전략 실행 ON/OFF
@@ -251,7 +307,7 @@ Last updated: 2026-02-17 (Asia/Seoul)
 
 ---
 
-## 9. 설정 변경/감사 로그
+## 10. 설정 변경/감사 로그
 
 ### FR-AUDIT-001 (P0) 감사 로그(민감값 제외)
 **설명**: 거래/보안과 관련된 핵심 이벤트는 감사 로그를 남긴다.
