@@ -15,7 +15,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
@@ -37,7 +37,7 @@ spring:
             client-name: kakao
             client-id: ${KAKAO_CLIENT_ID:}
             client-secret: ${KAKAO_CLIENT_SECRET:}
-            redirect-uri: https://everbit.kr/api/v2/auth/login/oauth2/code/kakao
+            redirect-uri: https://api.everbit.kr/api/v2/auth/login/oauth2/code/kakao
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
             scope: profile_nickname, profile_image
