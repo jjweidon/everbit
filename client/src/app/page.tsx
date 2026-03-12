@@ -37,7 +37,7 @@ export default function HomePage() {
   if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg0">
-        <div className="h-7 w-7 animate-spin rounded-full border-2 border-border border-t-text-3" />
+        <div className="h-7 w-7 animate-spin rounded-full border-2 border-borderSubtle border-t-text-3" />
       </div>
     );
   }
@@ -56,7 +56,7 @@ export default function HomePage() {
         {/* 로고 영역 */}
         <div className="flex flex-col items-center gap-4">
           <Image
-            src="/images/everbit_coin_bounce_256_transparent.webp"
+            src="/images/everbit_coin_flip_512_transparent.webp"
             alt="Everbit 코인"
             width={96}
             height={96}
@@ -74,7 +74,7 @@ export default function HomePage() {
         </div>
 
         {/* 기능 소개 */}
-        <ul className="w-full space-y-2.5 rounded-lg border border-border bg-bg2 px-5 py-4">
+        <ul className="w-full space-y-2.5 rounded-lg border border-borderSubtle bg-bg2 px-5 py-4">
           {FEATURES.map(({ icon, label }) => (
             <li key={label} className="flex items-center gap-3 text-sm text-text-2">
               <span className="text-base">{icon}</span>

@@ -66,7 +66,7 @@ export default function DashboardPage() {
   if (!summary) {
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold text-text-1">대시보드</h1>
+        <h1 className="text-xl font-semibold text-text-heading">대시보드</h1>
         {dashboard.ErrorBanner()}
         <p className="text-text-3">데이터를 불러올 수 없습니다.</p>
       </div>
@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-text-1">대시보드</h1>
+      <h1 className="text-xl font-semibold text-text-heading">대시보드</h1>
 
       {/* API 에러 배너 (403/429/418) */}
       {dashboard.ErrorBanner()}
@@ -117,13 +117,13 @@ export default function DashboardPage() {
       </div>
 
       {/* 실행·리스크 */}
-      <section aria-label="실행 및 리스크" className="rounded-lg border border-border bg-bg2 p-4">
-        <h2 className="inline-flex items-center text-sm font-medium text-text-2">
+      <section aria-label="실행 및 리스크" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
+        <h2 className="inline-flex items-center text-sm font-medium text-text-heading">
           실행·리스크
           <InfoTooltip content={TERM_TOOLTIPS.EXECUTION_RISK} ariaLabel="실행·리스크 설명" />
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               킬 스위치
               <InfoTooltip content={TERM_TOOLTIPS.KILL_SWITCH} ariaLabel="킬 스위치 설명" />
@@ -132,28 +132,28 @@ export default function DashboardPage() {
               <OnOffBadge value={accountEnabled ?? false} />
             </p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">전략</p>
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-text-1">
               <TagBadge>{strategyKey}</TagBadge>
               <OnOffBadge value={strategyEnabled ?? false} />
             </p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               마지막 오류
               <InfoTooltip content={TERM_TOOLTIPS.LAST_ERROR} ariaLabel="마지막 오류 설명" />
             </p>
             <p className="mt-1 tabular-nums text-text-1">{lastErrorAt ? formatIso(lastErrorAt) : "—"}</p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               UNKNOWN 건수
               <InfoTooltip content={TERM_TOOLTIPS.UNKNOWN_COUNT} ariaLabel="UNKNOWN 건수 설명" />
             </p>
             <p className="mt-1 tabular-nums text-text-1">{risk.unknownAttempts24h}</p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3 sm:col-span-2">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3 sm:col-span-2">
             <p className="inline-flex items-center text-xs text-text-3">마지막 reconcile</p>
             <p className="mt-1 tabular-nums text-text-1">
               {lastReconcileAt ? formatIso(lastReconcileAt) : "—"}
@@ -163,27 +163,27 @@ export default function DashboardPage() {
       </section>
 
       {/* 자산·손익 */}
-      <section aria-label="자산 및 손익" className="rounded-lg border border-border bg-bg2 p-4">
-        <h2 className="inline-flex items-center text-sm font-medium text-text-2">
+      <section aria-label="자산 및 손익" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
+        <h2 className="inline-flex items-center text-sm font-medium text-text-heading">
           자산·손익
           <InfoTooltip content={TERM_TOOLTIPS.EQUITY_PNL} ariaLabel="자산·손익 설명" />
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               자산
               <InfoTooltip content={TERM_TOOLTIPS.EQUITY} ariaLabel="자산 설명" />
             </p>
             <p className="mt-1 tabular-nums text-text-1">{formatKrw(equity.equityKrw)}</p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               실현손익
               <InfoTooltip content={TERM_TOOLTIPS.REALIZED} ariaLabel="실현손익 설명" />
             </p>
             <p className="mt-1 tabular-nums text-text-1">{formatKrw(equity.realizedPnlKrw)}</p>
           </div>
-          <div className="rounded border border-border bg-bg1 p-3">
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
             <p className="inline-flex items-center text-xs text-text-3">
               미실현손익
               <InfoTooltip content={TERM_TOOLTIPS.UNREALIZED} ariaLabel="미실현손익 설명" />
@@ -194,8 +194,8 @@ export default function DashboardPage() {
       </section>
 
       {/* 최근 주문 (ACK 기준) */}
-      <section aria-label="최근 주문" className="rounded-lg border border-border bg-bg2 p-4">
-        <h2 className="text-sm font-medium text-text-2">최근 주문 (접수 완료 기준)</h2>
+      <section aria-label="최근 주문" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
+        <h2 className="text-sm font-medium text-text-heading">최근 주문 (접수 완료 기준)</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -251,8 +251,8 @@ export default function DashboardPage() {
       </section>
 
       {/* 마켓 상태 테이블 */}
-      <section aria-label="마켓 상태" className="rounded-lg border border-border bg-bg2 p-4">
-        <h2 className="text-sm font-medium text-text-2">마켓 상태</h2>
+      <section aria-label="마켓 상태" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
+        <h2 className="text-sm font-medium text-text-heading">마켓 상태</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>

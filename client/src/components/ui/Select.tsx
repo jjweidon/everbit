@@ -33,7 +33,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ref={ref}
       aria-invalid={error ?? undefined}
       className={`w-full rounded-token-md border bg-bg2 px-3 py-2 text-sm text-text-1 outline-none focus:ring-2 focus:ring-cyan focus:ring-offset-2 focus:ring-offset-bg1 disabled:cursor-not-allowed disabled:opacity-50 ${
-        error ? "border-red" : "border-border"
+        error ? "border-red" : "border-borderSubtle"
       } ${className}`}
       {...rest}
     >

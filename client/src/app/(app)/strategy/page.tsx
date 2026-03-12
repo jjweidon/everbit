@@ -17,7 +17,7 @@ export default function StrategyPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">전략</h1>
 
-      <section aria-label="전략 메타" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="전략 메타" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">전략 정보</h2>
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-text-2">
           <span className="inline-flex items-center gap-1.5">
@@ -29,7 +29,7 @@ export default function StrategyPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[200px_1fr]">
-        <section aria-label="파라미터 그룹" className="rounded-lg border border-border bg-bg2 p-4">
+        <section aria-label="파라미터 그룹" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">그룹</h2>
           <ul className="mt-2 space-y-1 text-sm text-text-2">
             {["Timeframes", "Regime", "Entry", "Exit", "Risk", "Execution"].map((g) => (
@@ -37,10 +37,10 @@ export default function StrategyPage() {
             ))}
           </ul>
         </section>
-        <section aria-label="파라미터 폼" className="rounded-lg border border-border bg-bg2 p-4">
+        <section aria-label="파라미터 폼" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">파라미터</h2>
           <div className="mt-3 space-y-4">
-            <pre className="overflow-x-auto rounded border border-border bg-bg1 p-3 text-xs text-text-2">
+            <pre className="overflow-x-auto rounded border border-thin border-borderSubtle bg-bg1 p-3 text-xs text-text-2">
               {JSON.stringify(configJson, null, 2)}
             </pre>
             <p className="text-sm text-text-3">(실제 편집 폼은 API 연동 후 구현)</p>

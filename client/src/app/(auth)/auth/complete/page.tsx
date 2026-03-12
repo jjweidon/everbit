@@ -42,7 +42,7 @@ function AuthCompleteInner() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg0">
-      <div className="h-7 w-7 animate-spin rounded-full border-2 border-border border-t-text-3" />
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-borderSubtle border-t-text-3" />
     </div>
   );
 }
@@ -52,7 +52,7 @@ export default function AuthCompletePage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-bg0">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-border border-t-text-3" />
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-borderSubtle border-t-text-3" />
         </div>
       }
     >

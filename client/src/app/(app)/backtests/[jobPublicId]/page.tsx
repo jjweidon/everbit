@@ -47,7 +47,7 @@ export default async function BacktestDetailPage({ params }: BacktestDetailPageP
       </div>
       <p className="font-mono text-sm text-text-2">{detail.jobPublicId}</p>
 
-      <section aria-label="상태" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="상태" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">상태</h2>
         <div className="mt-3 flex flex-wrap gap-4">
           <StatusChip tone={detail.status === "DONE" ? "green" : "neutral"} label={detail.status} />
@@ -63,7 +63,7 @@ export default async function BacktestDetailPage({ params }: BacktestDetailPageP
       </section>
 
       {"metrics" in detail && detail.metrics ? (
-        <section aria-label="메트릭" className="rounded-lg border border-border bg-bg2 p-4">
+        <section aria-label="메트릭" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">메트릭</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {(detail as BacktestDetail).metrics?.cagr != null && (
@@ -103,9 +103,9 @@ export default async function BacktestDetailPage({ params }: BacktestDetailPageP
       ) : null}
 
       {"requestJson" in detail && detail.requestJson ? (
-        <section aria-label="요청 파라미터" className="rounded-lg border border-border bg-bg2 p-4">
+        <section aria-label="요청 파라미터" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">요청 파라미터</h2>
-          <pre className="mt-3 overflow-x-auto rounded border border-border bg-bg1 p-3 text-xs text-text-2">
+          <pre className="mt-3 overflow-x-auto rounded border border-thin border-borderSubtle bg-bg1 p-3 text-xs text-text-2">
             {JSON.stringify((detail as BacktestDetail).requestJson ?? {}, null, 2)}
           </pre>
         </section>

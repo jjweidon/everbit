@@ -27,7 +27,7 @@ export default function BacktestsPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">백테스트</h1>
 
-      <section aria-label="실행 폼" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="실행 폼" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">실행 폼</h2>
         <div className="mt-3 grid grid-cols-2 gap-4 text-sm text-text-3 sm:grid-cols-4">
           <span>markets (multi)</span>
@@ -39,7 +39,7 @@ export default function BacktestsPage() {
         <p className="mt-2 text-xs text-text-3">(API 연동 후 구현)</p>
       </section>
 
-      <section aria-label="백테스트 목록" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="백테스트 목록" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">목록</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">

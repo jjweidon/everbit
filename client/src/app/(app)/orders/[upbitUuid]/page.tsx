@@ -94,7 +94,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       <p className="font-mono text-sm text-text-2">Upbit 주문 ID: {detail.upbitUuid}</p>
 
       {/* Upbit 주문 스냅샷 */}
-      <section aria-label="Upbit 주문 스냅샷" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="Upbit 주문 스냅샷" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">Upbit 주문 스냅샷</h2>
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
@@ -128,7 +128,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
       {/* 관련 Intent */}
       {detail.intent && (
-        <section aria-label="관련 주문 의도" className="rounded-lg border border-border bg-bg2 p-4">
+        <section aria-label="관련 주문 의도" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
           <h2 className="text-sm font-medium text-text-2">관련 주문 의도</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
@@ -152,13 +152,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       )}
 
       {/* Attempt 타임라인 */}
-      <section aria-label="시도 타임라인" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="시도 타임라인" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">시도 타임라인</h2>
         <div className="mt-3 space-y-3">
           {detail.attempts.map((a) => (
             <div
               key={a.attemptPublicId}
-              className="flex items-center gap-4 rounded border border-border bg-bg1 p-3"
+              className="flex items-center gap-4 rounded border border-thin border-borderSubtle bg-bg1 p-3"
             >
               <span className="tabular-nums text-text-3">#{a.attemptNo}</span>
               <StatusChip
@@ -180,7 +180,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       </section>
 
       {/* Fill(체결) */}
-      <section aria-label="체결 내역" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="체결 내역" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">체결 내역</h2>
         {detail.fills.length > 0 ? (
           <div className="mt-3 overflow-x-auto">

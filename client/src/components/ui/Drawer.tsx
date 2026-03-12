@@ -10,6 +10,8 @@ export interface DrawerProps {
   children: React.ReactNode;
   /** 드로어 폭 (기본 400px) */
   width?: string | number;
+  /** 열리는 방향: right(기본, 상세 패널), left(모바일 네비 등) */
+  side?: "left" | "right";
 }
 
 export function Drawer({
@@ -18,6 +20,7 @@ export function Drawer({
   title,
   children,
   width = "400px",
+  side = "right",
 }: DrawerProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,10 +36,11 @@ export function Drawer({
   if (!open) return null;
 
   const w = typeof width === "number" ? `${width}px` : width;
+  const isLeft = side === "left";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end"
+      className={`fixed inset-0 z-50 flex ${isLeft ? "justify-start" : "justify-end"}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? "drawer-title" : undefined}
@@ -48,14 +52,16 @@ export function Drawer({
       />
       <div
         ref={ref}
-        className="relative flex h-full flex-col border-l border-border bg-bg2 shadow-lg"
+        className={`relative flex h-full flex-col border-thin border-borderSubtle bg-bg2 shadow-lg ${
+          isLeft ? "border-r" : "border-l"
+        }`}
         style={{ width: w }}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <h2
             id="drawer-title"
-            className="border-b border-divider px-4 py-3 text-sm font-medium text-text-1"
+            className="border-b border-borderSubtle px-4 py-3 text-sm font-medium text-text-heading"
           >
             {title}
           </h2>

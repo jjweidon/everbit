@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Everbit v2",
-  description: "Everbit trading dashboard",
+  title: "에버비트",
+  description: "암호화폐 퀀트 트레이딩 시스템",
 };
 
 export default function RootLayout({

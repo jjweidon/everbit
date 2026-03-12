@@ -111,14 +111,14 @@ export default function OrdersPage() {
         )}
       </div>
 
-      <section aria-label="필터" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="필터" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">필터</h2>
         <div className="mt-3 flex flex-wrap gap-2 text-sm text-text-3">
           마켓 / 의도 유형 / 시도 상태 / 기간 (mock에서는 비활성)
         </div>
       </section>
 
-      <section aria-label="주문 목록" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="주문 목록" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">주문 목록</h2>
         {ordersRes.loading && orderList.length === 0 ? (
           <p className="mt-3 text-text-3">로딩 중…</p>

@@ -58,7 +58,7 @@ export function ConfirmModal({
       />
       <div
         ref={ref}
-        className="relative w-full max-w-md rounded-token-lg border border-border bg-bg2 p-4 shadow-lg"
+        className="relative w-full max-w-md rounded-token-lg border border-thin border-borderSubtle bg-bg2 p-4 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2

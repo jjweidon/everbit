@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
-import { OnOffBadge } from "@/components/ui";
+import Image from "next/image";
+import { Bell, Menu } from "lucide-react";
 import type { UpbitKeyStatus } from "@/types/api-contracts";
-import { mockDashboardSummary } from "@/lib/mocks/dashboard";
 import { mockUpbitKeyStatus } from "@/lib/mocks/upbit-key";
 
 /** Kill Switch placeholder — OFF 전환 시 confirm 필수(규칙). 실제 동작은 추후 연동. */
@@ -42,7 +41,7 @@ function KillSwitchPlaceholder() {
         aria-label={on ? "자동매매 켜짐 (끄려면 클릭)" : "자동매매 꺼짐"}
         onClick={() => (on ? handleToggle(false) : handleToggle(true))}
         disabled={pending}
-        className={`relative h-6 w-11 shrink-0 rounded-full border border-border transition-colors ${
+        className={`relative h-6 w-11 shrink-0 rounded-full border border-borderSubtle transition-colors ${
           on ? "bg-green/80" : "bg-bg2"
         } ${pending ? "opacity-60" : ""}`}
       >
@@ -52,7 +51,6 @@ function KillSwitchPlaceholder() {
           }`}
         />
       </button>
-      <OnOffBadge value={on} />
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-bg0/80"
@@ -60,8 +58,8 @@ function KillSwitchPlaceholder() {
           aria-modal="true"
           aria-labelledby="kill-switch-confirm-title"
         >
-          <div className="w-full max-w-sm rounded-lg border border-border bg-bg2 p-4 shadow-lg">
-            <h2 id="kill-switch-confirm-title" className="font-medium text-text-1">
+          <div className="w-full max-w-sm rounded-lg border border-borderSubtle bg-bg2 p-4 shadow-lg">
+            <h2 id="kill-switch-confirm-title" className="font-medium text-text-heading">
               킬 스위치 끄기
             </h2>
             <p className="mt-2 text-sm text-text-2">
@@ -71,7 +69,7 @@ function KillSwitchPlaceholder() {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="rounded-md border border-border bg-bg1 px-3 py-1.5 text-sm text-text-1 hover:bg-border"
+                className="rounded-md border border-borderSubtle bg-bg1 px-3 py-1.5 text-sm text-text-1 hover:bg-bg2"
               >
                 취소
               </button>
@@ -90,23 +88,6 @@ function KillSwitchPlaceholder() {
   );
 }
 
-/** WS 상태 — mock 데이터 기반 */
-function WsStatusBadge() {
-  const { wsStatus } = mockDashboardSummary;
-  const config = {
-    CONNECTED: { dot: "bg-green", label: "WS 연결됨" },
-    DEGRADED: { dot: "bg-yellow", label: "WS 불안정" },
-    DISCONNECTED: { dot: "bg-red", label: "WS 끊김" },
-  } as const;
-  const { dot, label } = config[wsStatus];
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5">
-      <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden title={label} />
-      <span className="text-sm text-text-2">{label}</span>
-    </div>
-  );
-}
-
 /** Upbit 키 상태 — mock 데이터 기반 */
 function UpbitKeyBadge() {
   const { status, lastVerifiedAt } = mockUpbitKeyStatus;
@@ -119,7 +100,7 @@ function UpbitKeyBadge() {
   return (
     <Link
       href="/settings/upbit-key"
-      className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5 text-sm text-text-2 transition-colors hover:bg-border hover:text-text-1"
+      className="flex items-center gap-2 rounded-md border border-borderSubtle bg-bg2 px-3 py-1.5 text-sm text-text-2 transition-colors hover:bg-bg1 hover:text-text-1"
       aria-label="Upbit 키 설정"
     >
       <span className="text-sm">{label}</span>
@@ -137,27 +118,56 @@ function NotificationsSlotPlaceholder() {
   return (
     <Link
       href="/notifications"
-      className="flex items-center gap-2 rounded-md border border-border bg-bg2 px-3 py-1.5 text-text-2 transition-colors hover:bg-border hover:text-text-1"
+      className="flex items-center gap-2 rounded-md border border-borderSubtle bg-bg2 px-3 py-1.5 text-text-2 transition-colors hover:bg-bg1 hover:text-text-1"
       aria-label="알림 설정"
     >
       <Bell className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-      <span className="text-sm">알림</span>
+      <span className="hidden text-sm sm:inline">알림</span>
     </Link>
   );
 }
 
-export function Topbar() {
+interface TopbarProps {
+  /** 모바일에서 메뉴 버튼 클릭 시 호출 (미제공 시 메뉴 버튼 숨김) */
+  onOpenMobileNav?: () => void;
+}
+
+export function Topbar({ onOpenMobileNav }: TopbarProps = {}) {
   return (
     <header
-      className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-bg2 px-4"
+      className="flex h-14 shrink-0 items-center justify-between gap-2 border-0 border-b border-borderSubtle bg-bg2 px-3 sm:px-4"
+      style={{ borderBottomWidth: "0.5px" }}
       role="banner"
     >
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-4">
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center transition-opacity hover:opacity-90"
+          aria-label="Everbit 대시보드로 이동"
+        >
+          <Image
+            src="/logos/everbit_logo_txt_white.png"
+            alt="Everbit"
+            width={120}
+            height={28}
+            className="h-7 w-auto"
+            priority
+          />
+        </Link>
+        {onOpenMobileNav && (
+          <button
+            type="button"
+            onClick={onOpenMobileNav}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-borderSubtle bg-bg2 text-text-2 transition-colors hover:bg-bg1 hover:text-text-1 md:hidden"
+            aria-label="메뉴 열기"
+          >
+            <Menu className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </button>
+        )}
         <KillSwitchPlaceholder />
         <UpbitKeyBadge />
-        <WsStatusBadge />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <NotificationsSlotPlaceholder />
       </div>
     </header>

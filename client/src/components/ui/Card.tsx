@@ -10,13 +10,13 @@ export interface CardProps {
 export function Card({ children, title, className = "" }: CardProps) {
   return (
     <section
-      className={`rounded-token-lg border border-border bg-bg2 ${className}`}
+      className={`rounded-token-lg border border-borderSubtle bg-bg2 ${className}`}
       aria-labelledby={title ? "card-title" : undefined}
     >
       {title && (
         <h2
           id="card-title"
-          className="border-b border-divider px-4 py-3 text-sm font-medium text-text-1"
+          className="border-b border-borderSubtle px-4 py-3 text-sm font-medium text-text-heading"
         >
           {title}
         </h2>

@@ -16,7 +16,7 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-text-1">알림</h1>
 
-      <section aria-label="권한 상태" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="권한 상태" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">권한 상태 카드</h2>
         <div className="mt-3 flex items-center gap-2">
           <span
@@ -36,12 +36,12 @@ export default function NotificationsPage() {
         )}
       </section>
 
-      <section aria-label="푸시 토글" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="푸시 토글" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">푸시 토글</h2>
         <p className="mt-2 text-sm text-text-3">ON/OFF (API 연동 후 구현)</p>
       </section>
 
-      <section aria-label="구독 목록" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="구독 목록" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">구독 목록</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
@@ -67,7 +67,7 @@ export default function NotificationsPage() {
         </div>
       </section>
 
-      <section aria-label="테스트 푸시" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="테스트 푸시" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">테스트 푸시</h2>
         <p className="mt-2 text-sm text-text-3">message + deepLink (API 연동 후 구현)</p>
       </section>

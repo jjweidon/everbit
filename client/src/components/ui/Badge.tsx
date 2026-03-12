@@ -74,7 +74,7 @@ export interface TagBadgeProps {
 export function TagBadge({ children, className = "" }: TagBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-md border border-border bg-bg2 px-2 py-0.5 font-mono text-[11px] font-medium tracking-wide text-text-2 ${className}`}
+      className={`inline-flex items-center rounded-md border border-borderSubtle bg-bg2 px-2 py-0.5 font-mono text-[11px] font-medium tracking-wide text-text-2 ${className}`}
     >
       {children}
     </span>

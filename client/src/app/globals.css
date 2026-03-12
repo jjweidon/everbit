@@ -7,6 +7,9 @@
 :root {
   --background: var(--bg-1);
   --foreground: var(--text-1);
+  /* 레이아웃/보더 고급화 (Vercel/Supabase 스타일) */
+  --border-subtle: 32 35 40; /* #202328, 더 어두운 보더 */
+  --text-heading: 248 250 252; /* #F8FAFC */
 }
 
 body {

@@ -48,7 +48,7 @@ export default function MarketsPage() {
         />
       )}
 
-      <section aria-label="마켓 목록" className="rounded-lg border border-border bg-bg2 p-4">
+      <section aria-label="마켓 목록" className="rounded-lg border border-thin border-borderSubtle bg-bg2 p-4">
         <h2 className="text-sm font-medium text-text-2">마켓 목록</h2>
         {marketsRes.loading && marketList.length === 0 ? (
           <p className="mt-3 text-text-3">로딩 중…</p>

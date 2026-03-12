@@ -51,7 +51,7 @@ const variantClasses: Record<ToastVariant, string> = {
   success: "border-green bg-green/15 text-green",
   error: "border-red bg-red/15 text-red",
   info: "border-cyan bg-cyan/15 text-cyan",
-  neutral: "border-border bg-bg2 text-text-1",
+  neutral: "border border-borderSubtle bg-bg2 text-text-1",
 };
 
 function ToastList() {

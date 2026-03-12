@@ -14,7 +14,7 @@ export default function LoginPage() {
         {/* 로고 */}
         <div className="flex flex-col items-center gap-3">
           <Image
-            src="/images/everbit_coin_bounce_256_transparent.webp"
+            src="/images/everbit_coin_flip_512_transparent.webp"
             alt="Everbit 코인"
             width={72}
             height={72}
@@ -25,7 +25,7 @@ export default function LoginPage() {
         </div>
 
         {/* 세션 만료 안내 */}
-        <div className="w-full rounded-lg border border-border bg-bg2 px-5 py-4 text-center">
+        <div className="w-full rounded-lg border border-thin border-borderSubtle bg-bg2 px-5 py-4 text-center">
           <p className="text-sm font-medium text-text-1">세션이 만료되었습니다</p>
           <p className="mt-1 text-xs text-text-3">다시 로그인해주세요.</p>
         </div>
