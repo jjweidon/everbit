@@ -20,9 +20,12 @@ export interface AuthRefreshResponse {
 // --- Dashboard ---
 export type WsStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
 
+/** 전략 키. SoT: docs/strategies/everbit_master_spec.md */
+export type StrategyKey = "EXTREME_FLIP" | "STRUCTURE_LIFT" | "PRESSURE_SURGE";
+
 export interface DashboardSummary {
   accountEnabled: boolean;
-  strategyKey: "EXTREME_FLIP";
+  strategyKey: StrategyKey | string;
   strategyEnabled: boolean;
   wsStatus: WsStatus;
   lastReconcileAt?: string;
@@ -131,7 +134,7 @@ export interface MarketStatusItem {
 
 // --- Strategy ---
 export interface StrategyConfig {
-  strategyKey: "EXTREME_FLIP";
+  strategyKey: StrategyKey | string;
   configVersion: number;
   updatedAt: string;
   configJson: Record<string, unknown>;

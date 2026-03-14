@@ -14,6 +14,8 @@ export interface UseApiDataOptions<T> {
   fetch: () => Promise<T>;
   /** 초기 로딩 시 자동 fetch */
   enabled?: boolean;
+  /** 404 시 에러 대신 이 값을 data로 사용(미구현 엔드포인트 대응) */
+  fallbackOn404?: T;
 }
 
 export interface UseApiDataResult<T> {
@@ -36,6 +38,7 @@ const MAX_CONSECUTIVE_NETWORK_ERRORS = 6;
 export function useApiData<T>({
   fetch,
   enabled = true,
+  fallbackOn404,
 }: UseApiDataOptions<T>): UseApiDataResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -44,8 +47,10 @@ export function useApiData<T>({
 
   const fetchRef = useRef(fetch);
   const toastRef = useRef(toast);
+  const fallbackRef = useRef(fallbackOn404);
   fetchRef.current = fetch;
   toastRef.current = toast;
+  fallbackRef.current = fallbackOn404;
 
   const doFetch = useCallback(
     async (opts?: { force?: boolean }) => {
@@ -62,13 +67,21 @@ export function useApiData<T>({
         setData(result);
       } catch (e) {
         if (e instanceof ApiError) {
-          consecutiveNetworkErrors = 0;
-          setError(e);
-          if (e.is5xx) {
-            toastRef.current.add(
-              e.body.message + " 잠시 후 다시 시도해 주세요.",
-              "error"
-            );
+          const useFallback =
+            e.status === 404 && fallbackRef.current !== undefined;
+          if (useFallback) {
+            consecutiveNetworkErrors = 0;
+            setData(fallbackRef.current as T);
+            setError(null);
+          } else {
+            consecutiveNetworkErrors = 0;
+            setError(e);
+            if (e.is5xx) {
+              toastRef.current.add(
+                e.body.message + " 잠시 후 다시 시도해 주세요.",
+                "error"
+              );
+            }
           }
         } else {
           setError(null);

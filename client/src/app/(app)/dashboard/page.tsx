@@ -53,10 +53,12 @@ export default function DashboardPage() {
   const orders = useApiData({
     fetch: () => getOrders({ limit: 20, onlyAcked: true }, opts),
     enabled: keyStatus.data != null && keyStatus.data.status === "REGISTERED",
+    fallbackOn404: { items: [], nextCursor: null },
   });
   const markets = useApiData({
     fetch: () => getMarkets(opts),
     enabled: keyStatus.data != null && keyStatus.data.status === "REGISTERED",
+    fallbackOn404: [],
   });
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export default function DashboardPage() {
   const strategyKey = summary.strategyKey;
   const strategyEnabled = summary.strategyEnabled ?? false;
   const accountEnabled = summary.accountEnabled ?? false;
+  const wsStatus = summary.wsStatus;
   const lastErrorAt = summary.lastErrorAt;
   const lastReconcileAt = summary.lastReconcileAt;
 
@@ -159,6 +162,15 @@ export default function DashboardPage() {
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-text-1">
               <TagBadge>{strategyKey}</TagBadge>
               <OnOffBadge value={strategyEnabled ?? false} />
+            </p>
+          </div>
+          <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">
+            <p className="inline-flex items-center text-xs text-text-3">WS 상태</p>
+            <p className="mt-1">
+              <StatusChip
+                tone={wsStatus === "CONNECTED" ? "green" : wsStatus === "DEGRADED" ? "yellow" : "red"}
+                label={wsStatus ?? "—"}
+              />
             </p>
           </div>
           <div className="rounded border border-thin border-borderSubtle bg-bg1 p-3">

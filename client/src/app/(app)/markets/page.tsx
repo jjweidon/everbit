@@ -22,6 +22,7 @@ export default function MarketsPage() {
   const marketsRes = useApiData({
     fetch: () => getMarkets(opts),
     enabled: true,
+    fallbackOn404: [],
   });
   const dashboardRes = useApiData({
     fetch: () => getDashboardSummary(opts),

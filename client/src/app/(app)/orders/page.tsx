@@ -76,6 +76,7 @@ export default function OrdersPage() {
   const ordersRes = useApiData({
     fetch: () => getOrders({ limit: 50 }, opts),
     enabled: true,
+    fallbackOn404: { items: [], nextCursor: null },
   });
   const dashboardRes = useApiData({
     fetch: () => getDashboardSummary(opts),
