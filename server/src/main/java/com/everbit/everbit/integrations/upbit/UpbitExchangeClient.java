@@ -108,10 +108,10 @@ public class UpbitExchangeClient {
 		String queryString = buildQueryString(params);
 		URI uri = buildUri(V1_ORDERS, "");
 		HttpHeaders headers = createHeaders(accessKey, secretKey, queryString);
-		HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+		HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, Objects.requireNonNull(headers));
 
 		try {
-			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
+			ResponseEntity<String> response = restTemplate.exchange(Objects.requireNonNull(uri), Objects.requireNonNull(HttpMethod.POST), entity, String.class);
 			if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
 				return objectMapper.readValue(response.getBody(), OrderResponse.class);
 			}
@@ -138,7 +138,7 @@ public class UpbitExchangeClient {
 
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(
-				uri, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
+				Objects.requireNonNull(uri), Objects.requireNonNull(HttpMethod.DELETE), new HttpEntity<>(Objects.requireNonNull(headers)), String.class);
 			if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
 				return objectMapper.readValue(response.getBody(), OrderResponse.class);
 			}
@@ -166,10 +166,10 @@ public class UpbitExchangeClient {
 		String queryString = buildQueryString(params);
 		URI uri = buildUri(V1_ORDERS_CANCEL_AND_NEW, "");
 		HttpHeaders headers = createHeaders(accessKey, secretKey, queryString);
-		HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
+		HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, Objects.requireNonNull(headers));
 
 		try {
-			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
+			ResponseEntity<String> response = restTemplate.exchange(Objects.requireNonNull(uri), Objects.requireNonNull(HttpMethod.POST), entity, String.class);
 			if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
 				return objectMapper.readValue(response.getBody(), ReplaceOrderResponse.class);
 			}
@@ -192,7 +192,7 @@ public class UpbitExchangeClient {
 			URI uri = buildUri(path, queryString);
 			HttpHeaders headers = createHeaders(accessKey, secretKey, queryString);
 			ResponseEntity<T> response = restTemplate.exchange(
-				uri, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+				Objects.requireNonNull(uri), Objects.requireNonNull(HttpMethod.GET), new HttpEntity<>(Objects.requireNonNull(headers)), Objects.requireNonNull(responseType));
 			return handleResponse(response, errorMessage);
 		} catch (HttpStatusCodeException e) {
 			throw toUpbitApiException(e);
@@ -209,7 +209,7 @@ public class UpbitExchangeClient {
 			URI uri = buildUri(path, queryString);
 			HttpHeaders headers = createHeaders(accessKey, secretKey, queryString);
 			ResponseEntity<T> response = restTemplate.exchange(
-				uri, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+				Objects.requireNonNull(uri), Objects.requireNonNull(HttpMethod.GET), new HttpEntity<>(Objects.requireNonNull(headers)), Objects.requireNonNull(responseType));
 			return handleResponse(response, errorMessage);
 		} catch (HttpStatusCodeException e) {
 			throw toUpbitApiException(e);
@@ -245,9 +245,9 @@ public class UpbitExchangeClient {
 	}
 
 	private URI buildUri(String path, String queryString) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(properties.baseUrl()).path(path);
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(Objects.requireNonNull(properties.baseUrl())).path(Objects.requireNonNull(path));
 		if (queryString != null && !queryString.isEmpty()) {
-			builder.query(queryString);
+			builder.query(Objects.requireNonNull(queryString));
 		}
 		return builder.build().toUri();
 	}
@@ -256,7 +256,7 @@ public class UpbitExchangeClient {
 		String token = UpbitJwtProvider.createToken(accessKey, secretKey, queryString);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.setBearerAuth(token);
+		headers.setBearerAuth(Objects.requireNonNull(token));
 		return headers;
 	}
 
