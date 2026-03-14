@@ -1,46 +1,26 @@
 package com.everbit.everbit.global.config;
 
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.Arrays;
-
-@Slf4j
+/**
+ * CORS 기본 설정. SoT: docs/architecture/modular-monolith.md.
+ */
 @Configuration
-public class CorsConfig {
+public class CorsConfig implements WebMvcConfigurer {
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        
-        // 허용할 출처 패턴 설정
-        config.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3001",
-                "https://everbit.kr",
-                "https://www.everbit.kr"
-        ));
+	@Value("${cors.allowed-origins:http://localhost:3000}")
+	private String allowedOrigins;
 
-        config.addAllowedMethod("*");
-        config.addAllowedHeader("*");
-        config.addExposedHeader("Set-Cookie");
-        config.addExposedHeader("Authorization");
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-
-    @Bean
-    public CorsFilter corsFilter() {
-        return new CorsFilter(corsConfigurationSource());
-    }
+	@Override
+	@SuppressWarnings("null")
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**")
+			.allowedOrigins(allowedOrigins.split(","))
+			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+			.allowedHeaders("*")
+			.allowCredentials(true);
+	}
 }

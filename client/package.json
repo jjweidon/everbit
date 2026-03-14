@@ -1,62 +1,35 @@
 {
   "name": "everbit-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "yarn next dev",
-    "build": "yarn next build",
-    "start": "yarn next start",
-    "lint": "yarn next lint",
-    "format": "yarn prettier --write ."
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "deploy": "npx vercel --prod",
+    "deploy:preview": "npx vercel"
   },
   "engines": {
-    "node": ">=18.x",
-    "yarn": ">=1.22.x"
+    "node": ">=18"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.15.10",
-    "@types/uuid": "^10.0.0",
-    "axios": "^1.5.0",
-    "chart.js": "^4.4.0",
-    "lightweight-charts": "^4.1.0",
-    "next": "13.5.6",
-    "react": "18.2.0",
-    "react-chartjs-2": "^5.2.0",
-    "react-dom": "18.2.0",
-    "react-hook-form": "^7.46.1",
-    "react-icons": "^5.5.0",
-    "swr": "^2.2.2",
-    "timeago.js": "^4.0.2",
-    "ts-case-convert": "^2.1.0",
-    "uuid": "^11.1.0",
-    "zod": "^4.0.5",
-    "zustand": "^4.4.1"
+    "lucide-react": "^0.577.0",
+    "next": "^14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.6.3",
-    "@types/react": "^18.2.22",
-    "@types/react-dom": "^18.2.7",
-    "autoprefixer": "^10.4.15",
-    "eslint": "^8.49.0",
-    "eslint-config-next": "13.5.6",
-    "postcss": "^8.4.30",
-    "postcss-import": "^16.1.1",
-    "prettier": "^3.0.3",
-    "tailwindcss": "^3.3.3",
-    "typescript": "^5.2.2"
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10",
+    "eslint": "^8",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017"
 }

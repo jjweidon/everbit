@@ -1,0 +1,67 @@
+# everbit v2 — bootstrap stub
+# SoT: docs/operations/environments.md, docs/security/exposure-policy.md
+# Timezone: docs/prompt-pack/server/00_source_map_and_decisions.md §D
+server:
+  port: ${SERVER_PORT:8082}
+  
+spring:
+  application:
+    name: everbit-api
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:54322/postgres
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  jwt:
+    access-secret: ${JWT_ACCESS_SECRET:}
+    refresh-secret: ${JWT_REFRESH_SECRET:}
+    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS:1209600}
+
+  security:
+    oauth2:
+      authenticated-redirect-uri: https://everbit.kr
+      logout-redirect-uri: https://everbit.kr
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3002,http://127.0.0.1:3002}
+      client:
+        registration:
+          kakao:
+            client-name: kakao
+            client-id: ${KAKAO_CLIENT_ID:}
+            client-secret: ${KAKAO_CLIENT_SECRET:}
+            redirect-uri: "{baseUrl}/api/v2/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            scope: account_email, profile_nickname
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+# Base path /api/v2 is on each controller; actuator stays /actuator (external exposure forbidden in prod)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3002,http://127.0.0.1:3002}
+
+upbit:
+  key:
+    master-key: ${UPBIT_KEY_MASTER_KEY:}

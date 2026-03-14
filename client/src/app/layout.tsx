@@ -1,41 +1,21 @@
-import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-import './globals.css';
-import RouteGuard from '@/components/RouteGuard';
-
-const logoFont = localFont({
-    src: '../../public/fonts/logo_font.ttf',
-    variable: '--font-logo',
-    display: 'swap',
-});
-
-const kimmBold = localFont({
-    src: '../../public/fonts/KIMM_BOLD.ttf',
-    variable: '--font-kimm',
-    display: 'swap',
-});
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-    title: 'everbit - 코인 퀀트 트레이딩 시스템',
-    description: 'Upbit API 기반 코인 퀀트 트레이딩 시스템',
-    icons: {
-        icon: '/favicon.ico',
-    },
+  title: "에버비트",
+  description: "암호화폐 퀀트 트레이딩 시스템",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html
-            lang="ko"
-            suppressHydrationWarning
-            className={`${logoFont.variable} ${kimmBold.variable}`}
-        >
-            <head>
-                <meta name="color-scheme" content="light only" />
-            </head>
-            <body className="font-sans bg-white text-navy-800">
-                <RouteGuard>{children}</RouteGuard>
-            </body>
-        </html>
-    );
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ko">
+      <body className="min-h-screen bg-bg1 text-text-1 antialiased">
+        {children}
+      </body>
+    </html>
+  );
 }

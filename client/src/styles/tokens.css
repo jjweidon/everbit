@@ -1,0 +1,43 @@
+/* Everbit v2 UI tokens (Dark Neutral Ops)
+   목표: 푸른 톤을 최소화하고, 거의 검정에 가까운 검푸른(Neutral-cool) 다크 UI
+   사용 방식: tailwind에서 rgb(var(--token) / <alpha-value>)로 참조
+*/
+
+:root {
+  /* Neutral (3-layer) */
+  --bg-0: 10 10 10;     /* #0A0A0A (deepest) */
+  --bg-1: 17 18 20;     /* #111214 (default surface) */
+  --bg-2: 23 24 27;     /* #17181B (elevated cards/panels) */
+
+  /* Lines */
+  --border: 220 222 228;   /* #DCDEE4 고대비 밝은 흰색 */
+  --divider: 34 35 38;  /* #222326 */
+
+  /* Text (less blue) */
+  --text-1: 232 233 235; /* #E8E9EB */
+  --text-2: 182 186 195; /* #B6BAC3 */
+  --text-3: 124 130 143; /* #7C828F */
+
+  /* Accent */
+  --green: 57 255 136;   /* #39FF88 */
+  --red: 255 77 109;     /* #FF4D6D */
+  --yellow: 255 209 102; /* #FFD166 */
+  --cyan: 62 197 255;    /* #3EC5FF */
+
+  /* Radius */
+  --radius-lg: 12px;
+  --radius-md: 10px;
+
+  /* Focus ring */
+  --focus: 62 197 255;   /* cyan */
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -2,10 +2,15 @@
 .DS_Store
 .env
 .env.**
+!.env.example
 .env.development.local
 .env.test.local
 .env.production.local
 docker-compose.dev.yaml
+*.bak
+*.bak2
+*.bak3
+*.bak4
 
 # # Python
 # .venv/
@@ -53,6 +58,10 @@ server/nbdist/
 server/.nb-gradle/
 server/**/application.yaml
 server/**/application-dev.yaml
+server/**/application-local.yaml
+
+# QueryDSL 빌드 산출물
+server/src/main/generated/
 
 # 예외 처리 (서버)
 !server/gradle/wrapper/gradle-wrapper.jar
@@ -88,7 +97,13 @@ logs/
 run-everbit.sh
 
 # 문서
-/docs/
+# docs/*.md는 커밋에 포함. ignore 필요한 파일만 제외
+docs/ignore/
+docs.zip
 *.docx
 *.pptx
 *.pdf
+docs/prompt-pack/
+.cursor/rules/
+docs/design/
+node_modules
