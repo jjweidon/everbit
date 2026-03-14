@@ -116,8 +116,8 @@ API 계약 SoT는 본 문서다. UI 명세(`docs/ui/everbit_ui_impl_spec.md`)의
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | accountEnabled | boolean | ✓ | 계정 Kill Switch |
-| strategyKey | string | ✓ | EXTREME_FLIP 고정 |
-| strategyEnabled | boolean | ✓ | 전략 실행 여부 |
+| strategyKey | string | ✓ | 현재 표시 전략 키 (EXTREME_FLIP / STRUCTURE_LIFT / PRESSURE_SURGE 등). strategy_config 기준, 없으면 EXTREME_FLIP |
+| strategyEnabled | boolean | ✓ | 해당 전략의 실행 여부 (KillSwitch enabled_strategies 기준) |
 | wsStatus | enum | ✓ | CONNECTED / DEGRADED / DISCONNECTED |
 | lastReconcileAt | string | | 마지막 reconcile 시각 |
 | lastErrorAt | string | | 마지막 오류 시각 |
