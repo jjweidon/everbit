@@ -13,6 +13,15 @@
 !client/**/tokens.css
 **/*token*
 **/*private*
+!**/src/**/*Key*.java
+!**/src/**/*Credentials*.java
+!**/src/**/*Token*.java
+!**/src/**/*Key*.ts
+!**/src/**/*Credentials*.ts
+!**/src/**/*Token*.ts
+!**/src/**/*Key*.tsx
+!**/src/**/*Credentials*.tsx
+!**/src/**/*Token*.tsx
 **/*.pem
 **/*.p12
 **/*.jks
