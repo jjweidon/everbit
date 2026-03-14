@@ -1,9 +1,7 @@
 package com.everbit.everbit.auth.application;
 
-import com.everbit.everbit.auth.application.port.OAuthStateStore;
 import com.everbit.everbit.auth.application.port.RefreshSessionStore;
 import com.everbit.everbit.auth.config.AuthProperties;
-import com.everbit.everbit.integrations.kakao.KakaoTokenClient;
 import com.everbit.everbit.user.application.OwnerResolver;
 import com.everbit.everbit.user.domain.AppUser;
 import com.everbit.everbit.user.application.NotOwnerException;
@@ -16,8 +14,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * 인증 유스케이스. 로그인/콜백/Refresh/로그아웃.
+ * 인증 유스케이스. OAuth2 성공 후 회원 매핑/토큰 발급, Refresh, 로그아웃.
  * SoT: docs/integrations/kakao-oauth-auth-flow.md.
+ * OAuth 인가 코드 교환·state 검증은 Spring Security OAuth2 Client가 수행.
  */
 @Service
 @RequiredArgsConstructor
@@ -27,40 +26,14 @@ public class AuthService {
 	private final AuthProperties authProperties;
 	private final TokenProvider tokenProvider;
 	private final RefreshSessionStore refreshSessionStore;
-	private final OAuthStateStore oauthStateStore;
 	private final OwnerResolver ownerResolver;
-	private final KakaoTokenClient kakaoTokenClient;
 
 	/**
-	 * OAuth 시작. state 생성 후 Kakao 인증 URL 반환.
-	 */
-	public String buildOAuthStartRedirectUrl() {
-		String state = UUID.randomUUID().toString();
-		oauthStateStore.save(state, Instant.now().plusSeconds(600)); // 10분
-		String scope = authProperties.kakaoScope().replace(", ", ",").replace(" ,", ",");
-		return authProperties.kakaoAuthorizationUri()
-			+ "?client_id=" + authProperties.kakaoClientId()
-			+ "&redirect_uri=" + authProperties.kakaoRedirectUri()
-			+ "&response_type=code"
-			+ "&state=" + state
-			+ "&scope=" + scope;
-	}
-
-	/**
-	 * OAuth 콜백 처리. code 교환 → 회원 매핑 → 토큰 발급.
+	 * OAuth2 인증 완료 후 회원 식별/생성 및 서비스 토큰 발급.
+	 * (Spring Security가 code 교환·user info 조회 후 호출하는 쪽에서 사용)
 	 */
 	@Transactional
-	public LoginResult handleCallback(String code, String state) {
-		if (!oauthStateStore.consume(state)) {
-			throw new InvalidOAuthStateException();
-		}
-
-		var tokenRes = kakaoTokenClient.exchangeToken(code);
-		var userRes = kakaoTokenClient.getUserInfo(tokenRes.accessToken());
-
-		String kakaoId = String.valueOf(userRes.id());
-		String email = userRes.kakaoAccount() != null ? userRes.kakaoAccount().email() : null;
-
+	public LoginResult handleOAuth2Success(String kakaoId, String email) {
 		AppUser owner;
 		try {
 			owner = ownerResolver.findOrCreateOwner(kakaoId, email);
@@ -122,12 +95,6 @@ public class AuthService {
 
 	public record LoginResult(String accessToken, String refreshJti, Instant refreshExpiresAt, long ownerId) {}
 	public record RefreshResult(String accessToken, String refreshJti, Instant refreshExpiresAt) {}
-
-	public static class InvalidOAuthStateException extends RuntimeException {
-		public InvalidOAuthStateException() {
-			super("유효하지 않은 요청입니다.");
-		}
-	}
 
 	public static class RefreshReuseDetectedException extends RuntimeException {
 		public RefreshReuseDetectedException() {

@@ -2,7 +2,7 @@
 # SoT: docs/operations/environments.md, docs/security/exposure-policy.md
 # Timezone: docs/prompt-pack/server/00_source_map_and_decisions.md §D
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8082}
   
 spring:
   application:
@@ -31,16 +31,17 @@ spring:
     oauth2:
       authenticated-redirect-uri: https://everbit.kr
       logout-redirect-uri: https://everbit.kr
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3002,http://127.0.0.1:3002}
       client:
         registration:
           kakao:
             client-name: kakao
             client-id: ${KAKAO_CLIENT_ID:}
             client-secret: ${KAKAO_CLIENT_SECRET:}
-            redirect-uri: https://api.everbit.kr/api/v2/auth/login/oauth2/code/kakao
+            redirect-uri: "{baseUrl}/api/v2/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
-            scope: profile_nickname, profile_image
+            scope: account_email, profile_nickname
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
@@ -59,4 +60,4 @@ management:
       show-details: when-authorized
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3002,http://127.0.0.1:3002}

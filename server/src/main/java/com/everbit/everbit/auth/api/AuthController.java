@@ -2,7 +2,6 @@ package com.everbit.everbit.auth.api;
 
 import com.everbit.everbit.auth.application.AuthService;
 import com.everbit.everbit.auth.config.AuthProperties;
-import com.everbit.everbit.user.application.NotOwnerException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,13 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 /**
- * 인증 API. SoT: docs/api/contracts.md, docs/integrations/kakao-oauth-auth-flow.md.
+ * 인증 API. Refresh만 제공. 로그인은 /oauth2/authorization/kakao, 로그아웃은 /logout.
+ * SoT: docs/api/contracts.md, docs/integrations/kakao-oauth-auth-flow.md.
  */
 @RestController
 @RequestMapping("/api/v2/auth")
@@ -29,43 +26,6 @@ public class AuthController {
 
 	private final AuthService authService;
 	private final AuthProperties authProperties;
-
-	@GetMapping("/start")
-	public void start(HttpServletResponse response) throws IOException {
-		String redirectUrl = authService.buildOAuthStartRedirectUrl();
-		response.sendRedirect(redirectUrl);
-	}
-
-	@GetMapping(value = {"/callback", "/login/oauth2/code/kakao"})
-	public void callback(
-		@RequestParam(required = false) String code,
-		@RequestParam(required = false) String state,
-		@RequestParam(required = false) String error,
-		HttpServletResponse response
-	) throws IOException {
-		if (error != null) {
-			redirectToLoginWithError(response, "카카오 로그인이 취소되었습니다.");
-			return;
-		}
-		if (code == null || state == null) {
-			redirectToLoginWithError(response, "인증 코드가 없습니다.");
-			return;
-		}
-
-		try {
-			var result = authService.handleCallback(code, state);
-			addRefreshCookie(response, result.refreshJti(), result.refreshExpiresAt());
-			String redirectUrl = authProperties.frontendBaseUrl() + "/auth/complete#access_token="
-				+ URLEncoder.encode(result.accessToken(), StandardCharsets.UTF_8);
-			response.sendRedirect(redirectUrl);
-		} catch (AuthService.InvalidOAuthStateException e) {
-			redirectToLoginWithError(response, e.getMessage());
-		} catch (NotOwnerException e) {
-			redirectToLoginWithError(response, e.getMessage());
-		} catch (Exception e) {
-			redirectToLoginWithError(response, "일시적인 오류가 발생했습니다.");
-		}
-	}
 
 	@PostMapping("/refresh")
 	public ResponseEntity<RefreshResponse> refresh(
@@ -90,22 +50,9 @@ public class AuthController {
 		}
 	}
 
-	@PostMapping("/logout")
-	public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-		validateOrigin(request);
-
-		String refreshJti = getRefreshCookie(request);
-		if (refreshJti != null) {
-			authService.logout(refreshJti);
-		}
-		clearRefreshCookie(response);
-		return ResponseEntity.noContent().build();
-	}
-
 	private void addRefreshCookie(HttpServletResponse response, String jti, Instant expiresAt) {
 		Cookie cookie = new Cookie(REFRESH_COOKIE_NAME, jti);
 		cookie.setHttpOnly(true);
-		// cookie.setSecure(true); // TODO: 로컬 테스트용 임시 비활성화 — 운영 배포 전 반드시 복구
 		cookie.setPath("/api/v2/auth");
 		cookie.setMaxAge(COOKIE_MAX_AGE_14_DAYS);
 		cookie.setAttribute("SameSite", "Lax");
@@ -145,11 +92,6 @@ public class AuthController {
 		if (!allowed) {
 			throw new InvalidOriginException();
 		}
-	}
-
-	private void redirectToLoginWithError(HttpServletResponse response, String message) throws IOException {
-		String url = authProperties.frontendBaseUrl() + "/login?error=" + URLEncoder.encode(message, StandardCharsets.UTF_8);
-		response.sendRedirect(url);
 	}
 
 	public record RefreshResponse(String accessToken, long expiresIn) {}
