@@ -51,7 +51,7 @@ com.everbit.everbit
 ├─ auth          # 로그인/세션(OAuth2, JWT, Refresh)
 ├─ user          # 소유자·Upbit 키·Kill Switch
 ├─ trade         # Signal, OrderIntent, OrderAttempt, 실행, 정합성
-├─ strategy      # 전략 설정(EXTREME_FLIP 등)
+├─ strategy      # 전략 설정(EXTREME_FLIP, STRUCTURE_LIFT, PRESSURE_SURGE 등)
 ├─ backtest      # 백테스트 job/결과
 ├─ notification  # Web Push 구독/발송
 ├─ dashboard     # 읽기 전용 요약/대시보드 API

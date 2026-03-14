@@ -12,7 +12,7 @@ Last updated: 2026-03-11 (Asia/Seoul)
 문서 관계:
 - 주문/재시도/멱등의 최종 기준: `docs/architecture/order-pipeline.md`
 - Event Bus/Queue(Outbox) 기준: `docs/architecture/event-bus.md`
-- 전략 상세: `docs/strategies/EXTREME_FLIP/spec.md`
+- 전략 상세: `docs/strategies/` (EVERBIT_MASTER_SPEC 및 개별 전략 스펙)
 
 ---
 
@@ -136,10 +136,10 @@ Last updated: 2026-03-11 (Asia/Seoul)
 
 ---
 
-## 5. 전략/설정/실행(전략 1개 + 여러 마켓)
+## 5. 전략/설정/실행(전략 포트폴리오 + 여러 마켓)
 
-### FR-TRADE-001 (P0) 전략 실행 단위(전략 1개 + 여러 마켓)
-**설명**: EXTREME_FLIP 1개 전략을 여러 마켓(KRW-*)에 대해 실행한다.
+### FR-TRADE-001 (P0) 전략 실행 단위(전략 포트폴리오 + 여러 마켓)
+**설명**: EXTREME_FLIP v1.1, STRUCTURE_LIFT v1.0, PRESSURE_SURGE v1.0 세 전략과 Regime Router·Strategy Arbitration를 조합해 여러 마켓(KRW-*)에 대해 실행한다. 동일 마켓에는 동시에 하나의 owner 전략만 포지션을 가진다.
 
 **수용 기준**
 - 활성 마켓 목록을 설정할 수 있다(Enable/Disable).
@@ -151,7 +151,7 @@ Last updated: 2026-03-11 (Asia/Seoul)
 **설명**: 전략 파라미터를 저장/조회/수정한다.
 
 **수용 기준**
-- EXTREME_FLIP 파라미터(타임프레임/임계값/쿨다운/포지션 제한/주문 정책)를 저장/조회할 수 있다.
+- 전략별 파라미터(EXTREME_FLIP, STRUCTURE_LIFT, PRESSURE_SURGE 등: 타임프레임/임계값/쿨다운/포지션 제한/주문 정책)를 저장/조회할 수 있다.
 - 설정 변경은 감사 로그로 남긴다(민감정보 제외).
 - 설정 스키마 버전(`config_version`)을 저장하고, 변경 시 이벤트를 발행한다(대시보드 반영).
 

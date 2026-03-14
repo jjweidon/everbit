@@ -119,9 +119,9 @@ v2 MVP에서는 Kafka를 **필수에서 제외**하고, PostgreSQL `outbox_event
 2) API → OWNER 검증(싱글 테넌트)  
 3) API → Access(Bearer) + Refresh(HttpOnly cookie) 발급
 
-### 4.2 자동매매(전략 1개 + 여러 마켓)
+### 4.2 자동매매(전략 포트폴리오 + 여러 마켓)
 1) Market data(WebSocket) 수신  
-2) candle close 단위로 전략 평가(EXTREME_FLIP)  
+2) candle close 단위로 Regime Router 및 전략 평가(EXTREME_FLIP, STRUCTURE_LIFT, PRESSURE_SURGE)  
 3) 리스크 게이트 통과 시 Signal/OrderIntent 저장  
 4) **EventBus(outbox_event)** 로 `CreateOrderAttempt` 커맨드 발행(트랜잭션 내 INSERT)  
 5) **Order Executor Worker** 가 커맨드를 claim → Upbit 주문 생성(Attempt 단위)  

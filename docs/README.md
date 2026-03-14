@@ -54,6 +54,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 
 ### API
 - [API 계약(엔드포인트/에러/예시)](./api/contracts.md)
+- [API 서버 구현 가이드(문서 기반 단계별)](./api/server-implementation-guide.md)
 
 ### Integrations
 - [Upbit 연동 스펙(REST + WebSocket)](./integrations/upbit.md)
@@ -97,7 +98,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 - [Server Prompt Pack(세션 단위 백엔드 구현)](./prompt-pack/server/00_README.md)
 
 ### Strategies
-- [EXTREME_FLIP(극점포착)](./strategies/EXTREME_FLIP/spec.md)
+- 전략 스펙은 **EVERBIT_MASTER_SPEC**(통합 스펙) 및 개별 전략(**EXTREME_FLIP v1.1**, **STRUCTURE_LIFT v1.0**, **PRESSURE_SURGE v1.0**)을 `docs/strategies/` 내부 문서에서 참조한다. 해당 디렉터리는 저장소에 포함되지 않을 수 있다.
 
 ### ADR(Architecture Decision Records)
 - [ADR 목록](./adr/README.md)
