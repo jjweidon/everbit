@@ -4,15 +4,18 @@
  * 대시보드 — 실행·리스크, 자산·손익, 최근 주문, 마켓 상태
  * docs/ui/everbit_ui_impl_spec.md §5.3
  * API: GET /api/v2/dashboard/summary, /orders, /markets
+ * 업비트 키 미등록 시 /upbit-key로 리다이렉트(ADR-0010).
  */
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SeverityBanner } from "@/components/ui/SeverityBanner";
 import { StatusChip, TagBadge, OnOffBadge, SideBadge, IntentTypeBadge } from "@/components/ui";
 import { TERM_TOOLTIPS } from "@/lib/term-tooltips";
 import { useApiData } from "@/hooks/useApiData";
 import { useApiOpts } from "@/hooks/useApiOpts";
-import { getDashboardSummary, getOrders, getMarkets } from "@/lib/api/endpoints";
+import { getDashboardSummary, getOrders, getMarkets, getUpbitKeyStatus } from "@/lib/api/endpoints";
 import type { AttemptStatus } from "@/types/api-contracts";
 
 function formatKrw(v: string) {
@@ -37,23 +40,42 @@ function getAttemptStatusTone(s: AttemptStatus): "green" | "red" | "yellow" | "c
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const opts = useApiOpts();
+  const keyStatus = useApiData({
+    fetch: () => getUpbitKeyStatus(opts),
+    enabled: true,
+  });
   const dashboard = useApiData({
     fetch: () => getDashboardSummary(opts),
-    enabled: true,
+    enabled: keyStatus.data != null && keyStatus.data.status === "REGISTERED",
   });
   const orders = useApiData({
     fetch: () => getOrders({ limit: 20, onlyAcked: true }, opts),
-    enabled: true,
+    enabled: keyStatus.data != null && keyStatus.data.status === "REGISTERED",
   });
   const markets = useApiData({
     fetch: () => getMarkets(opts),
-    enabled: true,
+    enabled: keyStatus.data != null && keyStatus.data.status === "REGISTERED",
   });
+
+  useEffect(() => {
+    if (keyStatus.data?.status === "NOT_REGISTERED" || keyStatus.data?.status === "VERIFICATION_FAILED") {
+      router.replace("/upbit-key");
+    }
+  }, [keyStatus.data?.status, router]);
 
   const summary = dashboard.data;
   const orderList = orders.data?.items ?? [];
   const marketList = markets.data ?? [];
+
+  if (keyStatus.loading || keyStatus.data?.status === "NOT_REGISTERED" || keyStatus.data?.status === "VERIFICATION_FAILED") {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-text-3">
+        <div className="h-7 w-7 animate-spin rounded-full border-2 border-borderSubtle border-t-text-3" />
+      </div>
+    );
+  }
 
   if (dashboard.loading && !summary) {
     return (

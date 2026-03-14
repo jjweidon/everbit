@@ -8,6 +8,7 @@ import type {
   OrderListResponse,
   OrderListItem,
   MarketStatusItem,
+  UpbitKeyStatusResponse,
 } from "@/types/api-contracts";
 
 export interface GetOrdersParams {
@@ -56,4 +57,27 @@ export function getOrders(
 export function getMarkets(opts: ApiEndpointsOptions): Promise<MarketStatusItem[]> {
   const client = createClient(opts);
   return apiFetch<MarketStatusItem[]>("/markets", { method: "GET" }, client);
+}
+
+// --- Upbit Key (SoT: docs/api/contracts.md, server UpbitKeyController) ---
+
+export function getUpbitKeyStatus(opts: ApiEndpointsOptions): Promise<UpbitKeyStatusResponse> {
+  const client = createClient(opts);
+  return apiFetch<UpbitKeyStatusResponse>("/upbit/key/status", { method: "GET" }, client);
+}
+
+export function registerUpbitKey(
+  body: { accessKey: string; secretKey: string },
+  opts: ApiEndpointsOptions
+): Promise<UpbitKeyStatusResponse> {
+  const client = createClient(opts);
+  return apiFetch<UpbitKeyStatusResponse>("/upbit/key", {
+    method: "POST",
+    body: JSON.stringify(body),
+  }, client);
+}
+
+export function deleteUpbitKey(opts: ApiEndpointsOptions): Promise<void> {
+  const client = createClient(opts);
+  return apiFetch<void>("/upbit/key", { method: "DELETE" }, client);
 }

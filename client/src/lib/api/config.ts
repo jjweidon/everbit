@@ -20,10 +20,9 @@ export const API_BASE_PATH = "/api/v2";
 
 /**
  * Spring Security OAuth2 Client 기본 로그인 시작 엔드포인트.
- * GET /oauth2/authorization/kakao → 카카오 인증 페이지로 리다이렉트.
+ * GET /api/v2/oauth2/authorization/kakao → 카카오 인증 페이지로 리다이렉트.
  */
--export const KAKAO_OAUTH2_AUTHORIZATION_PATH = "/oauth2/authorization/kakao";
-+export const KAKAO_OAUTH2_AUTHORIZATION_PATH = "/api/v2/oauth2/authorization/kakao";
+export const KAKAO_OAUTH2_AUTHORIZATION_PATH = "/api/v2/oauth2/authorization/kakao";
 
 /**
  * 카카오 로그인 시작 URL. 로그인 버튼 클릭 시 이 URL로 브라우저 리다이렉트.

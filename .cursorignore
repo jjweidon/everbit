@@ -22,6 +22,10 @@
 !**/src/**/*Key*.tsx
 !**/src/**/*Credentials*.tsx
 !**/src/**/*Token*.tsx
+!**/src/**/upbit-key*
+!**/src/**/upbit-key/**
+!**/src/**/*-key*.ts
+!**/src/**/*-key*.tsx
 **/*.pem
 **/*.p12
 **/*.jks
