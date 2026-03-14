@@ -61,3 +61,7 @@ management:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3002,http://127.0.0.1:3002}
+
+upbit:
+  key:
+    master-key: ${UPBIT_KEY_MASTER_KEY:}

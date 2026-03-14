@@ -7,16 +7,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
 
+import org.springframework.data.domain.Persistable;
+
 import java.time.Instant;
 
 /**
  * Upbit API 키(암호문 저장). SoT: docs/architecture/data-model.md §2.2.
  * 공유 PK: owner_id = PK = FK(app_user.id).
+ * 새 엔티티일 때 save()가 merge 대신 persist를 쓰도록 Persistable 구현.
  */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UpbitKey extends BaseEntity {
+public class UpbitKey extends BaseEntity implements Persistable<Long> {
 
 	@Id
 	@Column(name = "owner_id")
@@ -45,6 +48,16 @@ public class UpbitKey extends BaseEntity {
 		this.accessKeyEnc = accessKeyEnc;
 		this.secretKeyEnc = secretKeyEnc;
 		this.keyVersion = keyVersion;
+	}
+
+	@Override
+	public Long getId() {
+		return ownerId;
+	}
+
+	@Override
+	public boolean isNew() {
+		return getCreatedAt() == null;
 	}
 
 	public static UpbitKey create(AppUser owner, byte[] accessKeyEnc, byte[] secretKeyEnc, int keyVersion) {
