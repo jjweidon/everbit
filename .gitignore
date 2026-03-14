@@ -7,6 +7,10 @@
 .env.test.local
 .env.production.local
 docker-compose.dev.yaml
+*.bak
+*.bak2
+*.bak3
+*.bak4
 
 # # Python
 # .venv/
