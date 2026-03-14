@@ -68,6 +68,7 @@ Last updated: 2026-03-06 (Asia/Seoul)
 - [TDD 개발 규칙(RED→GREEN→REFACTOR)](./testing/tdd.md)
 - [Backend TDD 실무 템플릿(구조·예시)](./testing/backend-tdd-template.md)
 - [테스트 전략](./testing/strategy.md)
+- [Upbit 연동 테스트 가이드](./testing/upbit-integration-testing.md)
 - [테스트 매트릭스](./testing/test-matrix.md)
 - [성능/검증 계획](./testing/performance-plan.md)
 

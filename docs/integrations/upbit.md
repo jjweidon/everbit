@@ -101,6 +101,13 @@ Last updated: 2026-02-17 (Asia/Seoul)
 - 계정 Kill Switch OFF + 시장 SUSPENDED 전환
 - 재개는 수동
 
+### 4.4 서버 예외 처리 구조(강제)
+- Upbit 연동 예외는 **integrations/upbit** 패키지에서 일원화한다.
+- `UpbitException`: 일반 연동 오류 → HTTP 502, reasonCode `UPBIT_ERROR`
+- `UpbitApiException`: Upbit HTTP 4xx/5xx → 429는 429+`RATE_LIMIT_429`, 418은 503+`UPBIT_BLOCKED_418`, 그 외 502+`UPBIT_API_ERROR`
+- 전역 핸들러는 `UpbitExceptionHandler`(@RestControllerAdvice, integrations/upbit)에서만 처리하며, `GlobalExceptionHandler`는 Upbit 예외를 다루지 않는다.
+- API 계약: `docs/api/contracts.md` §11, §12.
+
 ---
 
 ## 5. REST 호출 정책(Timeout/Retry)
