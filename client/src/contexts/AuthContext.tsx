@@ -27,6 +27,8 @@ interface AuthContextValue {
   /** 401 시 1회 호출. 성공 시 새 토큰 반환, 실패 시 null */
   refreshToken: () => Promise<string | null>;
   isAuthenticated: boolean;
+  /** 부트스트랩(세션스토리지/refresh) 1회 시도 완료 시 true. 이전에는 로그인 리다이렉트 하지 않음. */
+  authReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -41,6 +43,7 @@ const BOOTSTRAP_KEY = "everbit_at_bootstrap";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   // 동시 refresh 요청을 하나의 Promise로 합쳐 JTI 재사용 탐지 방지
   const refreshInflight = useRef<Promise<string | null> | null>(null);
@@ -86,9 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (bootstrap) {
       sessionStorage.removeItem(BOOTSTRAP_KEY);
       setAccessToken(bootstrap);
+      setAuthReady(true);
       return;
     }
-    refreshToken();
+    refreshToken().finally(() => setAuthReady(true));
   }, [refreshToken]);
 
   const value = useMemo<AuthContextValue>(
@@ -97,8 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken,
       refreshToken,
       isAuthenticated: !!accessToken,
+      authReady,
     }),
-    [accessToken, refreshToken]
+    [accessToken, refreshToken, authReady]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

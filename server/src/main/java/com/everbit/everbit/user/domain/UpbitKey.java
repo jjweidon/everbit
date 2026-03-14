@@ -6,10 +6,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
-
 import org.springframework.data.domain.Persistable;
+import org.springframework.lang.NonNull;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Upbit API 키(암호문 저장). SoT: docs/architecture/data-model.md §2.2.
@@ -60,13 +61,14 @@ public class UpbitKey extends BaseEntity implements Persistable<Long> {
 		return getCreatedAt() == null;
 	}
 
+	@NonNull
 	public static UpbitKey create(AppUser owner, byte[] accessKeyEnc, byte[] secretKeyEnc, int keyVersion) {
-		return UpbitKey.builder()
+		return Objects.requireNonNull(UpbitKey.builder()
 			.owner(owner)
 			.accessKeyEnc(accessKeyEnc)
 			.secretKeyEnc(secretKeyEnc)
 			.keyVersion(keyVersion)
-			.build();
+			.build());
 	}
 
 	public void rotate(byte[] newAccessKeyEnc, byte[] newSecretKeyEnc, int newVersion) {

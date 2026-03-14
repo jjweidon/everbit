@@ -36,7 +36,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 		Authentication authentication) throws IOException {
 		OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-		String kakaoId = String.valueOf(oauth2User.getAttribute("id"));
+		String kakaoId = extractKakaoId(oauth2User);
 		String email = extractEmail(oauth2User);
 
 		try {
@@ -51,6 +51,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 			log.warn("OAuth2 success handler error", e);
 			redirectToLoginWithError(response, "일시적인 오류가 발생했습니다.");
 		}
+	}
+
+	private static String extractKakaoId(OAuth2User oauth2User) {
+		Object idAttr = oauth2User.getAttributes().get("id");
+		if (idAttr == null) return "";
+		if (idAttr instanceof Number n) return String.valueOf(n.longValue());
+		return idAttr.toString();
 	}
 
 	private static String extractEmail(OAuth2User oauth2User) {
