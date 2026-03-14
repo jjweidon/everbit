@@ -1,6 +1,8 @@
 package com.everbit.everbit.user.api;
 
+import com.everbit.everbit.auth.support.CurrentOwnerId;
 import com.everbit.everbit.integrations.upbit.UpbitApiException;
+import org.springframework.lang.NonNull;
 import com.everbit.everbit.integrations.upbit.UpbitExchangeClient;
 import com.everbit.everbit.integrations.upbit.UpbitException;
 import com.everbit.everbit.user.application.UpbitKeyService;
@@ -8,8 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -22,8 +22,7 @@ public class UpbitKeyController {
 	private final UpbitExchangeClient upbitExchangeClient;
 
 	@GetMapping("/status")
-	public ResponseEntity<UpbitKeyStatusResponse> status() {
-		Long ownerId = currentOwnerId();
+	public ResponseEntity<UpbitKeyStatusResponse> status(@CurrentOwnerId @NonNull Long ownerId) {
 		if (!upbitKeyService.hasKey(ownerId)) {
 			return ResponseEntity.ok(new UpbitKeyStatusResponse(
 				UpbitKeyStatusResponse.NOT_REGISTERED, null, null));
@@ -53,8 +52,9 @@ public class UpbitKeyController {
 	}
 
 	@PostMapping
-	public ResponseEntity<UpbitKeyStatusResponse> register(@Valid @RequestBody UpbitKeyRegisterRequest request) {
-		Long ownerId = currentOwnerId();
+	public ResponseEntity<UpbitKeyStatusResponse> register(
+		@CurrentOwnerId @NonNull Long ownerId,
+		@Valid @RequestBody UpbitKeyRegisterRequest request) {
 		upbitKeyService.register(ownerId, request.accessKey(), request.secretKey());
 		return upbitKeyService.getDecryptedCredentials(ownerId)
 			.map(creds -> {
@@ -81,18 +81,8 @@ public class UpbitKeyController {
 	}
 
 	@DeleteMapping
-	public ResponseEntity<Void> delete() {
-		Long ownerId = currentOwnerId();
+	public ResponseEntity<Void> delete(@CurrentOwnerId @NonNull Long ownerId) {
 		upbitKeyService.delete(ownerId);
 		return ResponseEntity.noContent().build();
-	}
-
-	@NonNull
-	private static Long currentOwnerId() {
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		if (!(principal instanceof Long ownerId)) {
-			throw new IllegalStateException("Expected Long principal (ownerId)");
-		}
-		return ownerId;
 	}
 }

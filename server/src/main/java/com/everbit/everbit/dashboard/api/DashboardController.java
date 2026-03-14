@@ -5,26 +5,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.everbit.everbit.auth.support.CurrentOwnerId;
+import com.everbit.everbit.dashboard.application.DashboardSummaryService;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
+
 /**
- * 대시보드 API (stub). SoT: docs/api/contracts.md §2.
- * 인증은 bootstrap 단계에서 비활성; 추후 Bearer 필수 적용.
+ * 대시보드 API. SoT: docs/api/contracts.md §2, docs/architecture/modular-monolith.md.
+ * 요청: Authorization: Bearer &lt;token&gt; 필수 (SecurityConfig).
+ * ownerId는 JWT에서 취득하여 {@link CurrentOwnerId}로 주입.
  */
 @RestController
 @RequestMapping("/api/v2/dashboard")
+@RequiredArgsConstructor
 public class DashboardController {
 
+	private final DashboardSummaryService dashboardSummaryService;
+
 	@GetMapping("/summary")
-	public ResponseEntity<DashboardSummaryResponse> summary() {
-		DashboardSummaryResponse stub = new DashboardSummaryResponse(
-			true,
-			"EXTREME_FLIP",
-			true,
-			"CONNECTED",
-			"2026-03-06T02:30:00.000Z",
-			"2026-03-06T01:15:00.000Z",
-			new DashboardSummaryResponse.RiskDto(2, null, 1, java.util.List.of("KRW-BTC")),
-			new DashboardSummaryResponse.EquityDto("12500000", "450000", "-32000")
-		);
-		return ResponseEntity.ok(stub);
+	public ResponseEntity<DashboardSummaryResponse> summary(@CurrentOwnerId @NonNull Long ownerId) {
+		return ResponseEntity.ok(dashboardSummaryService.getSummary(ownerId));
 	}
 }
