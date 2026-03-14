@@ -305,7 +305,10 @@ Last updated: 2026-03-06 (Asia/Seoul)
 ### 9.3 Redirect URI 검증
 
 - 카카오 개발자 콘솔에 등록된 Redirect URI와 요청 `redirect_uri`가 정확히 일치해야 한다.
-- 로컬: `http://localhost:8080/api/v2/auth/callback` 등. 운영: `https://api.everbit.kr/api/v2/auth/callback`.
+- **경로**: Spring Security OAuth2 리다이렉트 엔드포인트는 `/api/v2/login/oauth2/code/{registrationId}` 이다. **`/api/v2/auth/...` 형태는 사용하지 않는다.**
+- **개발**: `http://localhost:{SERVER_PORT}/api/v2/login/oauth2/code/kakao` 형태. 백엔드 포트(`SERVER_PORT`)와 카카오 앱에 등록한 Redirect URI가 정확히 일치해야 한다.
+- **운영**: `https://{API_HOST}/api/v2/login/oauth2/code/kakao` 형태. API 호스트와 카카오 앱 등록 URI가 일치해야 한다.
+- `application-local.yaml` 등에서 `redirect-uri`를 지정할 때 위 **경로 규칙**과 **환경별 호스트/포트**에 맞출 것. (문서에 실제 운영/개발 URI를 기입하지 않음.)
 
 ### 9.4 토큰 노출 방지
 

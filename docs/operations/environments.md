@@ -56,7 +56,7 @@ v2 MVP에서는 Kafka를 사용하지 않는다. 비동기 파이프라인은 Po
 #### OAuth(Kakao)
 - `KAKAO_CLIENT_ID=...`
 - `KAKAO_CLIENT_SECRET=...`
-- `KAKAO_REDIRECT_URI=https://api.everbit.kr/oauth2/callback/kakao`
+- 카카오 Redirect URI는 Spring OAuth2 엔드포인트와 일치해야 함. 경로는 `/api/v2/login/oauth2/code/kakao` (호스트/포트는 환경별로 설정). `application.yml`의 `redirect-uri` 템플릿 또는 로컬 오버라이드에서 동일 경로 사용. (문서에 실제 운영/개발 전체 URI 기입 금지.)
 
 #### Upbit(암호화)
 - `UPBIT_KEY_MASTER_KEY=...`  # 32 bytes, 운영 시크릿
